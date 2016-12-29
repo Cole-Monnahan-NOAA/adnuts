@@ -53,7 +53,7 @@ run_admb_nuts <-
       system(paste("admb", model.name))
       system(paste(model.name))
     }
-    mle <- R2admb::read_(model.name, verbose=TRUE)
+    mle <- R2admb::read_admb(model.name, verbose=TRUE)
     ## If user provided covar matrix, write it to file and save to
     ## results
     if(!is.null(cov.user)){
@@ -107,7 +107,7 @@ run_admb_nuts <-
                 model=model.name, mle=mle, par.names=par.names))
   }
 
-run_admb <- function(model.path, model.name, iter, chains=1, init=NULL,
+run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
                      seeds=NULL, covar=NULL, thin=1, ...){
   ## Argument checking
   if(is.null(init)){
