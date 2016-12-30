@@ -118,9 +118,9 @@ run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
   thin <- floor(thin)
   stopifnot(thin >=1)
+  thin.ind <- seq(1, iter, by=thin)
   stopifnot(chains >= 1)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
-
   mcmc.out <- lapply(1:chains, function(i)
     run_admb_nuts(model.path=model.path, model.name=model.name,
                   iter=iter, init=init[[i]],
@@ -129,12 +129,15 @@ run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
   samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
   for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$par}
-  sampler_params <- lapply(mcmc.out, function(x) x$sampler_params)
+  ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
+  samples <- samples[thin.ind,,, drop=FALSE]
+  sampler_params <- lapply(mcmc.out,
+       function(x) x$sampler_params[thin.ind,])
   time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
   time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
   result <- list(samples=samples, sampler_params=sampler_params,
                  time.warmup=time.warmup, time.total=time.total,
-                 algorithm="NUTS", warmup=mcmc.out[[1]]$warmup,
+                 algorithm="NUTS", warmup=mcmc.out[[1]]$warmup/thin,
                  model=mcmc.out[[1]]$model,
                  max_treedepth=mcmc.out[[1]]$max_treedepth)
   return(invisible(result))
