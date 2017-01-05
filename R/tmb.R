@@ -193,7 +193,10 @@ run_mcmc <- function(obj, iter, algorithm="NUTS", chains=1, init=NULL,
     if(case[i]==0) return(1)
     else if(case[i]==1) return(exp(y[i]))
     else if(case[i]==2) return(exp(y[i]))
-    else if(case[i]==3) return((b[i]-a[i])*exp(-y[i])/(1+exp(-y[i]))^2)
+    else if(case[i]==3){
+      tmp <- exp(-y[i])
+      return((b[i]-a[i])*tmp/(1+tmp)^2)
+      }
   })
   return(x)
 }
