@@ -15,7 +15,7 @@
 #'   beginning of the chain, *after* thining. The burn in period
 #'   (i.e., the first warmup*thin draws) should be at least large
 #'   enough to cover dynamic scaling.
-#' @param cov.user (Numeric matrix) A manually defined covariance
+#' @param covar (Numeric matrix) A manually defined covariance
 #'   matrix (in bounded space) to use in the Metropolis-Hastings
 #'   algorithm.
 #' @param init (Numeric vector) A vector of initial values, which
@@ -41,7 +41,7 @@
 #'   diagnostics using CODA.
 run_admb_nuts <-
   function(model.path, model.name, iter=2000, thin=1, warmup=ceiling(iter/2),
-           init=NULL, eps=NULL, cov.user=NULL,  mcseed=NULL,
+           init=NULL, eps=NULL, covar=NULL,  mcseed=NULL,
            mcdiag=FALSE, verbose=TRUE, extra.args=NULL, max_treedepth=12,
            mceval=TRUE, chain=1){
     wd.old <- getwd(); on.exit(setwd(wd.old))
@@ -56,19 +56,19 @@ run_admb_nuts <-
     mle <- R2admb::read_admb(model.name, verbose=TRUE)
     ## If user provided covar matrix, write it to file and save to
     ## results
-    if(!is.null(cov.user)){
-      cor.user <- cov.user/ sqrt(diag(cov.user) %o% diag(cov.user))
-      if(!is.positive.definite(x=cor.user))
-        stop("Invalid cov.user matrix, not positive definite")
-      write.admb.cov(cov.user)
-      mle$cov.user <- cov.user
+    if(!is.null(covar)){
+      cor.user <- covar/ sqrt(diag(covar) %o% diag(covar))
+      if(!matrixcalc:::is.positive.definite(x=cor.user))
+        stop("Invalid covar matrix, not positive definite")
+      write.admb.cov(covar)
+      mle$covar <- covar
     } else {
       ## otherwise use the estimated one
-      mle$cov.user <-  NULL
+      mle$covar <-  NULL
     }
     ## Write the starting values to file. Always using a
     ## init file b/c need to use -nohess -noest so
-    ## that the cov.user can be specified and not
+    ## that the covar can be specified and not
     ## overwritten. HOwever, this feature then starts the
     ## mcmc chain from the initial values instead of the
     ## MLEs. So let the user specify the init values, or
@@ -123,7 +123,7 @@ run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
   mcmc.out <- lapply(1:chains, function(i)
     run_admb_nuts(model.path=model.path, model.name=model.name,
-                  iter=iter, init=init[[i]],
+                  iter=iter, init=init[[i]], covar=covar,
                   chain=i,  mcseed=seeds[i], ...))
   par.names=mcmc.out[[1]]$par.names
   samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),

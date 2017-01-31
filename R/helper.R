@@ -1,4 +1,25 @@
-write.admb.cov.unbounded <- function(cov.unbounded, model.path=getwd()){
+#' Read in the ADMB covariance file.
+#'
+#' @template covariance_template
+#' @export
+get.admb.cov <- function(model.path=getwd()){
+    wd.old <- getwd(); on.exit(setwd(wd.old))
+    setwd(model.path)
+    filename <- file("admodel.cov", "rb")
+    on.exit(close(filename), add=TRUE)
+    num.pars <- readBin(filename, "integer", 1)
+    cov.vec <- readBin(filename, "numeric", num.pars^2)
+    cov.unbounded <- matrix(cov.vec, ncol=num.pars, nrow=num.pars)
+    hybrid_bounded_flag <- readBin(filename, "integer", 1)
+    scale <- readBin(filename, "numeric", num.pars)
+    cov.bounded <- cov.unbounded*(scale %o% scale)
+    result <- list(num.pars=num.pars, cov.bounded=cov.bounded,
+                   cov.unbounded=cov.unbounded,
+                   hybrid_bounded_flag=hybrid_bounded_flag, scale=scale)
+    return(result)
+}
+
+write.admb.cov <- function(cov.unbounded, model.path=getwd()){
   temp <- file.exists(paste0(model.path, "/admodel.cov"))
   if(!temp) stop(paste0("Couldn't find file ",model.path, "/admodel.cov"))
   temp <- file.copy(from=paste0(model.path, "/admodel.cov"),
