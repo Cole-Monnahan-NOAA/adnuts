@@ -1,3 +1,4 @@
+
 #' Run an MCMC using an ADMB model, return (1) the posterior
 #' draws, MLE fits and covariance/correlation matrices, and some
 #' MCMC convergence diagnostics using CODA.
