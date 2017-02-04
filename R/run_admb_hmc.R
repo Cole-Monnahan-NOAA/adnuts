@@ -81,6 +81,7 @@ run_admb_nuts <-
     ## arguments
     cmd <- paste(model.name,"-noest -nohess -nuts -mcmc ",iter)
     cmd <- paste(cmd, "-mcpin init.pin")
+    cmd <- paste(cmd, "-chain", chain)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
     if(!is.null(mcseed))
