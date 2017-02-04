@@ -147,7 +147,7 @@ run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
 
 as.shinystan.admb <- function(admb.fit){
   sso <- with(admb.fit,
-    as.shinystan(samples, burnin=warmup, max_treedepth=max_treedepth,
+    as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
                  sampler_params=sampler_params, algorithm='NUTS',
                  model_name=model))
   ## pars2 <- array(0, dim=c(nrow(pars), 1, ncol(pars)))

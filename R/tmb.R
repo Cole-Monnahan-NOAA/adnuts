@@ -848,13 +848,13 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
 #'   used, this list will have slight differences.
 as.shinystan.tmb <- function(tmb.fit){
   if(tmb.fit$algorithm=="NUTS"){
-    sso <- with(tmb.fit, as.shinystan(samples, burnin=warmup, max_treedepth=max_treedepth,
+    sso <- with(tmb.fit, as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
              sampler_params=sampler_params, algorithm='NUTS', model_name=model))
   } else if(tmb.fit$algorithm=="HMC"){
-    sso <- with(tmb.fit, as.shinystan(samples, burnin=warmup,
+    sso <- with(tmb.fit, as.shinystan(samples, warmup=warmup,
              sampler_params=sampler_params, algorithm='HMC', model_name=model))
   } else {
-    sso <- with(tmb.fit, as.shinystan(samples, burnin=warmup,
+    sso <- with(tmb.fit, as.shinystan(samples, warmup=warmup,
              algorithm='RWM', model_name=model))
   }
   return(sso)
