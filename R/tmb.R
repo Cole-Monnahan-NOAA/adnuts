@@ -621,8 +621,9 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
   ndiv <- sum(sampler_params[-(1:warmup),5])
   if(ndiv>0)
     message(paste0("There were ", ndiv, " divergent transitions after warmup"))
-  message(paste0("Final acceptance ratio=", sprintf("%.2f", mean(sampler_params[-(1:warmup),1])),
-                 " and target is ", adapt_delta))
+  msg <- paste0("Final acceptance ratio=", sprintf("%.2f", mean(sampler_params[-(1:warmup),1])))
+  if(useDA) msg <- paste0(msg,", and target=", adapt_delta)
+  message(msg)
   if(useDA) message(paste0("Final step size=", round(epsbar[warmup], 3),
                            "; after ", warmup, " warmup iterations"))
   time.total <- difftime(Sys.time(), time.start, units='secs')
