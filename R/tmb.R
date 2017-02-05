@@ -50,6 +50,8 @@ run_mcmc <- function(obj, iter, algorithm="NUTS", chains=1, init=NULL,
   if(is.null(init)){
     if(chains>1) warning('Using same inits for each chain -- strongly recommended to use dispersed inits')
     init <- rep(list(obj$par), times=chains)
+  } else if(is.function(init)){
+    init <- lapply(1:chains, function(i) unlist(inits()))
   } else if(length(init) != chains){
     stop("Length of init does not equal number of chains.")
   } else if(any(unlist(lapply(init, function(x) length(x) != length(obj$par))))){
@@ -592,11 +594,12 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
       }
     }
     j.results[m] <- j-1
+
+    alpha2 <- res$alpha/res$nalpha
+    if(!is.finite(alpha2)) alpha2 <- 0
     if(useDA){
       ## Do the adapting of eps.
       if(m <= warmup){
-        alpha2 <- res$alpha/res$nalpha
-        if(!is.finite(alpha2)) alpha2 <- 0
         Hbar[m+1] <- (1-1/(m+t0))*Hbar[m] +
           (adapt_delta-alpha2)/(m+t0)
         ## If logalpha not defined, skip this updating step and use
