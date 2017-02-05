@@ -215,7 +215,7 @@ run_mcmc <- function(obj, iter, algorithm="NUTS", chains=1, init=NULL,
     x[ind] <- 1
   ind <- cases==3
   if(length(ind)>0)
-    x[ind] <- -1+2/(1+exp(y[i]))
+    x[ind] <- -1+2/(1+exp(y[ind]))
   return(x)
 }
 
@@ -601,7 +601,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
           (adapt_delta-alpha2)/(m+t0)
         ## If logalpha not defined, skip this updating step and use
         ## the last one.
-        if(is.nan(Hbar[m+1])) Hbar[m+1] <- abs(Hbar[m])
+        ## if(is.nan(Hbar[m+1])) Hbar[m+1] <- abs(Hbar[m])
         logeps <- mu-sqrt(m)*Hbar[m+1]/gamma
         epsvec[m+1] <- exp(logeps)
         logepsbar <- m^(-kappa)*logeps + (1-m^(-kappa))*log(epsbar[m])
@@ -613,7 +613,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
     }
     ## Save adaptation info.
     sampler_params[m,] <-
-      c(res$alpha/res$nalpha, eps, j, info$n.calls, info$divergent, fn2(theta.cur))
+      c(alpha2, eps, j, info$n.calls, info$divergent, fn2(theta.cur))
     if(m==warmup) time.warmup <- difftime(Sys.time(), time.start, units='secs')
     .print.mcmc.progress(m, iter, warmup, chain)
   } ## end of MCMC loop
@@ -630,7 +630,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
   msg <- paste0("Final acceptance ratio=", sprintf("%.2f", mean(sampler_params[-(1:warmup),1])))
   if(useDA) msg <- paste0(msg,", and target=", adapt_delta)
   message(msg)
-  if(useDA) message(paste0("Final step size=", round(epsbar[warmup], 3),
+  if(useDA) message(paste0("Final step size=", round(eps, 3),
                            "; after ", warmup, " warmup iterations"))
   time.total <- difftime(Sys.time(), time.start, units='secs')
   .print.mcmc.timing(time.warmup=time.warmup, time.total=time.total)
