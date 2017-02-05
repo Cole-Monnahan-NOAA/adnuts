@@ -590,7 +590,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
       ## Do the adapting of eps.
       if(m <= warmup){
         alpha2 <- res$alpha/res$nalpha
-        if(alpha2>1 | !is.finite(alpha2)) browser()
+        if(!is.finite(alpha2)) alpha2 <- 0
         Hbar[m+1] <- (1-1/(m+t0))*Hbar[m] +
           (adapt_delta-alpha2)/(m+t0)
         ## If logalpha not defined, skip this updating step and use
@@ -724,7 +724,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
       nprime <- yy$n+ xx$n
       alpha <- xx$alpha+yy$alpha
       nalpha <- xx$nalpha+yy$nalpha
-      if(!is.finite(nprime)) {browser();nprime <- 0}
+      if(!is.finite(nprime)) {nprime <- 0}
       if(nprime!=0){
         ## choose whether to keep this theta
         if(runif(n=1, min=0, max=1) <= yy$n/nprime)
