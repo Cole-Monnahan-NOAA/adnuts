@@ -165,12 +165,16 @@ run_mcmc <- function(obj, iter, algorithm="NUTS", chains=1, init=NULL,
 #' This function returns the transformed variable, x=f(y).
 #'
 .transform <- function(y, a, b, cases){
-  x <- sapply(1:length(y), function(i) {
-    if(cases[i]==0) return(y[i])
-    else if(cases[i]==1) return(exp(y[i])+a[i])
-    else if(cases[i]==2) return(b[i]-exp(y[i]))
-    else if(cases[i]==3) return(a[i]+(b[i]-a[i])/(1+exp(-y[i])))
-  })
+  x <- y
+  ind <- cases==1
+  if(length(ind)>0)
+    x[ind] <- exp(y[ind])+a[ind]
+  ind <- cases==2
+  if(length(ind)>0)
+    x[ind] <- b[ind]-exp(y[ind])
+  ind <- cases==3
+  if(length(ind)>0)
+   x[ind] <- a[ind]+(b[ind]-a[ind])/(1+exp(-y[ind]))
   return(x)
 }
 #' The inverse of the transformation, y=f-1(x).
@@ -188,28 +192,30 @@ run_mcmc <- function(obj, iter, algorithm="NUTS", chains=1, init=NULL,
 
 #' The absolute value of the derivative of transformation.
 #'
-.transform.grad <- function(y, a, b, case){
-  x <- sapply(1:length(y), function(i) {
-    if(case[i]==0) return(1)
-    else if(case[i]==1) return(exp(y[i]))
-    else if(case[i]==2) return(exp(y[i]))
-    else if(case[i]==3){
-      tmp <- exp(-y[i])
-      return((b[i]-a[i])*tmp/(1+tmp)^2)
-      }
-  })
+.transform.grad <- function(y, a, b, cases){
+  x <- rep(1, length(y))
+  ind <- cases %in% 1:2
+  if(length(ind)>0)
+    x[ind] <- exp(y[ind])
+  ind <- cases==3
+  if(length(ind)>0){
+    tmp <- exp(-y[ind])
+    x[ind] <- (b[ind]-a[ind])*tmp/(1+tmp)^2
+  }
   return(x)
 }
+
 #' The derivative of the log of the derivative of the transformation. I.e.,
 #' d/dy[log(.transform.grad(y,a,b))].
 #'
-.transform.grad2 <- function(y, a, b, case){
-  x <- sapply(1:length(y), function(i) {
-    if(case[i]==0) return(0)
-    else if(case[i]==1) return(1)
-    else if(case[i]==2) return(1)
-    else if(case[i]==3) return(-1+2/(1+exp(y[i])))
-  })
+.transform.grad2 <- function(y, a, b, cases){
+  x <- rep(0, len=length(y))
+  ind <- cases %in% 1:2
+  if(length(ind)>0)
+    x[ind] <- 1
+  ind <- cases==3
+  if(length(ind)>0)
+    x[ind] <- -1+2/(1+exp(y[i]))
   return(x)
 }
 
@@ -573,11 +579,11 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
         if(runif(n=1, min=0,max=1) <= res$n/n){
           theta.cur <- theta.out[m,] <- res$theta.prime
           lp[m] <- fn2(theta.cur)
-          ## if(any(is.na(theta.cur))) browser()
         }
       }
       n <- n+res$n
-      s <- res$s*.test.nuts(theta.plus, theta.minus, r.plus, r.minus)
+      s <- as.vector(res$s*.test.nuts(theta.plus, theta.minus, r.plus, r.minus))
+      if(!is.finite(s)) s=0
       j <- j+1
       ## Stop doubling if too many or it's diverged enough
       if(j>max_treedepth) {
