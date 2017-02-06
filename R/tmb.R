@@ -51,7 +51,7 @@ run_mcmc <- function(obj, iter, algorithm="NUTS", chains=1, init=NULL,
     if(chains>1) warning('Using same inits for each chain -- strongly recommended to use dispersed inits')
     init <- rep(list(obj$par), times=chains)
   } else if(is.function(init)){
-    init <- lapply(1:chains, function(i) unlist(inits()))
+    init <- lapply(1:chains, function(i) unlist(init()))
   } else if(length(init) != chains){
     stop("Length of init does not equal number of chains.")
   } else if(any(unlist(lapply(init, function(x) length(x) != length(obj$par))))){
@@ -577,6 +577,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
         r.minus <- res$r.minus
       }
       ## test whether to accept this state
+      if(!is.finite(res$s)) browser()
       if(res$s==1) {
         if(runif(n=1, min=0,max=1) <= res$n/n){
           theta.cur <- theta.out[m,] <- res$theta.prime
@@ -585,7 +586,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
       }
       n <- n+res$n
       s <- as.vector(res$s*.test.nuts(theta.plus, theta.minus, r.plus, r.minus))
-      if(!is.finite(s)) s=0
+      if(!is.finite(s)) s <- 0
       j <- j+1
       ## Stop doubling if too many or it's diverged enough
       if(j>max_treedepth) {
