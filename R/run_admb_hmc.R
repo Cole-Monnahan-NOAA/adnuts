@@ -56,6 +56,7 @@ run_admb_nuts <-
     }
     ## If user provided covar matrix, write it to file and save to
     ## results
+    mle <- R2admb::read_admb(model.name, verbose=TRUE)
     if(!is.null(covar)){
       cor.user <- covar/ sqrt(diag(covar) %o% diag(covar))
       if(!matrixcalc:::is.positive.definite(x=cor.user))
@@ -70,12 +71,11 @@ run_admb_nuts <-
     ## mcmc chain from the initial values instead of the
     ## MLEs. So let the user specify the init values, or
     ## specify the MLEs manually
-    if(init=='mle'){
+    if(!is.null(init) & init=='mle'){
       est <- TRUE
     } else {
       est <- FALSE
       if(is.null(init)){
-        mle <- R2admb::read_admb(model.name, verbose=TRUE)
         init <- mle$coefficients[1:mle$npar]
         }
       write.table(file="init.pin", x=init, row.names=F, col.names=F)
