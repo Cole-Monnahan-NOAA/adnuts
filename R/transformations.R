@@ -9,6 +9,7 @@
 #'   functions. Error checking is only done here, not in other functions.
 #' @seealso \code{\link{.transform}}, \code{\link{.transform.inv}},
 #'   \code{\link{.transform.grad}}, \code{\link{.transform.grad2}}
+#' @export
 #'
 .transform.cases <- function(lower, upper){
   if(length(lower) != length(upper))
@@ -30,6 +31,7 @@
 
 #' This function returns the transformed variable, x=f(y).
 #'
+#' @export
 .transform <- function(y, a, b, cases){
   x <- y
   ind <- cases==1
@@ -45,7 +47,7 @@
 }
 
 #' The inverse of the transformation, y=f-1(x).
-#'
+#' @export
 .transform.inv <- function(x, a, b, cases){
   if(any(x<a) | any(x>b)) stop("x outside limits provided -- not meaningful")
   y <- sapply(1:length(x), function(i) {
@@ -58,7 +60,7 @@
 }
 
 #' The absolute value of the derivative of transformation.
-#'
+#' @export
 .transform.grad <- function(y, a, b, cases){
   x <- rep(1, length(y))
   ind <- cases %in% 1:2
@@ -74,7 +76,7 @@
 
 #' The derivative of the log of the derivative of the transformation. I.e.,
 #' d/dy[log(.transform.grad(y,a,b))].
-#'
+#' @export
 .transform.grad2 <- function(y, a, b, cases){
   x <- rep(0, len=length(y))
   ind <- cases %in% 1:2
