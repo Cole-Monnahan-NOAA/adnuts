@@ -627,6 +627,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
     alpha <- xx$alpha
     nalpha <- xx$nalpha
     s <- xx$s
+    if(!is.finite(s)) s <- 0
     nprime <- xx$n
     ## If it didn't fail, update the above quantities
     if(s==1){
