@@ -149,6 +149,7 @@ run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
   return(invisible(result))
 }
 
+#' @export
 as.shinystan.admb <- function(admb.fit){
   sso <- with(admb.fit,
     as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
@@ -175,6 +176,8 @@ as.shinystan.admb <- function(admb.fit){
 
     return(sso)
 }
+
+#' @export
 launch_shinystan_admb <- function(admb.fit){
   launch_shinystan(as.shinystan.admb(admb.fit))
 }
