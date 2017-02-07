@@ -54,7 +54,6 @@ run_admb_nuts <-
       system(paste("admb", model.name))
       system(paste(model.name))
     }
-    mle <- R2admb::read_admb(model.name, verbose=TRUE)
     ## If user provided covar matrix, write it to file and save to
     ## results
     if(!is.null(covar)){
@@ -63,9 +62,6 @@ run_admb_nuts <-
         stop("Invalid covar matrix, not positive definite")
       write.admb.cov(covar)
       mle$covar <- covar
-    } else {
-      ## otherwise use the estimated one
-      mle$covar <-  NULL
     }
     ## Write the starting values to file. Always using a
     ## init file b/c need to use -nohess -noest so
@@ -74,13 +70,22 @@ run_admb_nuts <-
     ## mcmc chain from the initial values instead of the
     ## MLEs. So let the user specify the init values, or
     ## specify the MLEs manually
-    if(is.null(init))
-      init <- mle$coefficients[1:mle$npar]
-    write.table(file="init.pin", x=init, row.names=F, col.names=F)
+    if(init=='mle'){
+      est <- TRUE
+    } else {
+      est <- FALSE
+      if(is.null(init)){
+        mle <- R2admb::read_admb(model.name, verbose=TRUE)
+        init <- mle$coefficients[1:mle$npar]
+        }
+      write.table(file="init.pin", x=init, row.names=F, col.names=F)
+    }
     ## Separate the options by algorithm, first doing the shared
     ## arguments
-    cmd <- paste(model.name,"-noest -nohess -nuts -mcmc ",iter)
-    cmd <- paste(cmd, "-mcpin init.pin")
+    cmd <- model.name
+    if(!est)
+      cmd <- paste(cmd, " -noest -mcpin init.pin")
+    cmd <- paste(cmd," -nohess -nuts -mcmc ",iter)
     cmd <- paste(cmd, "-chain", chain)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
