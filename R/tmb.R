@@ -43,6 +43,7 @@
 #'   useful for diagnosing behavior and efficiency.
 #' @seealso \code{\link{run_mcmc.hmc}}, \code{\link{run_mcmc.nuts}},
 #'   \code{\link{run_mcmc.rwm}}
+#' @export
 run_mcmc <- function(obj, iter, algorithm="NUTS", chains=1, init=NULL,
                      covar=NULL, lower=NULL, upper=NULL, thin=1, ...){
   ## Argument checking
@@ -771,6 +772,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
 #' @seealso launch_shinystan_tmb
 #' @return An S4 object of class shinystan. Depending on the algorithm
 #'   used, this list will have slight differences.
+#' @export
 as.shinystan.tmb <- function(tmb.fit){
   if(tmb.fit$algorithm=="NUTS"){
     sso <- with(tmb.fit, as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
@@ -789,6 +791,7 @@ as.shinystan.tmb <- function(tmb.fit){
 #'
 #' @details This function simply calls
 #'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+#' @export
 launch_shinystan_tmb <- function(tmb.fit){
   launch_shinystan(as.shinystan.tmb(tmb.fit))
 }
@@ -802,6 +805,7 @@ launch_shinystan_tmb <- function(tmb.fit){
 #' @return An invisible data.frame containing samples (rows) of each
 #'   parameter (columns). If multiple chains exist they will be rbinded
 #'   together.
+#' @export
 extract_samples <- function(fit.tmb, inc_warmup=FALSE){
   x <- fit.tmb$samples
   if(!is.array(x)) stop("fit.tmb$samples is not an array -- valid TMB output?")
