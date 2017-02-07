@@ -41,7 +41,6 @@
 #'   files for the samplers for further arguments.
 #' @return A list containing the samples and properties of the sampler
 #'   useful for diagnosing behavior and efficiency.
-#' @example inst/examples/mcmc_examples.R
 #' @seealso \code{\link{run_mcmc.hmc}}, \code{\link{run_mcmc.nuts}},
 #'   \code{\link{run_mcmc.rwm}}
 run_mcmc <- function(obj, iter, algorithm="NUTS", chains=1, init=NULL,

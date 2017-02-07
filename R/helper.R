@@ -1,6 +1,5 @@
 #' Read in the ADMB covariance file.
 #'
-#' @template covariance_template
 #' @export
 get.admb.cov <- function(model.path=getwd()){
     wd.old <- getwd(); on.exit(setwd(wd.old))
