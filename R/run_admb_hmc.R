@@ -114,6 +114,7 @@ run_admb_nuts <-
                 model=model.name, mle=mle, par.names=par.names))
   }
 
+#' @export
 run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
                      seeds=NULL, covar=NULL, thin=1, ...){
   ## Argument checking
