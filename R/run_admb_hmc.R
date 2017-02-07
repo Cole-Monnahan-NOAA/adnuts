@@ -71,15 +71,13 @@ run_admb_nuts <-
     ## mcmc chain from the initial values instead of the
     ## MLEs. So let the user specify the init values, or
     ## specify the MLEs manually
-    if(!is.null(init) & init=='mle'){
+    est <- FALSE
+    if(is.null(init)){
+      init <- mle$coefficients[1:mle$npar]
+    } else if(init[1]=='mle') {
       est <- TRUE
-    } else {
-      est <- FALSE
-      if(is.null(init)){
-        init <- mle$coefficients[1:mle$npar]
-        }
-      write.table(file="init.pin", x=init, row.names=F, col.names=F)
     }
+    write.table(file="init.pin", x=init, row.names=F, col.names=F)
     ## Separate the options by algorithm, first doing the shared
     ## arguments
     cmd <- model.name
