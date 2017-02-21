@@ -1,4 +1,4 @@
-## Draw samples with the RWM, HMC and NUTS algorithms and compare.
+## A very quick demonstration of the samplers. More to come.
 
 ## Run the simple example, so that obj and opt are loaded into workspace
 library(TMB)
@@ -10,14 +10,17 @@ obj <- MakeADFun(data=list(x=x, B=B, A=A),
                  random=NULL, DLL="simple", silent=TRUE)
 str(obj)
 
-## Run RWM and two gradient based algorithms, using adative step size (eps)
-## for each. Start from the MLE.
+## Note that this model does not use any box constraints. These can be
+## passed to run_mcmc just like with nlminb.
+
+## Random walk metropolis, tuned to have about 60% acceptance rate
 rwm <- run_mcmc(obj=obj, iter=20000, thin=10, algorithm='RWM', alpha=.05, chains=3)
 rwm.samples <- extract_samples(rwm)
 rwm.diagnostics <- rstan::monitor(sims=rwm$samples)
 ## Calculate estimated samples per time (efficiency)
 min(rwm.diagnostics[,'n_eff'])/rwm$time.total
 
+## No-U-Turn sampler with unit diagonal mass matrix.
 nuts <- run_mcmc(obj=obj, iter=2000, algorithm='NUTS', chains=3)
 nuts.samples <- extract_samples(nuts)
 nuts.diagnostics <- rstan::monitor(sims=nuts$samples)
