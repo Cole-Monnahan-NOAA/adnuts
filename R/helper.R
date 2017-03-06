@@ -1,3 +1,36 @@
+#' @export
+as.shinystan.admb <- function(admb.fit){
+  sso <- with(admb.fit,
+    as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
+                 sampler_params=sampler_params, algorithm='NUTS',
+                 model_name=model))
+  ## pars2 <- array(0, dim=c(nrow(pars), 1, ncol(pars)))
+  ## pars2[,1,] <- as.matrix(pars)
+  ## dimnames(pars2) <-
+  ##   list(iter=1:nrow(pars), chains="chain:1",
+  ##        parameters=dimnames(pars)[[2]])
+  ## ss <- monitor(sims=pars2)
+  ## y <- vector("list", length=length(dimnames(pars2)[[3]]))
+  ## names(y) <- dimnames(pars2)[[3]]
+  ## z <- lapply(y, function(x) x=numeric(0))
+  ## sso <-
+  ##   shinystan:::shinystan(
+  ##   model_name=model.name, param_names=names(pars), param_dims=z,
+  ##   posterior_sample=pars2, sampler_params=list(adapt),
+  ##   summary=ss, n_chain=1, n_iter=nrow(pars),
+  ##   n_warmup=nrow(pars)/2, model_code='NA',
+  ##   misc=list(max_td=12, stan_method='sampling',
+  ##             stan_algorithm='NUTS',
+  ##             sso_version=utils::packageVersion('shinystan')))
+
+    return(sso)
+}
+
+#' @export
+launch_shinystan_admb <- function(admb.fit){
+  launch_shinystan(as.shinystan.admb(admb.fit))
+}
+
 #' Read in the ADMB covariance file.
 #'
 #' @export
