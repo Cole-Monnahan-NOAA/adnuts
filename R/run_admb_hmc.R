@@ -24,7 +24,7 @@ run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
   ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
   samples <- samples[thin.ind,,, drop=FALSE]
   sampler_params <- lapply(mcmc.out,
-       function(x) x$sampler_params[thin.ind,])
+                           function(x) x$sampler_params[thin.ind,])
   time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
   time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
   result <- list(samples=samples, sampler_params=sampler_params,
@@ -130,14 +130,14 @@ run_admb_nuts <-
       cmd <- paste(cmd, "-hyeps", eps)
     }
     ## Run it and get results
-    system(cmd, ignore.stdout=!verbose)
+    time <- system.time(system(cmd, ignore.stdout=!verbose))
     if(mceval) system(paste(model.name, "-mceval -noest -nohess"),
                       ignore.stdout=!verbose)
     sampler_params<- as.matrix(read.csv("adaptation.csv"))
     pars <- read_psv(model.name)
     pars[,'log-posterior'] <- sampler_params[,'energy__']
     pars <- as.matrix(pars)
-    time.total <- 5; time.warmup <- 3
+    time.total <- time; time.warmup <- NA
     ## Thin
     pars <- pars[seq(1, nrow(pars), by=thin),]
     sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
