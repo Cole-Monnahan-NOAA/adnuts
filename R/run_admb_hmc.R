@@ -130,7 +130,7 @@ run_admb_nuts <-
       cmd <- paste(cmd, "-hyeps", eps)
     }
     ## Run it and get results
-    time <- system.time(system(cmd, ignore.stdout=!verbose))
+    time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     if(mceval) system(paste(model.name, "-mceval -noest -nohess"),
                       ignore.stdout=!verbose)
     sampler_params<- as.matrix(read.csv("adaptation.csv"))
