@@ -64,7 +64,7 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd()){
   num.pars <- results$num.pars
   if(NROW(cov.unbounded) != num.pars)
     stop(paste0("Invalid size of covariance matrix, should be: ", num.pars,
-                "instead of ",NROW(cov.user)))
+                "instead of ",NROW(cov.unbounded), ". Do you need to rerun the model?"))
   ## Write it to file using original scales, although these are ignored.
   setwd(wd.old)
   file.new <- file(paste0(model.path, "/admodel.cov"),"wb")
