@@ -45,10 +45,9 @@
 #'   useful for diagnosing behavior and efficiency.
 #' @seealso \code{\link{extract_samples}}, \code{\link{launch_shinystan_tmb}}
 #' @export
-sample_tmb <-
-  function(obj, iter, init, chains=1, seeds=NULL, lower=NULL, upper=NULL,
-           control=list( adapt_delta=0.8, metric='unit', algorithm="NUTS",
-                        adapt_engaged=TRUE, thin=1)  ...){
+sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
+                       upper=NULL, control=NULL,   ...){
+    control <- update_control(control)
     ## Argument checking
     if(is.null(init)){
       if(chains>1) warning('Using same inits for each chain -- strongly recommended to use dispersed inits')
@@ -60,8 +59,8 @@ sample_tmb <-
     } else if(any(unlist(lapply(init, function(x) length(x) != length(obj$par))))){
       stop("Initial parameter vector is wrong length")
     }
-    algorithm <- match.arg(algorithm, choices=c("NUTS", "RWM", "HMC"))
-    thin <- floor(thin)
+    algorithm <- match.arg(control$algorithm, choices=c("NUTS", "RWM", "HMC"))
+    thin <- floor(control$thin)
     stopifnot(thin >=1)
     stopifnot(chains >= 1)
     if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
@@ -108,7 +107,7 @@ sample_tmb <-
     } else if(algorithm=="NUTS"){
       mcmc.out <- lapply(1:chains, function(i)
         run_mcmc.nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
-                      covar=covar, chain=i, thin=thin, ...))
+                       chain=i, control=control, ...))
     } else if(algorithm=="RWM")
       mcmc.out <- lapply(1:chains, function(i)
         run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]], covar=covar,

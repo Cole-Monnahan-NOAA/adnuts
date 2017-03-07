@@ -1,3 +1,4 @@
+
 #' [BETA VERSION] Draw MCMC samples from a model posterior using a
 #' Random Walk Metropolis (RWM) sampler.
 #'
@@ -288,9 +289,18 @@ run_mcmc.hmc <- function(iter, fn, gr, init, L, eps=NULL, covar=NULL,
 #'   ('sampler_params').
 #' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.hmc}},
 #'   \code{\link{run_mcmc.rwm}}
-run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
-                          eps=NULL, warmup=floor(iter/2),
-                          adapt_delta=0.8, covar=NULL, chain=1, thin=1){
+run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
+                          chain, control=NULL){
+  ## Now contains all required NUTS arguments
+  control <- update_control(control)
+  print(eps)
+  eps <- control$stepsize
+  print(eps)
+  metric <- control$metric
+  if(metric=='unit') covar <- NULL
+  if(metric=='diag') covar <- NULL
+  max_td <- control$max_treedepth
+  adapt_delta <- control$adapt_delta
   ## If using covariance matrix and Cholesky decomposition, redefine
   ## these functions to include this transformation. The algorithm will
   ## work in the transformed space
@@ -366,7 +376,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
       if(!is.finite(s)) s <- 0
       j <- j+1
       ## Stop doubling if too many or it's diverged enough
-      if(j>max_treedepth) {
+      if(j>max_td) {
        ## warning("j larger than max_treedepth, skipping to next m")
         break
       }
@@ -417,7 +427,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, max_treedepth=10,
   .print.mcmc.timing(time.warmup=time.warmup, time.total=time.total)
   return(list(par=theta.out, sampler_params=sampler_params,
               time.total=time.total, time.warmup=time.warmup,
-              warmup=warmup/thin, max_treedepth=max_treedepth))
+              warmup=warmup/thin, max_treedepth=max_td))
 }
 
 #' Draw a slice sample for given position and momentum variables

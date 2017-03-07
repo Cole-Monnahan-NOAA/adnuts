@@ -1,10 +1,9 @@
 #' @export
 #'
 #'
-sample_admb <-
-  function(dir, model, iter, init, chains=1, seeds=NULL,
-           control=list(adapt_delta=0.8, metric='unit', algorithm="NUTS",
-                        adapt_engaged=TRUE, thin=1), ...){
+sample_admb <- function(dir, model, iter, init, chains=1, seeds=NULL,
+                        control=NULL, ...){
+    control <- update_control(control)
     ## Argument checking
     if(is.null(init)){
       warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
@@ -19,8 +18,8 @@ sample_admb <-
     if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
     mcmc.out <- lapply(1:chains, function(i)
       sample_admb_nuts(dir=dir, model=model,
-                       iter=iter, init=init[[i]], covar=covar,
-                       chain=i,  mcseed=seeds[i], ...))
+                       iter=iter, init=init[[i]], chain=i,
+                        mcseed=seeds[i], control=control, ...))
     par.names=mcmc.out[[1]]$par.names
     samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),
                       dimnames=list(NULL, NULL, c(par.names,'lp__')))
@@ -83,11 +82,20 @@ sample_admb <-
 #'   diagnostics using CODA.
 sample_admb_nuts <-
   function(dir, model, iter=2000, thin=1, warmup=ceiling(iter/2),
-           init=NULL, eps=NULL, covar=NULL,  mcseed=NULL,
-           mcdiag=FALSE, verbose=TRUE, extra.args=NULL, max_treedepth=12,
-           mceval=TRUE, chain=1){
+           init=NULL,  chain=1, mcseed=NULL, control=NULL,
+           verbose=TRUE, extra.args=NULL,
+           mceval=TRUE){
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(dir)
+    ## Now contains all required NUTS arguments
+    control <- update_control(control)
+    eps <- control$stepsize
+    metric <- control$metric
+    if(metric=='unit') covar <- NULL
+    if(metric=='diag') covar <- NULL
+    max_td <- control$max_treedepth
+    adapt_delta <- control$adapt_delta
+
     ## Grab original admb fit and metrics
     if(iter <1)
       stop("Iterations must be >1")
@@ -126,6 +134,7 @@ sample_admb_nuts <-
       cmd <- paste(cmd, " -noest -mcpin init.pin")
     cmd <- paste(cmd," -nohess -nuts -mcmc ",iter)
     cmd <- paste(cmd, "-chain", chain)
+    cmd <- paste(cmd, "-max_treedepth", max_td)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
     if(!is.null(mcseed))
@@ -149,7 +158,7 @@ sample_admb_nuts <-
     par.names <- names(mle$coefficients[1:mle$npar])
     return(list(par=pars, sampler_params=sampler_params,
                 time.total=time.total, time.warmup=time.warmup,
-                warmup=warmup/thin, max_treedepth=max_treedepth,
+                warmup=warmup/thin, max_treedepth=max_td,
                 model=model, mle=mle, par.names=par.names))
   }
 
