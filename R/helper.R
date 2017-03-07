@@ -1,3 +1,97 @@
+#' Print MCMC progress to console.
+#'
+#' @param iteration The iteration of the MCMC chain.
+#' @param iter The total iterations.
+#' @param warmup The number of warmup iterations.
+#' @param chain The chain being run (bookkeeping only).
+#' @return Nothing. Prints to message to console.
+#'
+#' @details This function was modeled after the functionality provided by
+# the R package \link{rstan}.
+.print.mcmc.progress <- function(iteration, iter, warmup, chain){
+  i <- iteration
+  refresh <- max(10, floor(iter/10))
+  if(i==1 | i==iter | i %% refresh ==0){
+    i.width <- formatC(i, width=nchar(iter))
+    out <- paste0('Chain ',chain,', Iteration: ', i.width , "/", iter, " [",
+                  formatC(floor(100*(i/iter)), width=3), "%]",
+                  ifelse(i <= warmup, " (Warmup)", " (Sampling)"))
+    message(out)
+  }
+}
+
+#' Print MCMC timing to console
+#' @param time.warmup Time of warmup in seconds.
+#' @param time.total Time of total in seconds.
+#' @return Nothing. Prints message to console.
+#'
+#' @details This function was modeled after the functionality provided by
+#'   the R package \link{rstan}.
+.print.mcmc.timing <- function(time.warmup, time.total){
+  x <- ' Elapsed Time: '
+  message(paste0(x, sprintf("%.1f", time.warmup), ' seconds (Warmup)'))
+  message(paste0(x, sprintf("%.1f", time.total-time.warmup), ' seconds (Sampling)'))
+  message(paste0(x, sprintf("%.1f", time.total), ' seconds (Total)'))
+}
+
+#' Convert TMB output from \link{\code{run_mcmc}} into a \code{shinystan}
+#' object.
+#'
+#' @details The shinystan packages provides several conversion functions
+#'   for objects of different types, such as stanfit classes (Stan ouput)
+#'   and simple arrays. For the latter, option NUTS information, such as
+#'   \code{sampler_params} can be passed. This function essentially extends
+#'   the functionality of \code{as.shinystan} to work specifically with TMB
+#'   MCMC lists. The user can thus explore their TMB model with
+#'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))} in the same way
+#'   that Stan models are examined.
+#' @param tmb.fit Output list from \link{\code{run_mcmc}} for any of the
+#' three algorithms.
+#' @seealso launch_shinystan_tmb
+#' @return An S4 object of class shinystan. Depending on the algorithm
+#'   used, this list will have slight differences.
+#' @export
+as.shinystan.tmb <- function(tmb.fit){
+  if(tmb.fit$algorithm=="NUTS"){
+    sso <- with(tmb.fit, as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
+             sampler_params=sampler_params, algorithm='NUTS', model_name=model))
+  } else if(tmb.fit$algorithm=="HMC"){
+    sso <- with(tmb.fit, as.shinystan(samples, warmup=warmup,
+             sampler_params=sampler_params, algorithm='HMC', model_name=model))
+  } else {
+    sso <- with(tmb.fit, as.shinystan(samples, warmup=warmup,
+             algorithm='RWM', model_name=model))
+  }
+  return(sso)
+}
+
+#' A high level wrapper to launch shinystan for a TMB MCMC list object.
+#'
+#' @details This function simply calls
+#'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+#' @export
+launch_shinystan_tmb <- function(tmb.fit){
+  launch_shinystan(as.shinystan.tmb(tmb.fit))
+}
+
+#' Extract posterior samples from a TMB MCMC fit list.
+#'
+#' @param fit.tmb A list returned by \code{\link{run_mcmc}}.
+#' @param inc_warmup Whether to extract the warmup samples or not
+#'   (default). Warmup samples should never be used for inference, but may
+#'   be useful for diagnostics.
+#' @return An invisible data.frame containing samples (rows) of each
+#'   parameter (columns). If multiple chains exist they will be rbinded
+#'   together.
+#' @export
+extract_samples <- function(fit.tmb, inc_warmup=FALSE){
+  x <- fit.tmb$samples
+  if(!is.array(x)) stop("fit.tmb$samples is not an array -- valid TMB output?")
+  ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit.tmb$warmup)
+  y <- do.call(rbind, lapply(1:dim(x)[2], function(i) x[ind, i, -dim(x)[3]]))
+  return(invisible(as.data.frame(y)))
+}
+
 #' @export
 as.shinystan.admb <- function(admb.fit){
   sso <- with(admb.fit,

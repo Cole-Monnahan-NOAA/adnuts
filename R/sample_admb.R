@@ -1,5 +1,5 @@
 #' @export
-run_admb_mcmc <- function(model.path, model.name, iter, chains=1, init=NULL,
+sample_admb <- function(model.path, model.name, iter, chains=1, init=NULL,
                      seeds=NULL, covar=NULL, thin=1, ...){
   ## Argument checking
   if(is.null(init)){
