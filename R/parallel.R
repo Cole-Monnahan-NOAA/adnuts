@@ -1,7 +1,7 @@
 
 #' A wrapper for running SS models in parallel
 #' @export
-run_ss_mcmc_parallel <- function(parallel_number,  Nout, mcsave, burn.in, cov.user = NULL,
+sample_admb_parallel <- function(parallel_number,  Nout, mcsave, burn.in, cov.user = NULL,
                                  init.pin = NULL, se.scale = 1, mcscale = TRUE, mcseed = NULL,
                                  mcrb = NULL, mcdiag = FALSE, mcprobe = NULL, verbose = TRUE,
                                  extra.args = NULL, hybrid = FALSE, hyeps = NULL, hynstep = NULL,
