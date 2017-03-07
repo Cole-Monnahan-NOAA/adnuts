@@ -1,3 +1,17 @@
+#' Update the control list.
+#'
+#' @param control A list passed from \code{sample_tmb}.
+#' @return A list with default control elements updated by those supplied
+#'   in \code{control}
+update_control <- function(control){
+  default <- list(adapt_delta=0.8, metric='unit', stepsize=NULL,
+                  algorithm="NUTS", adapt_engaged=TRUE, thin=1,
+                  max_treedepth=10)
+  if(!is.null(control))
+    for(i in names(control))  default[[i]] <- control[[i]]
+  return(default)
+}
+
 #' Print MCMC progress to console.
 #'
 #' @param iteration The iteration of the MCMC chain.
