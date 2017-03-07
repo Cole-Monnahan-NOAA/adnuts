@@ -5,9 +5,8 @@
 \title{[BETA VERSION] Draw MCMC samples from a model posterior using the
 No-U-Turn (NUTS) sampler with dual averaging.}
 \usage{
-run_mcmc.nuts(iter, fn, gr, init, max_treedepth = 10, eps = NULL,
-  warmup = floor(iter/2), adapt_delta = 0.8, covar = NULL, chain = 1,
-  thin = 1)
+run_mcmc.nuts(iter, fn, gr, init, warmup = floor(iter/2), chain,
+  control = NULL)
 }
 \arguments{
 \item{iter}{The number of samples to return.}
@@ -19,19 +18,14 @@ the posterior density (same as \code{fn}).}
 
 \item{init}{A vector of initial parameter values.}
 
-\item{max_treedepth}{Integer representing the maximum times the path
-length should double within an MCMC iteration. Default of 4, so 16
-steps. If a U-turn has not occured before this many steps the
-algorithm will stop and return a sample from the given tree.}
+\item{warmup}{An optional argument for how many iterations to adapt
+\code{eps} in the dual averaging algorithm. A value of \code{NULL}
+results in a default of \code{warmup=iter/2}.}
 
 \item{eps}{The length of the leapfrog steps. If a numeric value is
 passed, it will be used throughout the entire chain. A \code{NULL}
 value will initiate adaptation of \code{eps} using the dual averaging
 algorithm during the first \code{warmup} steps.}
-
-\item{warmup}{An optional argument for how many iterations to adapt
-\code{eps} in the dual averaging algorithm. A value of \code{NULL}
-results in a default of \code{warmup=iter/2}.}
 
 \item{adapt_delta}{The target acceptance rate for the dual averaging
 algorithm. Defaults to 80\%. NUTS does not include an accept/reject
@@ -47,6 +41,11 @@ multivariate standard normal. In this case the algorithm will be more
 efficient, but there will be overhead in the matrix calculations which
 need to be done at each step. The default of NULL specifies to not do
 this transformation.}
+
+\item{max_treedepth}{Integer representing the maximum times the path
+length should double within an MCMC iteration. Default of 4, so 16
+steps. If a U-turn has not occured before this many steps the
+algorithm will stop and return a sample from the given tree.}
 }
 \value{
 A list containing samples ('par') and algorithm details such as

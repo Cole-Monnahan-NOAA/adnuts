@@ -7,9 +7,8 @@ draws, MLE fits and covariance/correlation matrices, and some
 MCMC convergence diagnostics using CODA.}
 \usage{
 sample_admb_nuts(dir, model, iter = 2000, thin = 1,
-  warmup = ceiling(iter/2), init = NULL, eps = NULL, covar = NULL,
-  mcseed = NULL, mcdiag = FALSE, verbose = TRUE, extra.args = NULL,
-  max_treedepth = 12, mceval = TRUE, chain = 1)
+  warmup = ceiling(iter/2), init = NULL, chain = 1, mcseed = NULL,
+  control = NULL, verbose = TRUE, extra.args = NULL, mceval = TRUE)
 }
 \arguments{
 \item{dir}{(Character) A path to the folder containing
@@ -31,20 +30,8 @@ enough to cover dynamic scaling.}
 are written to file and used in the model via the -mcpin
 option.}
 
-\item{eps}{(Numeric) The size of the leapfrog jump in the
-hybrid method, with smaller values leading to smaller but
-more accurate jumps. Must be a positive value.}
-
-\item{covar}{(Numeric matrix) A manually defined covariance
-matrix (in bounded space) to use in the Metropolis-Hastings
-algorithm.}
-
 \item{mcseed}{(Integer) Which seed (integer value) to pass
 ADMB. Used for reproducibility.}
-
-\item{mcdiag}{(Logical) Whether to use the \code{mcdiag}
-feature. This uses an identity matrix for the covariance
-matrix.}
 
 \item{verbose}{(Logical) Whether to print ADMB warnings and
 other information. Useful for testing and troubleshooting.}
@@ -55,6 +42,18 @@ model executable.}
 
 \item{mode.name}{(Character) The name of the model
 executable. A character string, without '.exe'.}
+
+\item{covar}{(Numeric matrix) A manually defined covariance
+matrix (in bounded space) to use in the Metropolis-Hastings
+algorithm.}
+
+\item{mcdiag}{(Logical) Whether to use the \code{mcdiag}
+feature. This uses an identity matrix for the covariance
+matrix.}
+
+\item{eps}{(Numeric) The size of the leapfrog jump in the
+hybrid method, with smaller values leading to smaller but
+more accurate jumps. Must be a positive value.}
 }
 \value{
 Returns a list containing (1) the posterior draws, (2)
