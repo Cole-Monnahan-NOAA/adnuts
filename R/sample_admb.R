@@ -1,46 +1,50 @@
 #' @export
-sample_admb <- function(model.path, model.name, iter, chains=1, init=NULL,
-                     seeds=NULL, covar=NULL, thin=1, ...){
-  ## Argument checking
-  if(is.null(init)){
-    warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
-  } else if(length(init) != chains){
-    stop("Length of init does not equal number of chains.")
+#'
+#'
+sample_admb <-
+  function(dir, model, iter, init, chains=1, seeds=NULL,
+           control=list(adapt_delta=0.8, metric='unit', algorithm="NUTS",
+                        adapt_engaged=TRUE, thin=1), ...){
+    ## Argument checking
+    if(is.null(init)){
+      warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
+    } else if(length(init) != chains){
+      stop("Length of init does not equal number of chains.")
+    }
+    if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
+    thin <- floor(control$thin)
+    stopifnot(thin >=1)
+    thin.ind <- seq(1, iter, by=thin)
+    stopifnot(chains >= 1)
+    if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
+    mcmc.out <- lapply(1:chains, function(i)
+      sample_admb_nuts(dir=dir, model=model,
+                       iter=iter, init=init[[i]], covar=covar,
+                       chain=i,  mcseed=seeds[i], ...))
+    par.names=mcmc.out[[1]]$par.names
+    samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),
+                      dimnames=list(NULL, NULL, c(par.names,'lp__')))
+    for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$par}
+    ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
+    samples <- samples[thin.ind,,, drop=FALSE]
+    sampler_params <- lapply(mcmc.out,
+                             function(x) x$sampler_params[thin.ind,])
+    time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
+    time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
+    result <- list(samples=samples, sampler_params=sampler_params,
+                   time.warmup=time.warmup, time.total=time.total,
+                   algorithm="NUTS", warmup=mcmc.out[[1]]$warmup/thin,
+                   model=mcmc.out[[1]]$model,
+                   max_treedepth=mcmc.out[[1]]$max_treedepth)
+    return(invisible(result))
   }
-  if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
-  thin <- floor(thin)
-  stopifnot(thin >=1)
-  thin.ind <- seq(1, iter, by=thin)
-  stopifnot(chains >= 1)
-  if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
-  mcmc.out <- lapply(1:chains, function(i)
-    run_admb_nuts(model.path=model.path, model.name=model.name,
-                  iter=iter, init=init[[i]], covar=covar,
-                  chain=i,  mcseed=seeds[i], ...))
-  par.names=mcmc.out[[1]]$par.names
-  samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),
-                    dimnames=list(NULL, NULL, c(par.names,'lp__')))
-  for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$par}
-  ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
-  samples <- samples[thin.ind,,, drop=FALSE]
-  sampler_params <- lapply(mcmc.out,
-                           function(x) x$sampler_params[thin.ind,])
-  time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
-  time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
-  result <- list(samples=samples, sampler_params=sampler_params,
-                 time.warmup=time.warmup, time.total=time.total,
-                 algorithm="NUTS", warmup=mcmc.out[[1]]$warmup/thin,
-                 model=mcmc.out[[1]]$model,
-                 max_treedepth=mcmc.out[[1]]$max_treedepth)
-  return(invisible(result))
-}
 
 
 #' Run an MCMC using an ADMB model, return (1) the posterior
 #' draws, MLE fits and covariance/correlation matrices, and some
 #' MCMC convergence diagnostics using CODA.
 #'
-#' @param model.path (Character) A path to the folder containing
+#' @param dir (Character) A path to the folder containing
 #'   the model. NULL indicates the current folder.
 #' @param mode.name (Character) The name of the model
 #'   executable. A character string, without '.exe'.
@@ -77,23 +81,23 @@ sample_admb <- function(model.path, model.name, iter, chains=1, init=NULL,
 #'   and object of class 'admb', read in using the results read
 #'   in using \code{read_admb}, and (3) some MCMC convergence
 #'   diagnostics using CODA.
-run_admb_nuts <-
-  function(model.path, model.name, iter=2000, thin=1, warmup=ceiling(iter/2),
+sample_admb_nuts <-
+  function(dir, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL, eps=NULL, covar=NULL,  mcseed=NULL,
            mcdiag=FALSE, verbose=TRUE, extra.args=NULL, max_treedepth=12,
            mceval=TRUE, chain=1){
     wd.old <- getwd(); on.exit(setwd(wd.old))
-    setwd(model.path)
+    setwd(dir)
     ## Grab original admb fit and metrics
     if(iter <1)
       stop("Iterations must be >1")
-    if(!file.exists(paste0(model.name,'.par'))) {
-      system(paste("admb", model.name))
-      system(paste(model.name))
+    if(!file.exists(paste0(model,'.par'))) {
+      system(paste("admb", model))
+      system(paste(model))
     }
     ## If user provided covar matrix, write it to file and save to
     ## results
-    mle <- R2admb::read_admb(model.name, verbose=TRUE)
+    mle <- R2admb::read_admb(model, verbose=TRUE)
     if(!is.null(covar)){
       cor.user <- covar/ sqrt(diag(covar) %o% diag(covar))
       if(!matrixcalc:::is.positive.definite(x=cor.user))
@@ -117,7 +121,7 @@ run_admb_nuts <-
     write.table(file="init.pin", x=init, row.names=F, col.names=F)
     ## Separate the options by algorithm, first doing the shared
     ## arguments
-    cmd <- model.name
+    cmd <- model
     if(!est)
       cmd <- paste(cmd, " -noest -mcpin init.pin")
     cmd <- paste(cmd," -nohess -nuts -mcmc ",iter)
@@ -131,10 +135,10 @@ run_admb_nuts <-
     }
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
-    if(mceval) system(paste(model.name, "-mceval -noest -nohess"),
+    if(mceval) system(paste(model, "-mceval -noest -nohess"),
                       ignore.stdout=!verbose)
     sampler_params<- as.matrix(read.csv("adaptation.csv"))
-    pars <- read_psv(model.name)
+    pars <- read_psv(model)
     pars[,'log-posterior'] <- sampler_params[,'energy__']
     pars <- as.matrix(pars)
     time.total <- time; time.warmup <- NA
@@ -146,7 +150,7 @@ run_admb_nuts <-
     return(list(par=pars, sampler_params=sampler_params,
                 time.total=time.total, time.warmup=time.warmup,
                 warmup=warmup/thin, max_treedepth=max_treedepth,
-                model=model.name, mle=mle, par.names=par.names))
+                model=model, mle=mle, par.names=par.names))
   }
 
 
