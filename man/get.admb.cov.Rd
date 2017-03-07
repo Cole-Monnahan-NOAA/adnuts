@@ -9,4 +9,3 @@ get.admb.cov(model.path = getwd())
 \description{
 Read in the ADMB covariance file.
 }
-
