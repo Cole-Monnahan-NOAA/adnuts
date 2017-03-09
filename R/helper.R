@@ -5,7 +5,7 @@
 #'   in \code{control}
 update_control <- function(control){
   default <- list(adapt_delta=0.8, metric='unit', stepsize=NULL,
-                  algorithm="NUTS", adapt_engaged=TRUE, thin=1,
+                  algorithm="NUTS", adapt_engaged=TRUE,
                   max_treedepth=10)
   if(!is.null(control))
     for(i in names(control))  default[[i]] <- control[[i]]
@@ -137,6 +137,22 @@ as.shinystan.admb <- function(admb.fit){
 #' @export
 launch_shinystan_admb <- function(admb.fit){
   launch_shinystan(as.shinystan.admb(admb.fit))
+}
+
+#' Write matrix of samples to a binary .psv file.
+#'
+#' @details Useful to combine multiple MCMC runs together into a single
+#' .psv file which can then be executed with '-mceval'.
+#' @param fn Model name
+#' @param samples A matrix or data.frame of samples, each column is a
+#'   parameter, each row a sample.
+write_psv <- function(fn, samples, model.path=getwd()){
+  samples <- as.matrix(samples)
+  psv <- file.path(getwd(), paste0(fn, '.psv'))
+  con <- file(psv, 'wb')
+  writeBin(object=ncol(samples), con=con)
+  writeBin(object=as.vector(t(samples)), con=con)
+  close(con)
 }
 
 #' Read in the ADMB covariance file.
