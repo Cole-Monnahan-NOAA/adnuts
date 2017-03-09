@@ -50,3 +50,4 @@ so some trial and error may be required for efficient sampling.
 \seealso{
 \code{\link{run_mcmc}}, \code{\link{run_mcmc.nuts}}, \code{\link{run_mcmc.hmc}}
 }
+

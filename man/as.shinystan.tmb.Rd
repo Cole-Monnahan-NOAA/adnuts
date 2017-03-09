@@ -32,3 +32,4 @@ The shinystan packages provides several conversion functions
 \seealso{
 launch_shinystan_tmb
 }
+

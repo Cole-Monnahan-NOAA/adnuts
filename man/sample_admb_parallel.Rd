@@ -4,12 +4,9 @@
 \alias{sample_admb_parallel}
 \title{A wrapper for running SS models in parallel}
 \usage{
-sample_admb_parallel(parallel_number, Nout, mcsave, burn.in, cov.user = NULL,
-  init.pin = NULL, se.scale = 1, mcscale = TRUE, mcseed = NULL,
-  mcrb = NULL, mcdiag = FALSE, mcprobe = NULL, verbose = TRUE,
-  extra.args = NULL, hybrid = FALSE, hyeps = NULL, hynstep = NULL,
-  mceval = FALSE, estimate = FALSE)
+sample_admb_parallel(parallel_number, dir, ...)
 }
 \description{
 A wrapper for running SS models in parallel
 }
+

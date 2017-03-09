@@ -6,9 +6,9 @@
 draws, MLE fits and covariance/correlation matrices, and some
 MCMC convergence diagnostics using CODA.}
 \usage{
-sample_admb_nuts(dir, model, iter = 2000, thin = 1,
-  warmup = ceiling(iter/2), init = NULL, chain = 1, mcseed = NULL,
-  control = NULL, verbose = TRUE, extra.args = NULL, mceval = TRUE)
+sample_admb_nuts(dir, model, iter, thin, warmup = ceiling(iter/2),
+  init = NULL, chain = 1, seed = NULL, control = NULL, verbose = TRUE,
+  extra.args = NULL)
 }
 \arguments{
 \item{dir}{(Character) A path to the folder containing
@@ -30,7 +30,7 @@ enough to cover dynamic scaling.}
 are written to file and used in the model via the -mcpin
 option.}
 
-\item{mcseed}{(Integer) Which seed (integer value) to pass
+\item{seed}{(Integer) Which seed (integer value) to pass
 ADMB. Used for reproducibility.}
 
 \item{verbose}{(Logical) Whether to print ADMB warnings and
@@ -66,3 +66,4 @@ Run an MCMC using an ADMB model, return (1) the posterior
 draws, MLE fits and covariance/correlation matrices, and some
 MCMC convergence diagnostics using CODA.
 }
+

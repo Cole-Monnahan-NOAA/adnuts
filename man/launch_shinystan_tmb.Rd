@@ -13,3 +13,4 @@ A high level wrapper to launch shinystan for a TMB MCMC list object.
 This function simply calls
   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
 }
+

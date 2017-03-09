@@ -72,3 +72,4 @@ This function implements algorithm 5 of Hoffman and Gelman
 \code{\link{run_mcmc}}, \code{\link{run_mcmc.nuts}},
   \code{\link{run_mcmc.rwm}}
 }
+

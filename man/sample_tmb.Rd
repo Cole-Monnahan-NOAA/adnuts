@@ -37,9 +37,10 @@ This function is a top-level wrapper designed specifically to
   assessing the convergence and validity of the resulting samples (e.g.,
   through the \code{coda} package) before making inference.
 }
-\seealso{
-\code{\link{extract_samples}}, \code{\link{launch_shinystan_tmb}}
-}
 \author{
 Cole Monnahan
 }
+\seealso{
+\code{\link{extract_samples}}, \code{\link{launch_shinystan_tmb}}
+}
+
