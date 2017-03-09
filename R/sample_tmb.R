@@ -60,7 +60,7 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
       stop("Initial parameter vector is wrong length")
     }
     algorithm <- match.arg(control$algorithm, choices=c("NUTS", "RWM", "HMC"))
-    thin <- floor(control$thin)
+    thin <- control$thin
     stopifnot(thin >=1)
     stopifnot(chains >= 1)
     if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")

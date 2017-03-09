@@ -301,6 +301,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   if(metric=='diag') covar <- NULL
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
+  thin <- control$thin
   ## If using covariance matrix and Cholesky decomposition, redefine
   ## these functions to include this transformation. The algorithm will
   ## work in the transformed space
