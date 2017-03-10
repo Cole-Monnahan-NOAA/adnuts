@@ -4,10 +4,11 @@
 #'
 #' @param fits A list of fits, each having a single chain
 #' @return A merged fit across chains.
-combine_parallel_fits <- function(fits){
+combine_fits <- function(fits){
   z <- list()
   test <- lapply(fits, function(x) x$samples)
-  samples <- array(NA, dim=c(nrow(test[[1]]), length(test), dim(test[[1]])[3]))
+  browser()
+  samples <- array(NA, dim=c(nrow(test[[1]]), length(test), ncol(test[[1]])))
   dimnames(samples) <- dimnames(fits[[1]]$samples)
   for(i in 1:length(test)) samples[,i,] <- test[[i]]
   z$samples <- samples
@@ -24,16 +25,17 @@ combine_parallel_fits <- function(fits){
 
 #' A wrapper for running SS models in parallel
 #' @export
-sample_admb_parallel <- function(parallel_number, dir, ...){
-  library(R2admb)
+sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
+  library(adnuts)
   olddir <- getwd()
   on.exit(setwd(olddir))
   newdir <- paste0(getwd(),'/model',parallel_number)
   if(dir.exists(newdir)) unlink(newdir, TRUE)
   dir.create(newdir)
   trash <- file.copy(from=list.files(dir, full.names=TRUE), to=newdir)
-  ## delay in case indexing ties up files briefly
-  Sys.sleep(5)
-  fit <- sample_admb(chain=1, dir=newdir, ...)
-  fit
+  if(algorithm=="NUTS")
+    fit <- adnuts:::sample_admb_nuts(dir=newdir, ...)
+  if(algorithm=="RWM")
+    fit <- adnuts:::sample_admb_rwm(dir=newdir, ...)
+  return(fit)
 }

@@ -1,10 +1,12 @@
 #' @export
 #'
 #'
-sample_admb <- function(dir, model, iter, init, chains=1, seeds=NULL,
-                        control=NULL, ...){
+sample_admb <- function(model, iter, init, chains=1, seeds=NULL,
+                        thin=1, dir=getwd(), mceval=FALSE,
+                        parallel=FALSE, cores=NULL, control=NULL, ...){
   control <- update_control(control)
   algorithm <- control$algorithm
+  if(!(algorithm %in% c('NUTS', 'RWM'))) stop("Invalid algorithm specified")
   ## Argument checking
   if(is.null(init)){
     warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
@@ -12,27 +14,51 @@ sample_admb <- function(dir, model, iter, init, chains=1, seeds=NULL,
     stop("Length of init does not equal number of chains.")
   }
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
-  thin <- floor(control$thin)
   stopifnot(thin >=1)
   thin.ind <- seq(1, iter, by=thin)
   stopifnot(chains >= 1)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
+
+  ## Run in serial
+  if(!parallel){
   if(algorithm=="NUTS"){
     mcmc.out <- lapply(1:chains, function(i)
       sample_admb_nuts(dir=dir, model=model,
                        iter=iter, init=init[[i]], chain=i,
-                       mcseed=seeds[i], control=control, ...))
-  } else if(algorithm=="RWM"){
+                       seed=seeds[i], thin=thin, control=control, ...))
+  } else {
     mcmc.out <- lapply(1:chains, function(i)
       sample_admb_rwm(dir=dir, model=model,
                        iter=iter, init=init[[i]], chain=i,
-                       mcseed=seeds[i], control=control, ...))
-  } else { stop("Invalid algorithm specified")}
+                       seed=seeds[i], thin=thin, control=control, ...))
+  }
+  ## Parallel execution
+  } else {
+    mcmc.out <- sfLapply(1:chains, function(i)
+      sample_admb_parallel(parallel_number=i, dir=dir, model=model,
+                           algorithm=algorithm,
+                           iter=iter, init=init[[i]],
+                           seed=seeds[i], thin=thin, control=control))
+  }
 
-  par.names=mcmc.out[[1]]$par.names
-  samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$samples), chains, 1+length(par.names)),
+  par.names <- mcmc.out[[1]]$par.names
+  samples <-  array(NA, dim=c(iter, chains, 1+length(par.names)),
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
   for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$samples}
+
+  if(mceval){
+    ## Merge all chains together and run mceval
+    message("... Writing samples from all chains to psv file and running -mceval")
+    ind <- -(1:mcmc.out[[1]]$warmup)
+    samples2 <- do.call(rbind, lapply(1:chains, function(i)
+      samples[ind, i, -dim(samples)[3]]))
+    write_psv(fn=model, samples=samples2, model.path=dir)
+    oldwd <- getwd()
+    setwd(dir)
+    system(paste(model, "-mceval -noest -nohess"), ignore.stdout=TRUE)
+    setwd(oldwd)
+  }
+
   ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
   samples <- samples[thin.ind,,, drop=FALSE]
   sampler_params <- lapply(mcmc.out,
@@ -71,7 +97,7 @@ sample_admb <- function(dir, model, iter, init, chains=1, seeds=NULL,
 #' @param init (Numeric vector) A vector of initial values, which
 #'   are written to file and used in the model via the -mcpin
 #'   option.
-#' @param mcseed (Integer) Which seed (integer value) to pass
+#' @param seed (Integer) Which seed (integer value) to pass
 #'   ADMB. Used for reproducibility.
 #' @param mcdiag (Logical) Whether to use the \code{mcdiag}
 #'   feature. This uses an identity matrix for the covariance
@@ -90,10 +116,9 @@ sample_admb <- function(dir, model, iter, init, chains=1, seeds=NULL,
 #'   in using \code{read_admb}, and (3) some MCMC convergence
 #'   diagnostics using CODA.
 sample_admb_nuts <-
-  function(dir, model, iter=2000, thin=1, warmup=ceiling(iter/2),
-           init=NULL,  chain=1, mcseed=NULL, control=NULL,
-           verbose=TRUE, extra.args=NULL,
-           mceval=TRUE){
+  function(dir, model, iter, thin, warmup=ceiling(iter/2),
+           init=NULL,  chain=1, seed=NULL, control=NULL,
+           verbose=TRUE, extra.args=NULL){
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(dir)
     ## Now contains all required NUTS arguments
@@ -146,17 +171,15 @@ sample_admb_nuts <-
     cmd <- paste(cmd, "-max_treedepth", max_td)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
-    if(!is.null(mcseed))
-      cmd <- paste(cmd, "-mcseed", mcseed)
+    if(!is.null(seed))
+      cmd <- paste(cmd, "-mcseed", seed)
     if(!is.null(eps)){
       cmd <- paste(cmd, "-hyeps", eps)
     }
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
-    if(mceval) system(paste(model, "-mceval -noest -nohess"),
-                      ignore.stdout=!verbose)
     sampler_params<- as.matrix(read.csv("adaptation.csv"))
-    pars <- read_psv(model)
+    pars <- R2admb::read_psv(model)
     pars[,'log-posterior'] <- sampler_params[,'energy__']
     pars <- as.matrix(pars)
     time.total <- time; time.warmup <- NA
@@ -176,7 +199,7 @@ sample_admb_nuts <-
 
 sample_admb_rwm <-
   function(dir, model, iter=2000, thin=1, warmup=ceiling(iter/2),
-           init=NULL,  chain=1, mcseed=NULL, control=NULL,
+           init=NULL,  chain=1, seed=NULL, control=NULL,
            verbose=TRUE, extra.args=NULL,
            mceval=TRUE){
     wd.old <- getwd(); on.exit(setwd(wd.old))
@@ -223,13 +246,13 @@ sample_admb_rwm <-
     cmd <- paste(cmd, "-nosdmcmc -mcsave", thin)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
-    if(!is.null(mcseed))
-      cmd <- paste(cmd, "-mcseed", mcseed)
+    if(!is.null(seed))
+      cmd <- paste(cmd, "-mcseed", seed)
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     if(mceval) system(paste(model, "-mceval -noest -nohess"),
                       ignore.stdout=!verbose)
-    pars <- read_psv(model)
+    pars <- R2admb::read_psv(model)
     pars[,'log-posterior'] <- pars[,1]
     warning("log posterior column in RWM is still broken!!")
     pars <- as.matrix(pars)
