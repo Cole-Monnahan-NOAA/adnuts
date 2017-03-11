@@ -1,11 +1,12 @@
 #' @export
 #'
 #'
-sample_admb <- function(model, iter, init, chains=1, seeds=NULL,
+sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                         thin=1, dir=getwd(), mceval=FALSE,
                         parallel=FALSE, cores=NULL, control=NULL, ...){
   control <- update_control(control)
   algorithm <- control$algorithm
+  if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM'))) stop("Invalid algorithm specified")
   ## Argument checking
   if(is.null(init)){
@@ -36,7 +37,7 @@ sample_admb <- function(model, iter, init, chains=1, seeds=NULL,
   } else {
     mcmc.out <- sfLapply(1:chains, function(i)
       sample_admb_parallel(parallel_number=i, dir=dir, model=model,
-                           algorithm=algorithm,
+                           algorithm=algorithm, par.names=par.names,
                            iter=iter, init=init[[i]],
                            seed=seeds[i], thin=thin, control=control))
   }
@@ -117,7 +118,7 @@ sample_admb <- function(model, iter, init, chains=1, seeds=NULL,
 #'   diagnostics using CODA.
 sample_admb_nuts <-
   function(dir, model, iter, thin, warmup=ceiling(iter/2),
-           init=NULL,  chain=1, seed=NULL, control=NULL,
+           init=NULL,  chain=1, par.names=NULL, seed=NULL, control=NULL,
            verbose=TRUE, extra.args=NULL){
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(dir)
@@ -139,13 +140,16 @@ sample_admb_nuts <-
     }
     ## If user provided covar matrix, write it to file and save to
     ## results
-    mle <- R2admb::read_admb(model, verbose=TRUE)
+    if(is.null(par.names)){
+      mle <- R2admb::read_admb(model, verbose=TRUE)
+      par.names <- names(mle$coefficients[1:mle$npar])
+    }
     if(!is.null(covar)){
       cor.user <- covar/ sqrt(diag(covar) %o% diag(covar))
       if(!matrixcalc:::is.positive.definite(x=cor.user))
         stop("Invalid covar matrix, not positive definite")
       write.admb.cov(covar)
-      mle$covar <- covar
+     ##  mle$covar <- covar
     }
     ## Write the starting values to file. Always using a
     ## init file b/c need to use -nohess -noest so
@@ -154,9 +158,11 @@ sample_admb_nuts <-
     ## mcmc chain from the initial values instead of the
     ## MLEs. So let the user specify the init values, or
     ## specify the MLEs manually
-    est <- FALSE
+    est <- FALSE                        # turn off est (-noest)
     if(is.null(init)){
-      init <- mle$coefficients[1:mle$npar]
+      ## If no inits, want to use the MLE
+      stop("NULL init not supported")
+      ## init <- mle$coefficients[1:mle$npar]
     } else if(init[1]=='mle') {
       est <- TRUE
     }
@@ -187,11 +193,10 @@ sample_admb_nuts <-
     pars <- pars[seq(1, nrow(pars), by=thin),]
     sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
     ndiv <- sum(sampler_params[-(1:warmup),5])
-    par.names <- names(mle$coefficients[1:mle$npar])
     return(list(samples=pars, sampler_params=sampler_params,
                 time.total=time.total, time.warmup=time.warmup,
                 warmup=warmup/thin, max_treedepth=max_td,
-                model=model, mle=mle, par.names=par.names))
+                model=model, par.names=par.names))
   }
 
 
@@ -217,13 +222,13 @@ sample_admb_rwm <-
     }
     ## If user provided covar matrix, write it to file and save to
     ## results
-    mle <- R2admb::read_admb(model, verbose=TRUE)
+    ## mle <- R2admb::read_admb(model, verbose=TRUE)
     if(!is.null(covar)){
       cor.user <- covar/ sqrt(diag(covar) %o% diag(covar))
       if(!matrixcalc:::is.positive.definite(x=cor.user))
         stop("Invalid covar matrix, not positive definite")
       write.admb.cov(covar)
-      mle$covar <- covar
+      ##  mle$covar <- covar
     }
     ## Write the starting values to file. Always using a init file b/c need
     ## to use -nohess -noest so that the covar can be specified and not
@@ -260,6 +265,6 @@ sample_admb_rwm <-
     par.names <- names(mle$coefficients[1:mle$npar])
     return(list(samples=pars,  time.total=time.total,
                 time.warmup=time.warmup,
-                warmup=warmup,  model=model, mle=mle,
+                warmup=warmup,  model=model,
                 par.names=par.names))
   }
