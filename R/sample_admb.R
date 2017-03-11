@@ -24,12 +24,12 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   if(!parallel){
   if(algorithm=="NUTS"){
     mcmc.out <- lapply(1:chains, function(i)
-      sample_admb_nuts(dir=dir, model=model,
+      sample_admb_nuts(dir=dir, model=model,warmup=warmup,
                        iter=iter, init=init[[i]], chain=i,
                        seed=seeds[i], thin=thin, control=control, ...))
   } else {
     mcmc.out <- lapply(1:chains, function(i)
-      sample_admb_rwm(dir=dir, model=model,
+      sample_admb_rwm(dir=dir, model=model,warmup=warmup,
                        iter=iter, init=init[[i]], chain=i,
                        seed=seeds[i], thin=thin, control=control, ...))
   }
@@ -38,7 +38,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
     mcmc.out <- sfLapply(1:chains, function(i)
       sample_admb_parallel(parallel_number=i, dir=dir, model=model,
                            algorithm=algorithm, par.names=par.names,
-                           iter=iter, init=init[[i]],
+                           iter=iter, init=init[[i]], warmup=warmup,
                            seed=seeds[i], thin=thin, control=control))
   }
 
