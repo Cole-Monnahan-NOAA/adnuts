@@ -173,7 +173,7 @@ sample_admb_nuts <-
     if(!est)
       cmd <- paste(cmd, " -noest -mcpin init.pin")
     cmd <- paste(cmd," -nohess -nuts -mcmc ",iter)
-    cmd <- paste(cmd, "-chain", chain)
+    cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
     cmd <- paste(cmd, "-max_treedepth", max_td)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
