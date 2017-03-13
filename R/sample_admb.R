@@ -3,36 +3,36 @@
 #'
 sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                         thin=1, dir=getwd(), mceval=FALSE, duration=NULL,
-                        parallel=FALSE, cores=NULL, control=NULL, ...){
+                        parallel=FALSE, cores=NULL, control=NULL,
+                        ...){
+  ## Argument checking and processing
   control <- adnuts:::update_control(control)
   algorithm <- control$algorithm
   if(is.null(warmup)) warmup <- floor(iter/2)
-  if(!(algorithm %in% c('NUTS', 'RWM'))) stop("Invalid algorithm specified")
-  ## Argument checking
+  if(!(algorithm %in% c('NUTS', 'RWM')))
+    stop("Invalid algorithm specified")
   if(is.null(init)){
     warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
   } else if(length(init) != chains){
     stop("Length of init does not equal number of chains.")
   }
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
-  stopifnot(thin >=1)
-  stopifnot(chains >= 1)
+  stopifnot(thin >=1) ;stopifnot(chains >= 1)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
-
   ## Run in serial
   if(!parallel){
-  if(algorithm=="NUTS"){
-    mcmc.out <- lapply(1:chains, function(i)
-      sample_admb_nuts(dir=dir, model=model, warmup=warmup, duration=duration,
-                       iter=iter, init=init[[i]], chain=i,
-                       seed=seeds[i], thin=thin, control=control, ...))
-  } else {
-    mcmc.out <- lapply(1:chains, function(i)
-      sample_admb_rwm(dir=dir, model=model,warmup=warmup, duration=duration,
-                       iter=iter, init=init[[i]], chain=i,
-                       seed=seeds[i], thin=thin, control=control, ...))
-  }
-  ## Parallel execution
+    if(algorithm=="NUTS"){
+      mcmc.out <- lapply(1:chains, function(i)
+        sample_admb_nuts(dir=dir, model=model, warmup=warmup, duration=duration,
+                         iter=iter, init=init[[i]], chain=i,
+                         seed=seeds[i], thin=thin, control=control, ...))
+    } else {
+      mcmc.out <- lapply(1:chains, function(i)
+        sample_admb_rwm(dir=dir, model=model, warmup=warmup, duration=duration,
+                        iter=iter, init=init[[i]], chain=i,
+                        seed=seeds[i], thin=thin, control=control, ...))
+    }
+    ## Parallel execution
   } else {
     mcmc.out <- sfLapply(1:chains, function(i)
       sample_admb_parallel(parallel_number=i, dir=dir, model=model,
@@ -41,24 +41,50 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                            iter=iter, init=init[[i]], warmup=warmup,
                            seed=seeds[i], thin=thin, control=control))
   }
+
   par.names <- mcmc.out[[1]]$par.names
   iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
-  if(any(iters!=iter)){
-    N <- min(iters)
+  if(any(iters!=iter/thin)){
+    N <- min(iters/thin)
     warning(paste("Chains have variable samples, truncating to minimum=", N))
   } else {
-    N <- iter
+    N <- iter/thin
   }
   samples <-  array(NA, dim=c(N, chains, 1+length(par.names)),
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
   for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$samples[1:N,]}
+  ## RWM does thinning internally for ADMB so need to adjust.
+  if(algorithm=="RWM"){
+    warmup <- floor(warmup/thin)
+    thin <- 1
+  }
 
+  ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
+  ## Thin samples. NUTS does this post-hoc
+  thin.ind <- seq(1, N, by=thin)
+  samples <- samples[thin.ind,,, drop=FALSE]
+  if(algorithm=="NUTS")
+    sampler_params <-
+      lapply(mcmc.out, function(x) x$sampler_params[thin.ind,])
+  else sampler_params <- NULL
+  time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
+  time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
+  cmd <- unlist(lapply(mcmc.out, function(x) x$cmd))
+  result <- list(samples=samples, sampler_params=sampler_params,
+                 time.warmup=time.warmup, time.total=time.total,
+                 algorithm=algorithm, warmup=warmup,
+                 model=model,
+                 max_treedepth=mcmc.out[[1]]$max_treedepth, cmd=cmd)
+
+  ## When running multiple chains the psv files will either be overwritten
+  ## or in different folders (if parallel is used). Thus mceval needs to be
+  ## done posthoc by recombining chains AFTER thinning and warmup and
+  ## discarded into a single chain, written to file, then call -mceval.
   if(mceval){
     ## Merge all chains together and run mceval
     message("... Writing samples from all chains to psv file and running -mceval")
-    ind <- -(1:mcmc.out[[1]]$warmup)
     samples2 <- do.call(rbind, lapply(1:chains, function(i)
-      samples[ind, i, -dim(samples)[3]]))
+      samples[, i, -dim(samples)[3]]))
     write_psv(fn=model, samples=samples2, model.path=dir)
     oldwd <- getwd()
     setwd(dir)
@@ -66,18 +92,6 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
     setwd(oldwd)
   }
 
-  ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
-  thin.ind <- seq(1, N, by=thin)
-  samples <- samples[thin.ind,,, drop=FALSE]
-  sampler_params <- lapply(mcmc.out,
-                           function(x) x$sampler_params[thin.ind,])
-  time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
-  time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
-  result <- list(samples=samples, sampler_params=sampler_params,
-                 time.warmup=time.warmup, time.total=time.total,
-                 algorithm=algorithm, warmup=mcmc.out[[1]]$warmup/thin,
-                 model=mcmc.out[[1]]$model,
-                 max_treedepth=mcmc.out[[1]]$max_treedepth)
   return(invisible(result))
 }
 
@@ -204,7 +218,7 @@ sample_admb_nuts <-
     return(list(samples=pars, sampler_params=sampler_params,
                 time.total=time.total, time.warmup=time.warmup,
                 warmup=warmup/thin, max_treedepth=max_td,
-                model=model, par.names=par.names))
+                model=model, par.names=par.names, cmd=cmd))
   }
 
 
@@ -278,5 +292,5 @@ sample_admb_rwm <-
     return(list(samples=pars,  time.total=time.total,
                 time.warmup=time.warmup,
                 warmup=warmup,  model=model,
-                par.names=par.names))
+                par.names=par.names, cmd=cmd))
   }
