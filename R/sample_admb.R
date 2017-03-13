@@ -41,31 +41,21 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                            iter=iter, init=init[[i]], warmup=warmup,
                            seed=seeds[i], thin=thin, control=control))
   }
-
+  warmup <- mcmc.out[[1]]$warmup
   par.names <- mcmc.out[[1]]$par.names
   iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
   if(any(iters!=iter/thin)){
     N <- min(iters)
-    warning(paste("Chains have variable samples, truncating to minimum=", N))
+    warning(paste("Variable chain lengths, truncating to minimum=", N))
   } else {
     N <- iter/thin
   }
   samples <-  array(NA, dim=c(N, chains, 1+length(par.names)),
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
   for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$samples[1:N,]}
-  ## RWM does thinning internally for ADMB so need to adjust.
-  if(algorithm=="RWM"){
-    warmup <- floor(warmup/thin)
-    thin <- 1
-  }
-
-  ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
-  ## Thin samples. NUTS does this post-hoc
-  thin.ind <- seq(1, N, by=thin)
-  samples <- samples[thin.ind,,, drop=FALSE]
   if(algorithm=="NUTS")
     sampler_params <-
-      lapply(mcmc.out, function(x) x$sampler_params[thin.ind,])
+      lapply(mcmc.out, function(x) x$sampler_params)
   else sampler_params <- NULL
   time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
   time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
@@ -75,13 +65,14 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                  algorithm=algorithm, warmup=warmup,
                  model=model,
                  max_treedepth=mcmc.out[[1]]$max_treedepth, cmd=cmd)
-
+  if(N < warmup) warning("Duration too short to finish warmup period")
   ## When running multiple chains the psv files will either be overwritten
   ## or in different folders (if parallel is used). Thus mceval needs to be
   ## done posthoc by recombining chains AFTER thinning and warmup and
   ## discarded into a single chain, written to file, then call -mceval.
   if(mceval){
     ## Merge all chains together and run mceval
+    warning("This functionality is untested")
     message("... Writing samples from all chains to psv file and running -mceval")
     samples2 <- do.call(rbind, lapply(1:chains, function(i)
       samples[, i, -dim(samples)[3]]))
@@ -152,6 +143,7 @@ sample_admb_nuts <-
     max_td <- control$max_treedepth
     adapt_delta <- control$adapt_delta
     if(is.null(warmup)) stop("Must provide warmup")
+    if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
     ## Grab original admb fit and metrics
     if(iter <1)
@@ -167,7 +159,7 @@ sample_admb_nuts <-
       if(!matrixcalc:::is.positive.definite(x=cor.user))
         stop("Invalid covar matrix, not positive definite")
       write.admb.cov(covar)
-     ##  mle$covar <- covar
+      ##  mle$covar <- covar
     }
     ## Write the starting values to file. Always using a
     ## init file b/c need to use -nohess -noest so
@@ -211,14 +203,14 @@ sample_admb_nuts <-
     }
     pars[,'log-posterior'] <- sampler_params[,'energy__']
     pars <- as.matrix(pars)
-    time.total <- time; time.warmup <- NA
-    ## Thin
+    ## Thin samples and adaptation post hoc for NUTS
     pars <- pars[seq(1, nrow(pars), by=thin),]
     sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
-    ndiv <- sum(sampler_params[-(1:warmup),5])
+    time.total <- time; time.warmup <- NA
+    warmup <- warmup/thin
     return(list(samples=pars, sampler_params=sampler_params,
                 time.total=time.total, time.warmup=time.warmup,
-                warmup=warmup/thin, max_treedepth=max_td,
+                warmup=warmup, max_treedepth=max_td,
                 model=model, par.names=par.names, cmd=cmd))
   }
 
@@ -237,6 +229,7 @@ sample_admb_rwm <-
     if(metric=='unit') covar <- NULL
     if(metric=='diag') covar <- NULL
     if(is.null(warmup)) stop("Must provide warmup")
+    if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
     ## Grab original admb fit and metrics
     if(iter <1)
@@ -291,8 +284,12 @@ sample_admb_rwm <-
     lp <- as.vector(read.table('rwm_lp.txt', header=TRUE)[,1])
     pars[,'log-posterior'] <- lp
     pars <- as.matrix(pars)
+    ## Thinning is done interally for RWM (via -mcsave) so don't need to do
+    ## it here
+    warmup <- warmup/thin
     time.total <- time; time.warmup <- NA
-    return(list(samples=pars,  time.total=time.total,
+    return(list(samples=pars, sampler_params=NULL,
+                time.total=time.total,
                 time.warmup=time.warmup,
                 warmup=warmup,  model=model,
                 par.names=par.names, cmd=cmd))
