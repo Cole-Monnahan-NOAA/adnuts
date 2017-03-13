@@ -3,6 +3,7 @@
 #' @param control A list passed from \code{sample_tmb}.
 #' @return A list with default control elements updated by those supplied
 #'   in \code{control}
+#' @export
 update_control <- function(control){
   default <- list(adapt_delta=0.8, metric='unit', stepsize=NULL,
                   algorithm="NUTS", adapt_engaged=TRUE,
