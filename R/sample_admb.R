@@ -45,7 +45,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   par.names <- mcmc.out[[1]]$par.names
   iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
   if(any(iters!=iter/thin)){
-    N <- min(iters/thin)
+    N <- min(iters)
     warning(paste("Chains have variable samples, truncating to minimum=", N))
   } else {
     N <- iter/thin
@@ -151,6 +151,7 @@ sample_admb_nuts <-
     if(metric=='diag') covar <- NULL
     max_td <- control$max_treedepth
     adapt_delta <- control$adapt_delta
+    if(is.null(warmup)) stop("Must provide warmup")
 
     ## Grab original admb fit and metrics
     if(iter <1)
@@ -235,6 +236,8 @@ sample_admb_rwm <-
     metric <- control$metric
     if(metric=='unit') covar <- NULL
     if(metric=='diag') covar <- NULL
+    if(is.null(warmup)) stop("Must provide warmup")
+
     ## Grab original admb fit and metrics
     if(iter <1)
       stop("Iterations must be >1")
@@ -269,7 +272,7 @@ sample_admb_rwm <-
     cmd <- model
     if(!est)
       cmd <- paste(cmd, " -noest -mcpin init.pin")
-    cmd <- paste(cmd," -nohess -mcmc ",iter,  "-mcball", warmup)
+    cmd <- paste(cmd," -nohess -mcmc ",iter,  "-mcscale", warmup)
     cmd <- paste(cmd, "-nosdmcmc -mcsave", thin)
     if(!is.null(duration))
       cmd <- paste(cmd, "-duration", duration)
@@ -282,11 +285,11 @@ sample_admb_rwm <-
     if(mceval) system(paste(model, "-mceval -noest -nohess"),
                       ignore.stdout=!verbose)
     pars <- R2admb::read_psv(model)
-    warning("log posterior column in RWM is still broken!!")
     if(is.null(par.names)){
       par.names <- names(pars)
     }
-    pars[,'log-posterior'] <- pars[,1]
+    lp <- as.vector(read.table('rwm_lp.txt', header=TRUE)[,1])
+    pars[,'log-posterior'] <- lp
     pars <- as.matrix(pars)
     time.total <- time; time.warmup <- NA
     return(list(samples=pars,  time.total=time.total,
