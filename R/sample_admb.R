@@ -2,9 +2,9 @@
 #'
 #'
 sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
-                        thin=1, dir=getwd(), mceval=FALSE,
+                        thin=1, dir=getwd(), mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL, ...){
-  control <- update_control(control)
+  control <- adnuts:::update_control(control)
   algorithm <- control$algorithm
   if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM'))) stop("Invalid algorithm specified")
@@ -16,7 +16,6 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   }
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
   stopifnot(thin >=1)
-  thin.ind <- seq(1, iter, by=thin)
   stopifnot(chains >= 1)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
 
@@ -24,12 +23,12 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   if(!parallel){
   if(algorithm=="NUTS"){
     mcmc.out <- lapply(1:chains, function(i)
-      sample_admb_nuts(dir=dir, model=model,warmup=warmup,
+      sample_admb_nuts(dir=dir, model=model, warmup=warmup, duration=duration,
                        iter=iter, init=init[[i]], chain=i,
                        seed=seeds[i], thin=thin, control=control, ...))
   } else {
     mcmc.out <- lapply(1:chains, function(i)
-      sample_admb_rwm(dir=dir, model=model,warmup=warmup,
+      sample_admb_rwm(dir=dir, model=model,warmup=warmup, duration=duration,
                        iter=iter, init=init[[i]], chain=i,
                        seed=seeds[i], thin=thin, control=control, ...))
   }
@@ -37,15 +36,22 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   } else {
     mcmc.out <- sfLapply(1:chains, function(i)
       sample_admb_parallel(parallel_number=i, dir=dir, model=model,
-                           algorithm=algorithm, par.names=par.names,
+                           duration=duration,
+                           algorithm=algorithm,
                            iter=iter, init=init[[i]], warmup=warmup,
                            seed=seeds[i], thin=thin, control=control))
   }
-
   par.names <- mcmc.out[[1]]$par.names
-  samples <-  array(NA, dim=c(iter, chains, 1+length(par.names)),
+  iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
+  if(any(iters!=iter)){
+    N <- min(iters)
+    warning(paste("Chains have variable samples, truncating to minimum=", N))
+  } else {
+    N <- iter
+  }
+  samples <-  array(NA, dim=c(N, chains, 1+length(par.names)),
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
-  for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$samples}
+  for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$samples[1:N,]}
 
   if(mceval){
     ## Merge all chains together and run mceval
@@ -61,6 +67,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   }
 
   ## Drop=FALSE prevents it from dropping 2nd dimension when chains=1
+  thin.ind <- seq(1, N, by=thin)
   samples <- samples[thin.ind,,, drop=FALSE]
   sampler_params <- lapply(mcmc.out,
                            function(x) x$sampler_params[thin.ind,])
@@ -117,13 +124,13 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
 #'   in using \code{read_admb}, and (3) some MCMC convergence
 #'   diagnostics using CODA.
 sample_admb_nuts <-
-  function(dir, model, iter, thin, warmup=ceiling(iter/2),
+  function(dir, model, iter, thin, warmup, duration=NULL,
            init=NULL,  chain=1, par.names=NULL, seed=NULL, control=NULL,
            verbose=TRUE, extra.args=NULL){
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(dir)
     ## Now contains all required NUTS arguments
-    control <- update_control(control)
+    control <- adnuts:::update_control(control)
     eps <- control$stepsize
     metric <- control$metric
     if(metric=='unit') covar <- NULL
@@ -140,10 +147,6 @@ sample_admb_nuts <-
     }
     ## If user provided covar matrix, write it to file and save to
     ## results
-    if(is.null(par.names)){
-      mle <- R2admb::read_admb(model, verbose=TRUE)
-      par.names <- names(mle$coefficients[1:mle$npar])
-    }
     if(!is.null(covar)){
       cor.user <- covar/ sqrt(diag(covar) %o% diag(covar))
       if(!matrixcalc:::is.positive.definite(x=cor.user))
@@ -174,6 +177,8 @@ sample_admb_nuts <-
       cmd <- paste(cmd, " -noest -mcpin init.pin")
     cmd <- paste(cmd," -nohess -nuts -mcmc ",iter)
     cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
+    if(!is.null(duration))
+      cmd <- paste(cmd, "-duration", duration)
     cmd <- paste(cmd, "-max_treedepth", max_td)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
@@ -186,6 +191,9 @@ sample_admb_nuts <-
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     sampler_params<- as.matrix(read.csv("adaptation.csv"))
     pars <- R2admb::read_psv(model)
+    if(is.null(par.names)){
+      par.names <- names(pars)
+    }
     pars[,'log-posterior'] <- sampler_params[,'energy__']
     pars <- as.matrix(pars)
     time.total <- time; time.warmup <- NA
@@ -204,8 +212,8 @@ sample_admb_nuts <-
 
 sample_admb_rwm <-
   function(dir, model, iter=2000, thin=1, warmup=ceiling(iter/2),
-           init=NULL,  chain=1, seed=NULL, control=NULL,
-           verbose=TRUE, extra.args=NULL,
+           init=NULL,  chain=1, seed=NULL, control=NULL, par.names=NULL,
+           verbose=TRUE, extra.args=NULL, duration=NULL,
            mceval=TRUE){
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(dir) ## Now contains all required NUTS arguments
@@ -249,6 +257,8 @@ sample_admb_rwm <-
       cmd <- paste(cmd, " -noest -mcpin init.pin")
     cmd <- paste(cmd," -nohess -mcmc ",iter,  "-mcball", warmup)
     cmd <- paste(cmd, "-nosdmcmc -mcsave", thin)
+    if(!is.null(duration))
+      cmd <- paste(cmd, "-duration", duration)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
     if(!is.null(seed))
@@ -258,11 +268,13 @@ sample_admb_rwm <-
     if(mceval) system(paste(model, "-mceval -noest -nohess"),
                       ignore.stdout=!verbose)
     pars <- R2admb::read_psv(model)
-    pars[,'log-posterior'] <- pars[,1]
     warning("log posterior column in RWM is still broken!!")
+    if(is.null(par.names)){
+      par.names <- names(pars)
+    }
+    pars[,'log-posterior'] <- pars[,1]
     pars <- as.matrix(pars)
     time.total <- time; time.warmup <- NA
-    par.names <- names(mle$coefficients[1:mle$npar])
     return(list(samples=pars,  time.total=time.total,
                 time.warmup=time.warmup,
                 warmup=warmup,  model=model,
