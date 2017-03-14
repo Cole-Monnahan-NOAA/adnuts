@@ -290,7 +290,7 @@ run_mcmc.hmc <- function(iter, fn, gr, init, L, eps=NULL, covar=NULL,
 #' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.hmc}},
 #'   \code{\link{run_mcmc.rwm}}
 run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
-                          chain, control=NULL){
+                          chain, thin=1, control=NULL){
   ## Now contains all required NUTS arguments
   control <- update_control(control)
   print(eps)
@@ -301,7 +301,6 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   if(metric=='diag') covar <- NULL
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
-  thin <- control$thin
   ## If using covariance matrix and Cholesky decomposition, redefine
   ## these functions to include this transformation. The algorithm will
   ## work in the transformed space
