@@ -293,12 +293,11 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                           chain, thin=1, control=NULL){
   ## Now contains all required NUTS arguments
   control <- update_control(control)
-  print(eps)
   eps <- control$stepsize
-  print(eps)
   metric <- control$metric
-  if(metric=='unit') covar <- NULL
-  if(metric=='diag') covar <- NULL
+  if(is.matrix(metric)) covar <- metric
+  else if(metric=='unit') covar <- NULL
+  else if(metric=='diag') covar <- NULL
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
   ## If using covariance matrix and Cholesky decomposition, redefine

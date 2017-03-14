@@ -138,8 +138,9 @@ sample_admb_nuts <-
     control <- adnuts:::update_control(control)
     eps <- control$stepsize
     metric <- control$metric
-    if(metric=='unit') covar <- NULL
-    if(metric=='diag') covar <- NULL
+    if(is.matrix(metric)) covar <- metric
+    else if(metric=='unit') covar <- NULL
+    else if(metric=='diag') covar <- NULL
     max_td <- control$max_treedepth
     adapt_delta <- control$adapt_delta
     if(is.null(warmup)) stop("Must provide warmup")
