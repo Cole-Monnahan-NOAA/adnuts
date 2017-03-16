@@ -375,7 +375,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       if(!is.finite(s)) s <- 0
       j <- j+1
       ## Stop doubling if too many or it's diverged enough
-      if(j>max_td) {
+      if(j>=max_td) {
        ## warning("j larger than max_treedepth, skipping to next m")
         break
       }
