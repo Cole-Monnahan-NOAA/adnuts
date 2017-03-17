@@ -337,9 +337,10 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   for(m in 1:iter){
     ## Initialize this iteration from previous in case divergence at first
     ## treebuilding. If successful trajectory they are overwritten
-    theta.out[m,] <- theta.minus <- theta.plus <- theta0 <- theta.cur
+    theta.out[m,] <- theta.minus <- theta.plus <-  theta.cur
     lp[m] <- if(m==1) fn2(theta.cur) else lp[m-1]
-    r.cur <- r.plus <- r.minus <- r0 <- rnorm(length(theta.cur),0,1)
+    r.cur <- r.plus <- r.minus  <- rnorm(length(theta.cur),0,1)
+    H0 <- .calculate.H(theta=theta.cur, r=r.cur, fn=fn)
     ## Draw a slice variable u
     u <- .sample.u(theta=theta.cur, r=r.cur, fn=fn2)
     j <- 0; n <- 1; s <- 1; divergent <- 0
@@ -350,14 +351,14 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       if(v==1){
         ## move in right direction
         res <- .buildtree(theta=theta.plus, r=r.plus, u=u, v=v,
-                          j=j, eps=eps, theta0=theta0, r0=r0,
+                          j=j, eps=eps, H0=H0,
                           fn=fn2, gr=gr2, info=info)
         theta.plus <- res$theta.plus
         r.plus <- res$r.plus
       } else {
         ## move in left direction
         res <- .buildtree(theta=theta.minus, r=r.minus, u=u, v=v,
-                          j=j, eps=eps, theta0=theta0, r0=r0,
+                          j=j, eps=eps, H0=H0,
                           fn=fn2, gr=gr2, info=info)
         theta.minus <- res$theta.minus
         r.minus <- res$r.minus
@@ -449,27 +450,26 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
 
 #' A recursive function that builds a leapfrog trajectory using a balanced
 #' binary tree.
-                                        #
+#'
 #' @references This is from the No-U-Turn sampler with dual averaging
 #' (algorithm 6) of Hoffman and Gelman (2014).
-                                        #
+#'
 #' @details The function repeatedly doubles (in a random direction) until
 #' either a U-turn occurs or the trajectory becomes unstable. This is the
 #' 'efficient' version that samples uniformly from the path without storing
 #' it. Thus the function returns a single proposed value and not the whole
 #' trajectory.
 #'
-.buildtree <- function(theta, r, u, v, j, eps, theta0, r0, fn, gr,
+.buildtree <- function(theta, r, u, v, j, eps, H0, fn, gr,
                        delta.max=1000, info = environment() ){
   if(j==0){
     ## ## Useful code for debugging. Returns entire path to global env.
     ## if(!exists('theta.trajectory'))
     ##   theta.trajectory <<- data.frame(step=0, t(theta))
     ## base case, take one step in direction v
-    eps2 <- v*eps
-    r <- r+(eps2/2)*gr(theta)
-    theta <- theta+eps2*r
-    r <- r+(eps2/2)*gr(theta)
+    r <- r+(v*eps/2)*gr(theta)
+    theta <- theta+(v*eps)*r
+    r <- r+(v*eps/2)*gr(theta)
     ## verify valid trajectory. Divergences occur if H is NaN, or drifts
     ## too from from true H.
     H <- .calculate.H(theta=theta, r=r, fn=fn)
@@ -479,7 +479,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
      info$divergent <- 1; s <- 0
     }
     ## Acceptance ratio in log space: (Hnew-Hold)
-    logalpha <- H-.calculate.H(theta=theta0, r=r0, fn=fn)
+    logalpha <- H-H0
     alpha <- min(exp(logalpha),1)
     info$n.calls <- info$n.calls + 1
     ## theta.trajectory <<-
@@ -489,7 +489,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   } else {
     ## recursion - build left and right subtrees
     xx <- .buildtree(theta=theta, r=r, u=u, v=v, j=j-1, eps=eps,
-                     theta0=theta0, r0=r0, fn=fn, gr=gr, info=info)
+                     H0=H0, fn=fn, gr=gr, info=info)
     theta.minus <- xx$theta.minus
     theta.plus <- xx$theta.plus
     theta.prime <- xx$theta.prime
@@ -504,13 +504,13 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     if(s==1){
       if(v== -1){
         yy <- .buildtree(theta=theta.minus, r=r.minus, u=u, v=v,
-                         j=j-1, eps=eps, theta0=theta0, r0=r0,
+                         j=j-1, eps=eps, H0=H0,
                          fn=fn, gr=gr, info=info)
         theta.minus <- yy$theta.minus
         r.minus <- yy$r.minus
       } else {
         yy <- .buildtree(theta=theta.plus, r=r.plus, u=u, v=v,
-                         j=j-1, eps=eps, theta0=theta0, r0=r0,
+                         j=j-1, eps=eps, H0=H0,
                          fn=fn, gr=gr, info=info)
         theta.plus <- yy$theta.plus
         r.plus <- yy$r.plus
