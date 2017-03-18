@@ -515,25 +515,21 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         theta.plus <- yy$theta.plus
         r.plus <- yy$r.plus
       }
-      ## This isn't in the paper but if both slice variables failed,
-      ## then you get 0/0. So I skip this test. Likewise if model
-      ## throwing errors, don't keep that theta.
+      ### Update elements:
+      ## If both slice variables fail you get 0/0.
       nprime <- yy$n+ xx$n
+      if(!is.finite(nprime)) {nprime <- 0}
+      ## choose whether to keep this theta
+      if(nprime>0)
+        if(runif(1) <= yy$n/nprime)
+          theta.prime <- yy$theta.prime
       alpha <- xx$alpha+yy$alpha
       nalpha <- xx$nalpha+yy$nalpha
-      if(!is.finite(nprime)) {nprime <- 0}
-      if(nprime!=0){
-        ## choose whether to keep this theta
-        if(runif(n=1, min=0, max=1) <= yy$n/nprime)
-          theta.prime <- yy$theta.prime
-      }
       ## check for valid proposal
-      test <- .test.nuts(theta.plus=theta.plus,
-                         theta.minus=theta.minus, r.plus=r.plus,
-                         r.minus=r.minus)
-      ## if(!test) warning(paste("U turn at j=", j))
-      ## check if any of the stopping conditions were met
-      s <- yy$s*test
+      b <- .test.nuts(theta.plus=theta.plus,
+                      theta.minus=theta.minus, r.plus=r.plus,
+                      r.minus=r.minus)
+      s <- yy$s*b
     }
     return(list(theta.minus=theta.minus, theta.plus=theta.plus,
                 theta.prime=theta.prime,
