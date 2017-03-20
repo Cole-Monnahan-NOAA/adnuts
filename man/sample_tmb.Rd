@@ -5,7 +5,7 @@
 \title{MCMC sampling of TMB models}
 \usage{
 sample_tmb(obj, iter, init, chains = 1, seeds = NULL, lower = NULL,
-  upper = NULL, control = NULL, ...)
+  thin = 1, upper = NULL, control = NULL, ...)
 }
 \arguments{
 \item{obj}{A TMB model object.}

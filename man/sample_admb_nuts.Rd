@@ -6,9 +6,9 @@
 draws, MLE fits and covariance/correlation matrices, and some
 MCMC convergence diagnostics using CODA.}
 \usage{
-sample_admb_nuts(dir, model, iter, thin, warmup = ceiling(iter/2),
-  init = NULL, chain = 1, seed = NULL, control = NULL, verbose = TRUE,
-  extra.args = NULL)
+sample_admb_nuts(dir, model, iter, thin, warmup, duration = NULL,
+  init = NULL, chain = 1, par.names = NULL, seed = NULL,
+  control = NULL, verbose = TRUE, extra.args = NULL)
 }
 \arguments{
 \item{dir}{(Character) A path to the folder containing

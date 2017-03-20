@@ -5,7 +5,7 @@
 \title{[BETA VERSION] Draw MCMC samples from a model posterior using the
 No-U-Turn (NUTS) sampler with dual averaging.}
 \usage{
-run_mcmc.nuts(iter, fn, gr, init, warmup = floor(iter/2), chain,
+run_mcmc.nuts(iter, fn, gr, init, warmup = floor(iter/2), chain, thin = 1,
   control = NULL)
 }
 \arguments{

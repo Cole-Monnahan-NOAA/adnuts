@@ -4,7 +4,7 @@
 \alias{sample_admb_parallel}
 \title{A wrapper for running SS models in parallel}
 \usage{
-sample_admb_parallel(parallel_number, dir, ...)
+sample_admb_parallel(parallel_number, dir, algorithm, ...)
 }
 \description{
 A wrapper for running SS models in parallel
