@@ -295,9 +295,11 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   control <- update_control(control)
   eps <- control$stepsize
   metric <- control$metric
-  if(is.matrix(metric)) covar <- metric
-  else if(metric=='unit') covar <- NULL
-  else if(metric=='diag') covar <- NULL
+  if(is.matrix(metric)){
+    covar <- metric
+  } else {
+    stop("Only allowed to pass covar matrix as metric")
+  }
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
   ## If using covariance matrix and Cholesky decomposition, redefine

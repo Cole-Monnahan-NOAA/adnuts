@@ -47,8 +47,8 @@
 #' @export
 sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
                        thin=1, upper=NULL, control=NULL,  ...){
-    control <- update_control(control)
-    ## Argument checking
+  control <- update_control(control)
+  ## Argument checking
     if(is.null(init)){
       if(chains>1) warning('Using same inits for each chain -- strongly recommended to use dispersed inits')
       init <- rep(list(obj$par), times=chains)

@@ -138,9 +138,12 @@ sample_admb_nuts <-
     control <- adnuts:::update_control(control)
     eps <- control$stepsize
     metric <- control$metric
-    if(is.matrix(metric)) covar <- metric
-    else if(metric=='unit') covar <- NULL
-    else if(metric=='diag') covar <- NULL
+    if(is.matrix(metric)){
+      covar <- metric
+    } else {
+      stop("Only allowed to pass covar matrix as metric")
+      covar <- NULL
+    }
     max_td <- control$max_treedepth
     adapt_delta <- control$adapt_delta
     if(is.null(warmup)) stop("Must provide warmup")
@@ -227,8 +230,12 @@ sample_admb_rwm <-
     setwd(dir) ## Now contains all required NUTS arguments
     control <- update_control(control)
     metric <- control$metric
-    if(metric=='unit') covar <- NULL
-    if(metric=='diag') covar <- NULL
+    if(is.matrix(metric)){
+      covar <- metric
+    } else {
+      stop("Only allowed to pass covar matrix as metric")
+      covar <- NULL
+    }
     if(is.null(warmup)) stop("Must provide warmup")
     if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
