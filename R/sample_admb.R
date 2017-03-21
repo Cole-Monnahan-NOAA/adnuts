@@ -180,7 +180,7 @@ sample_admb_nuts <-
     } else if(init[1]=='mle') {
       est <- TRUE
     }
-    write.table(file="init.pin", x=init, row.names=F, col.names=F)
+    write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
     ## Separate the options by algorithm, first doing the shared
     ## arguments
     cmd <- model
