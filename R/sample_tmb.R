@@ -49,8 +49,6 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
                        thin=1, upper=NULL, control=NULL,  ...){
   control <- update_control(control)
   ## Argument checking.
-  if(is.list(init))
-    init <- lapply(init, unlist)
   if(is.null(init)){
     if(chains>1) warning('Using same inits for each chain -- strongly recommended to use dispersed inits')
     init <- rep(list(obj$par), times=chains)
@@ -87,7 +85,7 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
       scales2 <- .transform.grad2(y, lower, upper, cases)
       -as.vector(obj$gr(x))*scales + scales2
     }
-    init <- lapply(init, FUN=.transform.inv, a=lower, b=upper, cases=cases)
+    init <- lapply(init, function(x) .transform.inv(x=unlist(x), a=lower, b=upper, cases=cases))
   } else {
     fn <- function(x) -obj$fn(x)
     gr <- function(x) -as.vector(obj$gr(x))
