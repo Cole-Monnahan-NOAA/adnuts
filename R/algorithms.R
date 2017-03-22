@@ -289,6 +289,8 @@ run_mcmc.hmc <- function(iter, fn, gr, init, L, eps=NULL, covar=NULL,
 #'   ('sampler_params').
 #' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.hmc}},
 #'   \code{\link{run_mcmc.rwm}}
+
+
 run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                           chain, thin=1, control=NULL){
   ## Now contains all required NUTS arguments
@@ -303,15 +305,13 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   }
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
-  ## If using covariance matrix and Cholesky decomposition, redefine
-  ## these functions to include this transformation. The algorithm will
-  ## work in the transformed space
+  ## Using a mass matrix means redefining what fn and gr do and
+  ## backtransforming the initial value.
   if(!is.null(covar)){
-    fn2 <- function(theta) fn(chd %*% theta)
-    gr2 <- function(theta) as.vector( t( gr(chd %*% theta) ) %*% chd )
-    chd <- t(chol(covar))               # lower triangular Cholesky decomp.
-    chd.inv <- solve(chd)               # inverse
-    theta.cur <- chd.inv %*% init
+    temp <- rotate_space(fn=fn, gr=gr, M=covar, theta.cur=init)
+    fn2 <- temp$fn2; gr2 <- temp$gr2
+    theta.cur <- temp$theta.cur
+    chd <- temp$chd
   } else {
     fn2 <- fn; gr2 <- gr
     theta.cur <- init
@@ -590,4 +590,16 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   }
   if(verbose) message(paste("Reasonable epsilon=", eps, "found after", k, "steps"))
   return(invisible(eps))
+}
+
+rotate_space <- function(fn, gr, M, theta.cur){
+  ## Rotation done using choleski decomposition
+  chd <- t(chol(M))               # lower triangular Cholesky decomp.
+  chd.inv <- solve(chd)               # inverse
+  ## Redefine these functions
+  fn2 <- function(theta) fn(chd %*% theta)
+  gr2 <- function(theta) as.vector( t( gr(chd %*% theta) ) %*% chd )
+  ## Need to adjust the current parameters so the chain is continuous
+  theta.cur <- chd.inv %*% theta.cur
+  x <- list(gr2=gr2, fn2=fn2, theta.cur=theta.cur, chd=chd)
 }
