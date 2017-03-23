@@ -19,6 +19,9 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
   stopifnot(thin >=1) ;stopifnot(chains >= 1)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
+  ## Delete any psv files in case something goes wrong we dont use old
+  ## values by accident
+  trash <- file.remove(list.files()[grep('.psv', x=list.files())])
   ## Run in serial
   if(!parallel){
     if(algorithm=="NUTS"){
@@ -201,7 +204,7 @@ sample_admb_nuts <-
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     sampler_params<- as.matrix(read.csv("adaptation.csv"))
-    pars <- R2admb::read_psv(model)
+    pars <- get_psv(model)
     if(is.null(par.names)){
       par.names <- names(pars)
     }
@@ -218,6 +221,24 @@ sample_admb_nuts <-
                 model=model, par.names=par.names, cmd=cmd))
   }
 
+
+get_psv <- function(model){
+      if(!file.exists(paste0(model, '.psv'))){
+      ## Sometimes ADMB will shorten the name of the psv file for some
+      ## reason, so need to catch that here.
+      ff <- list.files()[grep(x=list.files(), pattern='psv')]
+      if(length(ff)==1){
+        warning(paste("No .psv file found, using", ff))
+        pars <- R2admb::read_psv(sub('.psv', '', x=ff))
+      } else {
+        stop(paste("No .psv file found -- did something go wrong??"))
+      }
+    } else {
+      ## If model file exists
+      pars <- R2admb::read_psv(model)
+    }
+  return(pars)
+}
 
 
 
@@ -285,7 +306,7 @@ sample_admb_rwm <-
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     if(mceval) system(paste(model, "-mceval -noest -nohess"),
                       ignore.stdout=!verbose)
-    pars <- R2admb::read_psv(model)
+    pars <- get_psv(model)
     if(is.null(par.names)){
       par.names <- names(pars)
     }
