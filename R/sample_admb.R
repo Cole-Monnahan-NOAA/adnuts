@@ -55,7 +55,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$samples[1:N,]}
   if(algorithm=="NUTS")
     sampler_params <-
-      lapply(mcmc.out, function(x) x$sampler_params)
+      lapply(mcmc.out, function(x) x$sampler_params[1:N,])
   else sampler_params <- NULL
   time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
   time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
