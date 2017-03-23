@@ -141,7 +141,7 @@ sample_admb_nuts <-
     if(is.matrix(metric)){
       covar <- metric
     } else {
-      stop("Only allowed to pass covar matrix as metric")
+      ## stop("Only allowed to pass covar matrix as metric")
       covar <- NULL
     }
     max_td <- control$max_treedepth
@@ -233,7 +233,7 @@ sample_admb_rwm <-
     if(is.matrix(metric)){
       covar <- metric
     } else {
-      stop("Only allowed to pass covar matrix as metric")
+      ## stop("Only allowed to pass covar matrix as metric")
       covar <- NULL
     }
     if(is.null(warmup)) stop("Must provide warmup")
