@@ -289,8 +289,6 @@ run_mcmc.hmc <- function(iter, fn, gr, init, L, eps=NULL, covar=NULL,
 #'   ('sampler_params').
 #' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.hmc}},
 #'   \code{\link{run_mcmc.rwm}}
-
-
 run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                           chain, thin=1, control=NULL){
   ## Now contains all required NUTS arguments
@@ -317,8 +315,8 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     theta.cur <- init
   }
   sampler_params <- matrix(numeric(0), nrow=iter, ncol=6,
-      dimnames=list(NULL, c("accept_stat__", "stepsize__", "treedepth__",
-                            "n_leapfrog__", "divergent__", "energy__")))
+                           dimnames=list(NULL, c("accept_stat__", "stepsize__", "treedepth__",
+                                                 "n_leapfrog__", "divergent__", "energy__")))
   theta.out <- matrix(NA, nrow=iter, ncol=length(theta.cur))
   ## how many steps were taken at each iteration, useful for tuning
   j.results <- lp <- rep(NA, len=iter)
@@ -381,7 +379,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       j <- j+1
       ## Stop doubling if too many or it's diverged enough
       if(j>=max_td) {
-       ## warning("j larger than max_treedepth, skipping to next m")
+        ## warning("j larger than max_treedepth, skipping to next m")
         break
       }
     }
@@ -389,9 +387,10 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
 
     alpha2 <- res$alpha/res$nalpha
     if(!is.finite(alpha2)) alpha2 <- 0
+    ## Do the adapting of eps.
     if(useDA){
-      ## Do the adapting of eps.
       if(m <= warmup){
+        ## Adaptation during warmup:
         Hbar[m+1] <- (1-1/(m+t0))*Hbar[m] +
           (adapt_delta-alpha2)/(m+t0)
         ## If logalpha not defined, skip this updating step and use
@@ -403,9 +402,13 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         epsbar[m+1] <- exp(logepsbar)
         eps <- epsvec[m+1]
       } else {
+        ## Fix eps for sampling period
         eps <- epsbar[warmup]
       }
     }
+    ## Do the adaptation of M
+
+
     ## Save adaptation info.
     sampler_params[m,] <-
       c(alpha2, eps, j, info$n.calls, info$divergent, fn2(theta.cur))
@@ -592,14 +595,3 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   return(invisible(eps))
 }
 
-rotate_space <- function(fn, gr, M, theta.cur){
-  ## Rotation done using choleski decomposition
-  chd <- t(chol(M))               # lower triangular Cholesky decomp.
-  chd.inv <- solve(chd)               # inverse
-  ## Redefine these functions
-  fn2 <- function(theta) fn(chd %*% theta)
-  gr2 <- function(theta) as.vector( t( gr(chd %*% theta) ) %*% chd )
-  ## Need to adjust the current parameters so the chain is continuous
-  theta.cur <- chd.inv %*% theta.cur
-  x <- list(gr2=gr2, fn2=fn2, theta.cur=theta.cur, chd=chd)
-}
