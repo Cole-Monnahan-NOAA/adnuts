@@ -199,14 +199,16 @@ sample_admb_nuts <-
     cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
     if(!is.null(duration))
       cmd <- paste(cmd, "-duration", duration)
-    cmd <- paste(cmd, "-max_treedepth", max_td)
+    cmd <- paste(cmd, "-max_treedepth", max_td, "-adapt_delta", adapt_delta)
     if(!is.null(extra.args))
       cmd <- paste(cmd, extra.args)
     if(!is.null(seed))
       cmd <- paste(cmd, "-mcseed", seed)
-    if(!is.null(eps)){
+    if(!is.null(eps))
       cmd <- paste(cmd, "-hyeps", eps)
-    }
+    if(metric=='unit')
+      cmd <- paste(cmd, "-mcdiag")
+
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     sampler_params<- as.matrix(read.csv("adaptation.csv"))
