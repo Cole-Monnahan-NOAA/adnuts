@@ -178,8 +178,9 @@ sample_admb_nuts <-
     est <- FALSE                        # turn off est (-noest)
     if(is.null(init)){
       ## If no inits, want to use the MLE
-      stop("NULL init not supported")
+      ## warning("NULL init not supported")
       ## init <- mle$coefficients[1:mle$npar]
+      est <- TRUE
     } else if(init[1]=='mle') {
       est <- TRUE
     }
