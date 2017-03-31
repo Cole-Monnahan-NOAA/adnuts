@@ -42,7 +42,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                            duration=duration,
                            algorithm=algorithm,
                            iter=iter, init=init[[i]], warmup=warmup,
-                           seed=seeds[i], thin=thin, control=control))
+                           seed=seeds[i], thin=thin, control=control, ...))
   }
   warmup <- mcmc.out[[1]]$warmup
   par.names <- mcmc.out[[1]]$par.names
@@ -53,9 +53,10 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   } else {
     N <- iter/thin
   }
-  samples <-  array(NA, dim=c(N, chains, 1+length(par.names)),
-                    dimnames=list(NULL, NULL, c(par.names,'lp__')))
-  for(i in 1:chains){samples[,i,] <- mcmc.out[[i]]$samples[1:N,]}
+  samples <- array(NA, dim=c(N, chains, 1+length(par.names)),
+                   dimnames=list(NULL, NULL, c(par.names,'lp__')))
+  for(i in 1:chains)
+    samples[,i,] <- mcmc.out[[i]]$samples[1:N,]
   if(algorithm=="NUTS")
     sampler_params <-
       lapply(mcmc.out, function(x) x$sampler_params[1:N,])
@@ -63,29 +64,33 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
   time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
   cmd <- unlist(lapply(mcmc.out, function(x) x$cmd))
-  result <- list(samples=samples, sampler_params=sampler_params,
-                 time.warmup=time.warmup, time.total=time.total,
-                 algorithm=algorithm, warmup=warmup,
-                 model=model,
-                 max_treedepth=mcmc.out[[1]]$max_treedepth, cmd=cmd)
   if(N < warmup) warning("Duration too short to finish warmup period")
   ## When running multiple chains the psv files will either be overwritten
   ## or in different folders (if parallel is used). Thus mceval needs to be
   ## done posthoc by recombining chains AFTER thinning and warmup and
   ## discarded into a single chain, written to file, then call -mceval.
-  if(mceval){
-    ## Merge all chains together and run mceval
-    warning("This functionality is untested")
-    message("... Writing samples from all chains to psv file and running -mceval")
-    samples2 <- do.call(rbind, lapply(1:chains, function(i)
-      samples[, i, -dim(samples)[3]]))
-    write_psv(fn=model, samples=samples2, model.path=dir)
-    oldwd <- getwd()
-    setwd(dir)
-    system(paste(model, "-mceval -noest -nohess"), ignore.stdout=TRUE)
-    setwd(oldwd)
-  }
-
+  ## Merge all chains together and run mceval
+  message("... Writing samples from all chains to psv file")
+  samples2 <- do.call(rbind, lapply(1:chains, function(i)
+    samples[, i, -dim(samples)[3]]))
+  write_psv(fn=model, samples=samples2, model.path=dir)
+  ## These already exclude warmup
+  rotated <- do.call(rbind, lapply(mcmc.out, function(x) x$rotated))
+  bounded <- do.call(rbind, lapply(mcmc.out, function(x) x$bounded))
+  unbounded <- do.call(rbind, lapply(mcmc.out, function(x) x$unbounded))
+  oldwd <- getwd(); on.exit(setwd(oldwd))
+  setwd(dir)
+  write.table(unbounded, file='unbounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
+  write.table(rotated, file='rotated.csv', sep=",", col.names=FALSE, row.names=FALSE)
+  write.table(bounded, file='bounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
+  if(mceval)
+    system(paste(model, "-mceval -noest -nohess"), ignore.stdout=FALSE)
+  covar.est <- cov(unbounded)
+  result <- list(samples=samples, sampler_params=sampler_params,
+                 time.warmup=time.warmup, time.total=time.total,
+                 algorithm=algorithm, warmup=warmup,
+                 model=model, max_treedepth=mcmc.out[[1]]$max_treedepth,
+                 cmd=cmd, covar.est=covar.est)
   return(invisible(result))
 }
 
@@ -205,6 +210,10 @@ sample_admb_nuts <-
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     sampler_params<- as.matrix(read.csv("adaptation.csv"))
+    unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
+    rotated <- as.matrix(read.csv("rotated.csv", header=FALSE))
+    bounded <- as.matrix(read.csv("bounded.csv", header=FALSE))
+    dimnames(unbounded) <- dimnames(rotated) <- dimnames(bounded) <- NULL
     pars <- get_psv(model)
     if(is.null(par.names)){
       par.names <- names(pars)
@@ -219,7 +228,8 @@ sample_admb_nuts <-
     return(list(samples=pars, sampler_params=sampler_params,
                 time.total=time.total, time.warmup=time.warmup,
                 warmup=warmup, max_treedepth=max_td,
-                model=model, par.names=par.names, cmd=cmd))
+                model=model, par.names=par.names, cmd=cmd,
+                unbounded=unbounded, rotated=rotated, bounded=bounded))
   }
 
 
