@@ -157,9 +157,9 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
   ## Build the command to run the model
   cmd <- paste(model," -nohess -nuts -mcmc ",iter)
   cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
+  if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
   if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
   cmd <- paste(cmd, "-max_treedepth", max_td, "-adapt_delta", adapt_delta)
-  if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
   if(!is.null(eps)) cmd <- paste(cmd, "-hyeps", eps)
 
   ## Three options for metric. NULL (default) is to use the MLE estimates
@@ -174,23 +174,22 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
     if(!matrixcalc:::is.positive.definite(x=cor.user))
       stop("Invalid mass matrix, not positive definite")
     write.admb.cov(metric, hbf=1)
-  } else if(metric=='unit') {
-    ## Identity in unbounded space
-    cmd <- paste(cmd, "-mcdiag")
   } else if(is.null(metric)) {
     ## MLE one. Need to re-estimate model to rescale covar
     est <- TRUE
+  } else if(metric=='unit') {
+    ## Identity in unbounded space
+    cmd <- paste(cmd, "-mcdiag")
   } else {
     stop("Invalid metric option")
   }
   ## Write the starting values to file. A NULL value means to use the MLE,
   ## so need to run model
   if(!is.null(init)){
-    est <- TRUE
     cmd <- paste(cmd, "-mcpin init.pin")
     write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
   }
-  if(!est) cmd <- paste(cmd, " -noest ")
+  if(!est) cmd <- paste(cmd, "-noest ")
   if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
 
   ## Run it and get results
