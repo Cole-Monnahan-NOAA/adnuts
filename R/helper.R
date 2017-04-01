@@ -5,7 +5,7 @@
 #'   in \code{control}
 #' @export
 update_control <- function(control){
-  default <- list(adapt_delta=0.8, metric='unit', stepsize=NULL,
+  default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
                   algorithm="NUTS", adapt_engaged=TRUE,
                   max_treedepth=10)
   if(!is.null(control))
@@ -176,7 +176,7 @@ get.admb.cov <- function(model.path=getwd()){
     return(result)
 }
 
-write.admb.cov <- function(cov.unbounded, model.path=getwd()){
+write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
   temp <- file.exists(paste0(model.path, "/admodel.cov"))
   if(!temp) stop(paste0("Couldn't find file ",model.path, "/admodel.cov"))
   temp <- file.copy(from=paste0(model.path, "/admodel.cov"),
@@ -185,6 +185,7 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd()){
   setwd(model.path)
   ## Read in the output files
   results <- get.admb.cov()
+  if(is.null(hbf)) hbf=results$hybrid_bounded_flag
   scale <- results$scale
   num.pars <- results$num.pars
   if(NROW(cov.unbounded) != num.pars)
@@ -196,6 +197,6 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd()){
   on.exit(close(file.new))
   writeBin(as.integer(num.pars), con=file.new)
   writeBin(as.vector(as.numeric(cov.unbounded)), con=file.new)
-  writeBin(as.integer(results$hybrid_bounded_flag), con=file.new)
+  writeBin(as.integer(hbf), con=file.new)
   writeBin(as.vector(scale), con=file.new)
 }
