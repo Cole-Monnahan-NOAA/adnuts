@@ -211,6 +211,9 @@ sample_admb_nuts <-
     pars <- as.matrix(pars)
     ## Thin samples and adaptation post hoc for NUTS
     pars <- pars[seq(1, nrow(pars), by=thin),]
+    bounded <- bounded[seq(1, nrow(bounded), by=thin),]
+    unbounded <- unbounded[seq(1, nrow(unbounded), by=thin),]
+    rotated <- rotated[seq(1, nrow(rotated), by=thin),]
     sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
     time.total <- time; time.warmup <- NA
     warmup <- warmup/thin
