@@ -136,93 +136,88 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
 #'   and object of class 'admb', read in using the results read
 #'   in using \code{read_admb}, and (3) some MCMC convergence
 #'   diagnostics using CODA.
-sample_admb_nuts <-
-  function(dir, model, iter, thin, warmup, duration=NULL,
-           init=NULL,  chain=1, par.names=NULL, seed=NULL, control=NULL,
-           verbose=TRUE, extra.args=NULL){
-    wd.old <- getwd(); on.exit(setwd(wd.old))
-    setwd(dir)
-    ## Now contains all required NUTS arguments
-    control <- adnuts:::update_control(control)
-    eps <- control$stepsize
-    metric <- control$metric
-    stopifnot(iter >= 1)
-    stopifnot(warmup <= iter)
-    stopifnot(duration > 0)
-    stopifnot(thin >=1)
-    if(is.null(warmup)) stop("Must provide warmup")
-    if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
-    max_td <- control$max_treedepth
-    adapt_delta <- control$adapt_delta
+sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
+                             init=NULL,  chain=1, par.names=NULL, seed=NULL, control=NULL,
+                             verbose=TRUE, extra.args=NULL){
+  wd.old <- getwd(); on.exit(setwd(wd.old))
+  setwd(dir)
+  ## Now contains all required NUTS arguments
+  control <- adnuts:::update_control(control)
+  eps <- control$stepsize
+  metric <- control$metric
+  stopifnot(iter >= 1)
+  stopifnot(warmup <= iter)
+  stopifnot(duration > 0)
+  stopifnot(thin >=1)
+  if(is.null(warmup)) stop("Must provide warmup")
+  if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
+  max_td <- control$max_treedepth
+  adapt_delta <- control$adapt_delta
 
-    ## Build the command to run the model
-    cmd <- paste(model," -nohess -nuts -mcmc ",iter)
-    cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
-    if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
-    cmd <- paste(cmd, "-max_treedepth", max_td, "-adapt_delta", adapt_delta)
-    if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
-    if(!is.null(eps)) cmd <- paste(cmd, "-hyeps", eps)
+  ## Build the command to run the model
+  cmd <- paste(model," -nohess -nuts -mcmc ",iter)
+  cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
+  if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
+  cmd <- paste(cmd, "-max_treedepth", max_td, "-adapt_delta", adapt_delta)
+  if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
+  if(!is.null(eps)) cmd <- paste(cmd, "-hyeps", eps)
 
-    ## Three options for metric. NULL (default) is to use the MLE estimates
-    ## in admodel.cov. These need to be rescaled (see below), which means
-    ## the model needs to be re-estimated. If a matrix is passed, this is
-    ## written to file and no scaling is done. Option 'unit' means
-    ## identity. Note: these are all in unbounded space.
-    if(is.matrix(metric)){
-      ## User defined one will be writen to admodel.cov
-      cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
-      if(!matrixcalc:::is.positive.definite(x=cor.user))
-        stop("Invalid mass matrix, not positive definite")
-      write.admb.cov(metric, hbf=1)
-      est <- FALSE
-    } else if(metric=='unit') {
-      ## Identity in unbounded space
-      cmd <- paste(cmd, "-mcdiag")
-      est <- FALSE
-    } else if(is.null(metric)) {
-      ## MLE one. Need to re-estimate model to rescale covar
-      covar <- NULL
-      est <- TRUE
-    } else {
-      stop("Invalid metric option")
-    }
-    ## Write the starting values to file. Forcing user to specify them this
-    ## way to facilitate diffuse initial points.
-    if(is.null(init)){
-      ## If no inits, want to use the MLE
-      est <- TRUE
-    } else {
-      cmd <- paste(cmd, "-mcpin init.pin")
-    }
-    write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
-    if(!est) cmd <- paste(cmd, " -noest ")
-    if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
-
-    ## Run it and get results
-    time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
-    sampler_params<- as.matrix(read.csv("adaptation.csv"))
-    unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
-    rotated <- as.matrix(read.csv("rotated.csv", header=FALSE))
-    bounded <- as.matrix(read.csv("bounded.csv", header=FALSE))
-    dimnames(unbounded) <- dimnames(rotated) <- dimnames(bounded) <- NULL
-    pars <- get_psv(model)
-    if(is.null(par.names)) par.names <- names(pars)
-    pars[,'log-posterior'] <- sampler_params[,'energy__']
-    pars <- as.matrix(pars)
-    ## Thin samples and adaptation post hoc for NUTS
-    pars <- pars[seq(1, nrow(pars), by=thin),]
-    bounded <- bounded[seq(1, nrow(bounded), by=thin),]
-    unbounded <- unbounded[seq(1, nrow(unbounded), by=thin),]
-    rotated <- rotated[seq(1, nrow(rotated), by=thin),]
-    sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
-    time.total <- time; time.warmup <- NA
-    warmup <- warmup/thin
-    return(list(samples=pars, sampler_params=sampler_params,
-                time.total=time.total, time.warmup=time.warmup,
-                warmup=warmup, max_treedepth=max_td,
-                model=model, par.names=par.names, cmd=cmd,
-                unbounded=unbounded, rotated=rotated, bounded=bounded))
+  ## Three options for metric. NULL (default) is to use the MLE estimates
+  ## in admodel.cov. These need to be rescaled (see below), which means
+  ## the model needs to be re-estimated. If a matrix is passed, this is
+  ## written to file and no scaling is done. Option 'unit' means
+  ## identity. Note: these are all in unbounded space.
+  est <- FALSE
+  if(is.matrix(metric)){
+    ## User defined one will be writen to admodel.cov
+    cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
+    if(!matrixcalc:::is.positive.definite(x=cor.user))
+      stop("Invalid mass matrix, not positive definite")
+    write.admb.cov(metric, hbf=1)
+  } else if(metric=='unit') {
+    ## Identity in unbounded space
+    cmd <- paste(cmd, "-mcdiag")
+  } else if(is.null(metric)) {
+    ## MLE one. Need to re-estimate model to rescale covar
+    est <- TRUE
+  } else {
+    stop("Invalid metric option")
   }
+  ## Write the starting values to file. A NULL value means to use the MLE,
+  ## so need to run model
+  if(!is.null(init)){
+    est <- TRUE
+    cmd <- paste(cmd, "-mcpin init.pin")
+    write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
+  }
+  if(!est) cmd <- paste(cmd, " -noest ")
+  if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
+
+  ## Run it and get results
+  time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
+  sampler_params<- as.matrix(read.csv("adaptation.csv"))
+  unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
+  rotated <- as.matrix(read.csv("rotated.csv", header=FALSE))
+  bounded <- as.matrix(read.csv("bounded.csv", header=FALSE))
+  dimnames(unbounded) <- dimnames(rotated) <- dimnames(bounded) <- NULL
+  pars <- get_psv(model)
+  if(is.null(par.names)) par.names <- names(pars)
+  pars[,'log-posterior'] <- sampler_params[,'energy__']
+  pars <- as.matrix(pars)
+  ## Thin samples and adaptation post hoc for NUTS
+  pars <- pars[seq(1, nrow(pars), by=thin),]
+  bounded <- bounded[seq(1, nrow(bounded), by=thin),]
+  unbounded <- unbounded[seq(1, nrow(unbounded), by=thin),]
+  rotated <- rotated[seq(1, nrow(rotated), by=thin),]
+  sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
+  time.total <- time; time.warmup <- NA
+  warmup <- warmup/thin
+  return(list(samples=pars, sampler_params=sampler_params,
+              time.total=time.total, time.warmup=time.warmup,
+              warmup=warmup, max_treedepth=max_td,
+              model=model, par.names=par.names, cmd=cmd,
+              unbounded=unbounded, rotated=rotated, bounded=bounded))
+}
 
 
 get_psv <- function(model){
