@@ -4,10 +4,9 @@
 sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                         thin=1, dir=getwd(), mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
-                        ...){
+                        algorithm="NUTS", ...){
   ## Argument checking and processing
   control <- adnuts:::update_control(control)
-  algorithm <- control$algorithm
   if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM')))
     stop("Invalid algorithm specified")
@@ -307,6 +306,10 @@ sample_admb_rwm <-
     if(is.null(par.names)){
       par.names <- names(pars)
     }
+    unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
+    rotated <- as.matrix(read.csv("rotated.csv", header=FALSE))
+    bounded <- as.matrix(read.csv("bounded.csv", header=FALSE))
+    dimnames(unbounded) <- dimnames(rotated) <- dimnames(bounded) <- NULL
     lp <- as.vector(read.table('rwm_lp.txt', header=TRUE)[,1])
     pars[,'log-posterior'] <- lp
     pars <- as.matrix(pars)
@@ -314,9 +317,8 @@ sample_admb_rwm <-
     ## it here
     warmup <- warmup/thin
     time.total <- time; time.warmup <- NA
-    return(list(samples=pars, sampler_params=NULL,
-                time.total=time.total,
-                time.warmup=time.warmup,
-                warmup=warmup,  model=model,
-                par.names=par.names, cmd=cmd))
+    return(list(samples=pars, sampler_params=NULL, time.total=time.total,
+                time.warmup=time.warmup, warmup=warmup,  model=model,
+                par.names=par.names, cmd=cmd, unbounded=unbounded,
+                rotated=rotated, bounded=bounded))
   }
