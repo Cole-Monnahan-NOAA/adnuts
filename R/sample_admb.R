@@ -237,88 +237,80 @@ get_psv <- function(model){
 }
 
 
-
 sample_admb_rwm <-
   function(dir, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL,  chain=1, seed=NULL, control=NULL, par.names=NULL,
            verbose=TRUE, extra.args=NULL, duration=NULL,
            mceval=TRUE){
     wd.old <- getwd(); on.exit(setwd(wd.old))
-    setwd(dir) ## Now contains all required NUTS arguments
+    setwd(dir)
+    ## Now contains all required NUTS arguments
     control <- update_control(control)
     metric <- control$metric
-    if(is.matrix(metric)){
-      covar <- metric
-    } else {
-      ## stop("Only allowed to pass covar matrix as metric")
-      covar <- NULL
-    }
+    stopifnot(iter >= 1)
+    stopifnot(warmup <= iter)
+    stopifnot(duration > 0)
+    stopifnot(thin >=1)
     if(is.null(warmup)) stop("Must provide warmup")
     if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
-    ## Grab original admb fit and metrics
-    if(iter <1)
-      stop("Iterations must be >1")
-    if(!file.exists(paste0(model,'.par'))) {
-      system(paste("admb", model))
-      system(paste(model))
-    }
-    ## If user provided covar matrix, write it to file and save to
-    ## results
-    ## mle <- R2admb::read_admb(model, verbose=TRUE)
-    if(!is.null(covar)){
-      cor.user <- covar/ sqrt(diag(covar) %o% diag(covar))
-      if(!matrixcalc:::is.positive.definite(x=cor.user))
-        stop("Invalid covar matrix, not positive definite")
-      write.admb.cov(covar)
-      ##  mle$covar <- covar
-    }
-    ## Write the starting values to file. Always using a init file b/c need
-    ## to use -nohess -noest so that the covar can be specified and not
-    ## overwritten. HOwever, this feature then starts the mcmc chain from
-    ## the initial values instead of the MLEs. So let the user specify the
-    ## init values, or specify the MLEs manually
-    est <- FALSE
-    if(is.null(init)){
-      init <- mle$coefficients[1:mle$npar]
-    } else if(init[1]=='mle') {
-      est <- TRUE
-    }
-    write.table(file="init.pin", x=init, row.names=F, col.names=F)
-    ## Separate the options by algorithm, first doing the shared
-    ## arguments
-    cmd <- model
-    if(!est)
-      cmd <- paste(cmd, " -noest -mcpin init.pin")
-    cmd <- paste(cmd," -nohess -mcmc ",iter,  "-mcscale", warmup)
+    ## Build the command to run the model
+    cmd <- paste(model," -nohess -mcmc ",iter)
+    cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
+    if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
+    if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
     cmd <- paste(cmd, "-nosdmcmc -mcsave", thin)
-    if(!is.null(duration))
-      cmd <- paste(cmd, "-duration", duration)
-    if(!is.null(extra.args))
-      cmd <- paste(cmd, extra.args)
-    if(!is.null(seed))
-      cmd <- paste(cmd, "-mcseed", seed)
+
+    ## Three options for metric. NULL (default) is to use the MLE estimates
+    ## in admodel.cov. These need to be rescaled (see below), which means
+    ## the model needs to be re-estimated. If a matrix is passed, this is
+    ## written to file and no scaling is done. Option 'unit' means
+    ## identity. Note: these are all in unbounded space.
+    est <- FALSE
+    if(is.matrix(metric)){
+      ## User defined one will be writen to admodel.cov
+      cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
+      if(!matrixcalc:::is.positive.definite(x=cor.user))
+        stop("Invalid mass matrix, not positive definite")
+      write.admb.cov(metric)
+    } else if(is.null(metric)) {
+      ## MLE one. Need to re-estimate model to rescale covar
+      est <- TRUE
+    } else if(metric=='unit') {
+      ## Identity in unbounded space
+      cmd <- paste(cmd, "-mcdiag")
+    } else {
+      stop("Invalid metric option")
+    }
+    ## Write the starting values to file. A NULL value means to use the MLE,
+    ## so need to run model
+    if(!is.null(init)){
+      cmd <- paste(cmd, "-mcpin init.pin")
+      write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
+    }
+    if(!est) cmd <- paste(cmd, "-noest ")
+    if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
+
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
-    if(mceval) system(paste(model, "-mceval -noest -nohess"),
-                      ignore.stdout=!verbose)
-    pars <- get_psv(model)
-    if(is.null(par.names)){
-      par.names <- names(pars)
-    }
     unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
     rotated <- as.matrix(read.csv("rotated.csv", header=FALSE))
     bounded <- as.matrix(read.csv("bounded.csv", header=FALSE))
     dimnames(unbounded) <- dimnames(rotated) <- dimnames(bounded) <- NULL
+    pars <- get_psv(model)
+    if(is.null(par.names))  par.names <- names(pars)
     lp <- as.vector(read.table('rwm_lp.txt', header=TRUE)[,1])
     pars[,'log-posterior'] <- lp
     pars <- as.matrix(pars)
     ## Thinning is done interally for RWM (via -mcsave) so don't need to do
     ## it here
-    warmup <- warmup/thin
     time.total <- time; time.warmup <- NA
+    warmup <- warmup/thin
     return(list(samples=pars, sampler_params=NULL, time.total=time.total,
                 time.warmup=time.warmup, warmup=warmup,  model=model,
                 par.names=par.names, cmd=cmd, unbounded=unbounded,
                 rotated=rotated, bounded=bounded))
   }
+
+
+
