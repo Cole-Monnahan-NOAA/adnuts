@@ -124,7 +124,7 @@ launch_shinyadmb <- function(fit){
 #'   parameter, each row a sample.
 write_psv <- function(fn, samples, model.path=getwd()){
   samples <- as.matrix(samples)
-  psv <- file.path(getwd(), paste0(fn, '.psv'))
+  psv <- file.path(model.path, paste0(fn, '.psv'))
   con <- file(psv, 'wb')
   writeBin(object=ncol(samples), con=con)
   writeBin(object=as.vector(t(samples)), con=con)

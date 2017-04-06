@@ -274,8 +274,8 @@ sample_admb_rwm <-
         stop("Invalid mass matrix, not positive definite")
       write.admb.cov(metric)
     } else if(is.null(metric)) {
-      ## MLE one. Need to re-estimate model to rescale covar
-      est <- TRUE
+      ## MLE one. Should not need to re-estimate model to rescale covar
+      est <- FALSE
     } else if(metric=='unit') {
       ## Identity in unbounded space
       cmd <- paste(cmd, "-mcdiag")
