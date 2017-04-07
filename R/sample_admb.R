@@ -70,7 +70,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   ## done posthoc by recombining chains AFTER thinning and warmup and
   ## discarded into a single chain, written to file, then call -mceval.
   ## Merge all chains together and run mceval
-  message("... Writing samples from all chains to psv file")
+  message(paste("... Merging chains into main folder:", dir))
   samples2 <- do.call(rbind, lapply(1:chains, function(i)
     samples[, i, -dim(samples)[3]]))
   write_psv(fn=model, samples=samples2, model.path=dir)
@@ -83,10 +83,16 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   write.table(unbounded, file='unbounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
   write.table(rotated, file='rotated.csv', sep=",", col.names=FALSE, row.names=FALSE)
   write.table(bounded, file='bounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
-  if(mceval)
+  if(mceval){
+    messsage("... Running -mceval on merged chains")
     system(paste(model, "-mceval -noest -nohess"), ignore.stdout=FALSE)
+  }
+  message("... Calculating ESS and Rhat")
+  temp <- (rstan::monitor(samples, warmup=warmup, probs=.5, print=FALSE))
+  Rhat <- temp[,6]; ess <- temp[,5]
   covar.est <- cov(unbounded)
   result <- list(samples=samples, sampler_params=sampler_params,
+                 ess=ess, Rhat=Rhat,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
                  model=model, max_treedepth=mcmc.out[[1]]$max_treedepth,
