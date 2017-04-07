@@ -321,3 +321,54 @@ pairs_admb <- function(posterior, mle, diag=c("acf","hist", "trace"),
     }
   }
 }
+
+#' Read maximum likelihood fit for ADMB model
+#'
+#' @param model
+#' @return A list containing, MLE estimates, standard errors, covariance
+#'   and correlation matrices, and other output from ADMB.
+#' @details This is based loosely off read.admbFit from r4ss.
+#'
+read_mle_fit <- function(model, path=getwd()){
+  oldwd <- getwd(); on.exit(setwd(oldwd))
+  setwd(path)
+  ## Sequentially read .par file which contains model size, minimum NLL,
+  ## and maxgrad at the top
+  par <- as.numeric(scan(paste(model,'.par', sep=''),
+    what='', n=16, quiet=TRUE)[c(6,11,16)])
+  nopar <- as.integer(par[1])
+  nll <- par[2] #objective function value
+  maxgrad <- par[3]
+
+  ## The .cor file contains parameter (and derived quantity) names,
+  ## estimates, and se's. This is more convenient to read in than the .par
+  ## file.
+  file <- paste(model,'.cor', sep='')
+  xx <- readLines(file)
+  ## Total parameter including sdreport variables
+  totPar <- length(xx)-2
+  ## Log of the determinant of the hessian
+  logDetHess <- as.numeric(strsplit(xx[1], '=')[[1]][2])
+  sublin <- lapply(strsplit(xx[1:totPar+2], ' '),function(x)x[x!=''])
+  names.all <- unlist(lapply(sublin,function(x)x[2]))
+  names.all <- as.vector(do.call(c, sapply(unique(names.all), function(n){
+    x <- names.all[names.all==n]
+    if(length(x)==1) return(x)
+    paste0(x, '[',1:length(x),']')
+    })))
+
+  est <- as.numeric(unlist(lapply(sublin,function(x)x[3])))
+  std <- as.numeric(unlist(lapply(sublin,function(x)x[4])))
+  ## The correlation in the bounded space.
+  cor <- matrix(NA, totPar, totPar)
+  corvec <- unlist(sapply(1:length(sublin), function(i)sublin[[i]][5:(4+i)]))
+  cor[upper.tri(cor, diag=TRUE)] <- as.numeric(corvec)
+  cor[lower.tri(cor)]  <-  t(cor)[lower.tri(cor)]
+  ## Covariance matrix
+  cov <- cor*(std %o% std)
+  result <- list(nopar=nopar, nll=nll, maxgrad=maxgrad,
+                 par.names=names.all[1:nopar],
+                 names.all=names.all,
+                 est=est, se=std, cor=cor, cov=cov)
+  return(result)
+}

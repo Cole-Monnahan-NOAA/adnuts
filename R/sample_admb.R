@@ -21,6 +21,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   ## Delete any psv files in case something goes wrong we dont use old
   ## values by accident
   trash <- file.remove(list.files()[grep('.psv', x=list.files())])
+  mle <- read_mle_fit(model=model, path=dir)
   ## Run in serial
   if(!parallel){
     if(algorithm=="NUTS"){
@@ -44,7 +45,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                            seed=seeds[i], thin=thin, control=control, ...))
   }
   warmup <- mcmc.out[[1]]$warmup
-  par.names <- mcmc.out[[1]]$par.names
+  par.names <- mle$par.names
   iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
   if(any(iters!=iter/thin)){
     N <- min(iters)
@@ -89,7 +90,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
                  model=model, max_treedepth=mcmc.out[[1]]$max_treedepth,
-                 cmd=cmd, covar.est=covar.est)
+                 cmd=cmd, covar.est=covar.est, mle=mle)
   return(invisible(result))
 }
 
