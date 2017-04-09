@@ -94,17 +94,41 @@ launch_shinytmb <- function(fit){
 #' @param inc_warmup Whether to extract the warmup samples or not
 #'   (default). Warmup samples should never be used for inference, but may
 #'   be useful for diagnostics.
+#' @param inc_lp Whether to drop the column of log posterior density (last
+#'   column). For diagnostics it should be included.
 #' @return An invisible data.frame containing samples (rows) of each
 #'   parameter (columns). If multiple chains exist they will be rbinded
 #'   together.
 #' @export
-extract_samples <- function(fit.tmb, inc_warmup=FALSE){
+extract_samples <- function(fit.tmb, inc_warmup=FALSE, inc_lp=FALSE){
   x <- fit.tmb$samples
   if(!is.array(x)) stop("fit.tmb$samples is not an array -- valid TMB output?")
   ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit.tmb$warmup)
+  ## Drop LP
+  if(inc_lp){
+  y <- do.call(rbind, lapply(1:dim(x)[2], function(i) x[ind, i,]))
+  } else {
   y <- do.call(rbind, lapply(1:dim(x)[2], function(i) x[ind, i, -dim(x)[3]]))
+  }
   return(invisible(as.data.frame(y)))
 }
+
+#' @param fit A list returned by \code{\link{run_mcmc}}.
+#' @param inc_warmup Whether to extract the warmup samples or not
+#'   (default). Warmup samples should never be used for inference, but may
+#'   be useful for diagnostics.
+#' @return An invisible data.frame containing samples (rows) of each
+#'   parameter (columns). If multiple chains exist they will be rbinded
+#'   together.
+#' @export
+extract_sampler_params <- function(fit, inc_warmup=FALSE){
+  x <- fit$sampler_params
+  if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid output?")
+  ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
+  y <- do.call(rbind, lapply(1:length(x), function(i) x[[i]][ind,]))
+  return(invisible(as.data.frame(y)))
+}
+
 
 #' A high level wrapper to launch shinystan for a ADMB fit.
 #'
@@ -183,44 +207,60 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
 #' properties.
 #'
 #' @param posterior Dataframe containing the MCMC output, as read in using
-#' function \link{\code{run.mcmc}}
+#'   function \link{\code{run.mcmc}}
 #' @param mle A list as read in by \code{\link{r4ss::read.admbFit}}. It
-#' uses the parameter estimates and covariance and correlation matrices as
-#' estimated asymptotically.
+#'   uses the parameter estimates and covariance and correlation matrices
+#'   as estimated asymptotically.
 #' @param diag What type of plot to include on the diagonal, options are
-#' 'acf' which plots the autocorrelation function \code{acf}, 'hist' shows
-#' marginal posterior histograms, and 'trace' the trace plot.
-#' @param which.keep A vector of integers representing which parameters to
-#' subset. Useful if the model has a larger number of parameters and you
-#' just want to show a few.
+#'   'acf' which plots the autocorrelation function \code{acf}, 'hist'
+#'   shows marginal posterior histograms, and 'trace' the trace plot.
+#' @param pars A vector of parameter names or integers representing which
+#'   parameters to subset. Useful if the model has a larger number of
+#'   parameters and you just want to show a few key ones.
 #' @param acf.ylim If using the acf function on the diagonal, specify the y
-#' limit. The default is c(-1,1).
-#' @param ymult A vector of length ncol(posterior) specifying how much room to
-#' give when using the hist option for the diagonal. For use if the label
-#' is blocking part of the plot. The default is 1.3 for all parameters.
+#'   limit. The default is c(-1,1).
+#' @param ymult A vector of length ncol(posterior) specifying how much room
+#'   to give when using the hist option for the diagonal. For use if the
+#'   label is blocking part of the plot. The default is 1.3 for all
+#'   parameters.
 #' @param limits A list containing the ranges for each parameter to use in
-#' plotting.
+#'   plotting.
 #' @return Produces a plot, and returns nothing.
 #' @author Cole Monnahan
 #' @export
-pairs_admb <- function(posterior, mle, diag=c("acf","hist", "trace"),
+pairs_admb <- function(posterior, mle, divergences=NULL, diag=c("acf","hist", "trace"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
-                       which.keep=NULL,label.cex=.5, limits=NULL, ...){
+                       pars=NULL,label.cex=.5, limits=NULL, ...){
   ## reset to old par when exiting
   old.par <- par(no.readonly=TRUE)
   on.exit(par(old.par))
   diag <- match.arg(diag)
-  if(NCOL(posterior) != mle$nopar)
+  if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
     stop("Number of parameters in posterior and mle not the same")
   ## subset parameters down in case too many
-  if(is.null(which.keep)) which.keep <- 1:NCOL(posterior)
-  par.names <- mle$names[which.keep]
+  if(is.null(pars)){
+    if(NCOL(posterior)>50){
+      warning("Only showing first 50 parameters, use 'pars' argument to adjust")
+      pars <- 1:50
+    } else {
+      pars <- 1:NCOL(posterior)
+    }
+  } else if(is.character(pars[1])){
+    if("lp__" %in% pars){warning("lp__ dropped for now"); pars <- pars[pars!='lp__']}
+    pars <- match(x=pars, table=names(posterior))
+    if(any(is.na(pars))){
+      warning("Some par names did not match -- dropped")
+      pars <- pars[!is.na(pars)]
+    }
+  }
+  ## pars is now vector of column indices, so use it to subset.
+  par.names <- mle$names[pars]
   n <- length(par.names)
   if(n==1) stop("This function is only meaningful for >1 parameter")
-  mle.par <- mle$est[which.keep]
-  mle.se <- mle$std[which.keep]
-  mle.cor <- mle$cor[which.keep, which.keep]
-  posterior <- posterior[,which.keep]
+  mle.par <- mle$est[pars]
+  mle.se <- mle$se[pars]
+  mle.cor <- mle$cor[pars, pars]
+  posterior <- posterior[,pars]
   if(is.null(ymult)) ymult <- rep(1.3, n)
   ## If no limits given, calculate the max range of the posterior samples and
   ## parameter confidence interval
@@ -236,6 +276,18 @@ pairs_admb <- function(posterior, mle, diag=c("acf","hist", "trace"),
       limits[[i]] <- c(min.temp-margin, max.temp+margin)
     }
   }
+  ## Change posterior point look depending on how many samples. Makes
+  ## easier to read.
+  N <- NROW(posterior)
+  mypch <- 16; mycol <- 1
+  if(N>=1000){
+    mycol <- rgb(0,0,0,.5)
+  } else if(N>=10000){
+    mycol <- rgb(0,0,0,.05)
+  }
+  if(is.null(divergences)) divergences <- rep(0, N)
+  cexs <- ifelse(divergences, .25, .1)
+  cols <- ifelse(divergences, rgb(1,0,0), mycol)
   par(mfrow=c(n,n), mar=0*c(.1,.1,.1,.1), yaxs="i", xaxs="i", mgp=c(.25, .25,0),
       tck=-.02, cex.axis=.65, col.axis=axis.col, oma=c(2, 2, 2,.5))
   temp.box <- function() box(col=axis.col, lwd=.5)
@@ -270,14 +322,12 @@ pairs_admb <- function(posterior, mle, diag=c("acf","hist", "trace"),
                ann=F, ylim=limits[[row]])
           temp.box()
         }
-        mtext(par.names[row], line=-2, cex=label.cex)
       }
       ## If lower triangle add scatterplot
       if(row>col){
         par(xaxs="r", yaxs="r")
         plot(x=posterior[,col], y=posterior[,row], axes=FALSE, ann=FALSE,
-             pch=ifelse(NROW(posterior)>=5000,".", 1),
-             xlim=limits[[col]], ylim=limits[[row]], ...)
+             pch=mypch, cex=cexs, col=cols, xlim=limits[[col]], ylim=limits[[row]], ...)
         ## Add bivariate 95% normal levels for both the MLE
         ## estimated covariance, but also the user supplied cov.user
         points(x=mle.par[col], y=mle.par[row],
@@ -317,7 +367,7 @@ pairs_admb <- function(posterior, mle, diag=c("acf","hist", "trace"),
         par( mgp=c(.05, ifelse(row %% 2 ==1, .15, .65),0) )
         axis(2, col=axis.col, lwd=.5)
       }
-
+      if(row==1) mtext(par.names[col], line=.1, cex=label.cex)
     }
   }
 }
