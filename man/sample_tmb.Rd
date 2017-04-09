@@ -18,6 +18,27 @@ initialize multiple chains from dispersed points. A of NULL signifies
 to use the starting values present in the model (i.e., \code{obj$par})
 for all chains.}
 
+\item{control}{A list to control the sampler. Elements are
+\itemize{
+\item{"adapt_delta"}{The target acceptance rate.}
+\item{"metric"}{ The mass metric to use. Options are:}
+\itemize{
+\item{"unit"}{ for a unit diagonal matrix}
+\item{"diag"}{to estimate a diagonal matrix during warmup}
+\item{"matrix"} a matrix to be used directly (in untransformed space). For
+  instance from the MLE Hessian.
+}
+\item{"algorithm"}{ A string specifiying an algorithm. Currently supported
+  are: \itemize{ \item{"RWM"}{the random walk Metropolis sampler}
+  \item{"HMC"}{the static HMC sampler}
+  \item{"NUTS"}{the No-U-Turn sampler} }
+  These algorithms require different arguments; see their help files for
+  more information.}
+}
+\item{"adapt_engaged"}{Whether adaptation of step size and metric is turned on}
+\item{"thin"}{Thin The thinning rate to apply to samples. The default of 1
+ is almost always best.}}
+
 \item{...}{Further arguments to be passed to the algorithm. See help
 files for the samplers for further arguments.}
 }

@@ -22,7 +22,7 @@
 #' @param control A list to control the sampler. Elements are
 #' \itemize{
 #' \item{"adapt_delta"}{The target acceptance rate.}
-#' \item{"metric"}{ The mass metric to use. Options are
+#' \item{"metric"}{ The mass metric to use. Options are:}
 #' \itemize{
 #' \item{"unit"}{ for a unit diagonal matrix}
 #' \item{"diag"}{to estimate a diagonal matrix during warmup}

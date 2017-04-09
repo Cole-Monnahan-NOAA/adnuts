@@ -22,7 +22,7 @@ update_control <- function(control){
 #' @return Nothing. Prints to message to console.
 #'
 #' @details This function was modeled after the functionality provided by
-# the R package \link{rstan}.
+#' the R package \link{rstan}.
 .print.mcmc.progress <- function(iteration, iter, warmup, chain){
   i <- iteration
   refresh <- max(10, floor(iter/10))
@@ -324,7 +324,7 @@ pairs_admb <- function(posterior, mle, diag=c("acf","hist", "trace"),
 
 #' Read maximum likelihood fit for ADMB model
 #'
-#' @param model
+#' @param model Model name
 #' @return A list containing, MLE estimates, standard errors, covariance
 #'   and correlation matrices, and other output from ADMB.
 #' @details This is based loosely off read.admbFit from r4ss.
