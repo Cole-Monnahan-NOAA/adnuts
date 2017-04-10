@@ -237,8 +237,11 @@ pairs_admb <- function(posterior, mle, divergences=NULL, diag=c("acf","hist", "t
   diag <- match.arg(diag)
   if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
     stop("Number of parameters in posterior and mle not the same")
-  ## subset parameters down in case too many
+  ## pars will either be NULL, so use all parameters. OR a vector of
+  ## indices OR a vector of characters. Want to force lp__ to be the very
+  ## last one stylistically, and b/c there is no ellipse for it.
   if(is.null(pars)){
+    ## Use all or first 50
     if(NCOL(posterior)>50){
       warning("Only showing first 50 parameters, use 'pars' argument to adjust")
       pars <- 1:50
@@ -246,20 +249,27 @@ pairs_admb <- function(posterior, mle, divergences=NULL, diag=c("acf","hist", "t
       pars <- 1:NCOL(posterior)
     }
   } else if(is.character(pars[1])){
-    if("lp__" %in% pars){warning("lp__ dropped for now"); pars <- pars[pars!='lp__']}
+    ## Drop lp__ here and force below to be the very last column
+    pars <- pars[pars!='lp__']
     pars <- match(x=pars, table=names(posterior))
     if(any(is.na(pars))){
       warning("Some par names did not match -- dropped")
       pars <- pars[!is.na(pars)]
     }
   }
-  ## pars is now vector of column indices, so use it to subset.
+  ## pars is now vector of column indices of the parameters, so get the
+  ## pieces needed.
+  lp <- which(names(posterior)=='lp__')
+  pars <- pars[pars!=lp]
   par.names <- mle$names[pars]
-  n <- length(par.names)
-  if(n==1) stop("This function is only meaningful for >1 parameter")
   mle.par <- mle$est[pars]
   mle.se <- mle$se[pars]
   mle.cor <- mle$cor[pars, pars]
+  ## Now force log density to be last one.
+  pars <- c(pars, lp)
+  par.names <- c(par.names, 'log-density')
+  n <- length(pars)
+  if(n==1) stop("This function is only meaningful for >1 parameter")
   posterior <- posterior[,pars]
   if(is.null(ymult)) ymult <- rep(1.3, n)
   ## If no limits given, calculate the max range of the posterior samples and
@@ -267,7 +277,7 @@ pairs_admb <- function(posterior, mle, divergences=NULL, diag=c("acf","hist", "t
   if(is.null(limits)){
     limits <- list()
     for(i in 1:n){
-      limit.temp <- mle.par[i]+c(-1,1)*1.96*mle.se[i]
+      limit.temp <- if(i==n) NULL else mle.par[i]+c(-1,1)*1.96*mle.se[i]
       ## multiplier for the ranges, adjusts the whitespace around the
       ## plots
       min.temp <- min(posterior[,i], limit.temp[1])
@@ -328,16 +338,18 @@ pairs_admb <- function(posterior, mle, divergences=NULL, diag=c("acf","hist", "t
         par(xaxs="r", yaxs="r")
         plot(x=posterior[,col], y=posterior[,row], axes=FALSE, ann=FALSE,
              pch=mypch, cex=cexs, col=cols, xlim=limits[[col]], ylim=limits[[row]], ...)
-        ## Add bivariate 95% normal levels for both the MLE
-        ## estimated covariance, but also the user supplied cov.user
-        points(x=mle.par[col], y=mle.par[row],
-               pch=16, cex=.1, col=2)
-        ## Get points of a bivariate normal 95% confidence contour
-        ellipse.temp <- ellipse::ellipse(x=mle.cor[col, row],
-                                         scale=mle.se[c(col, row)],
-                                         centre= mle.par[c(col, row)], npoints=1000,
-                                         level=.95)
-        lines(ellipse.temp , lwd=1.5, lty=1, col="red")
+        if(row != n){
+          ## Add bivariate 95% normal levels for both the MLE
+          ## estimated covariance, but also the user supplied cov.user
+          points(x=mle.par[col], y=mle.par[row],
+                 pch=16, cex=.1, col=2)
+          ## Get points of a bivariate normal 95% confidence contour
+          ellipse.temp <- ellipse::ellipse(x=mle.cor[col, row],
+                                           scale=mle.se[c(col, row)],
+                                           centre= mle.par[c(col, row)], npoints=1000,
+                                           level=.95)
+          lines(ellipse.temp , lwd=1.5, lty=1, col="red")
+        }
         par(xaxs="i", yaxs="i")
         temp.box()
       }
