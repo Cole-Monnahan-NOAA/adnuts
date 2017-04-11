@@ -4,32 +4,33 @@
 \alias{pairs_admb}
 \title{Plot pairs for MCMC output from an ADMB model.}
 \usage{
-pairs_admb(posterior, mle, diag = c("acf", "hist", "trace"),
-  acf.ylim = c(-1, 1), ymult = NULL, axis.col = gray(0.5),
-  which.keep = NULL, label.cex = 0.5, limits = NULL, ...)
+pairs_admb(posterior, mle, divergences = NULL, diag = c("acf", "hist",
+  "trace"), acf.ylim = c(-1, 1), ymult = NULL, axis.col = gray(0.5),
+  pars = NULL, label.cex = 0.5, limits = NULL, ...)
 }
 \arguments{
 \item{posterior}{Dataframe containing the MCMC output, as read in using
 function \link{\code{run.mcmc}}}
 
 \item{mle}{A list as read in by \code{\link{r4ss::read.admbFit}}. It
-uses the parameter estimates and covariance and correlation matrices as
-estimated asymptotically.}
+uses the parameter estimates and covariance and correlation matrices
+as estimated asymptotically.}
 
 \item{diag}{What type of plot to include on the diagonal, options are
-'acf' which plots the autocorrelation function \code{acf}, 'hist' shows
-marginal posterior histograms, and 'trace' the trace plot.}
+'acf' which plots the autocorrelation function \code{acf}, 'hist'
+shows marginal posterior histograms, and 'trace' the trace plot.}
 
 \item{acf.ylim}{If using the acf function on the diagonal, specify the y
 limit. The default is c(-1,1).}
 
-\item{ymult}{A vector of length ncol(posterior) specifying how much room to
-give when using the hist option for the diagonal. For use if the label
-is blocking part of the plot. The default is 1.3 for all parameters.}
+\item{ymult}{A vector of length ncol(posterior) specifying how much room
+to give when using the hist option for the diagonal. For use if the
+label is blocking part of the plot. The default is 1.3 for all
+parameters.}
 
-\item{which.keep}{A vector of integers representing which parameters to
-subset. Useful if the model has a larger number of parameters and you
-just want to show a few.}
+\item{pars}{A vector of parameter names or integers representing which
+parameters to subset. Useful if the model has a larger number of
+parameters and you just want to show a few key ones.}
 
 \item{limits}{A list containing the ranges for each parameter to use in
 plotting.}

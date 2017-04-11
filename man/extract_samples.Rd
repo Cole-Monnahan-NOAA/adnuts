@@ -4,7 +4,7 @@
 \alias{extract_samples}
 \title{Extract posterior samples from a TMB MCMC fit list.}
 \usage{
-extract_samples(fit.tmb, inc_warmup = FALSE)
+extract_samples(fit.tmb, inc_warmup = FALSE, inc_lp = FALSE)
 }
 \arguments{
 \item{fit.tmb}{A list returned by \code{\link{run_mcmc}}.}
@@ -12,6 +12,9 @@ extract_samples(fit.tmb, inc_warmup = FALSE)
 \item{inc_warmup}{Whether to extract the warmup samples or not
 (default). Warmup samples should never be used for inference, but may
 be useful for diagnostics.}
+
+\item{inc_lp}{Whether to drop the column of log posterior density (last
+column). For diagnostics it should be included.}
 }
 \value{
 An invisible data.frame containing samples (rows) of each

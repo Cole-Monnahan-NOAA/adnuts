@@ -113,6 +113,8 @@ extract_samples <- function(fit.tmb, inc_warmup=FALSE, inc_lp=FALSE){
   return(invisible(as.data.frame(y)))
 }
 
+#' Extract sampler parameters from a fit
+#'
 #' @param fit A list returned by \code{\link{run_mcmc}}.
 #' @param inc_warmup Whether to extract the warmup samples or not
 #'   (default). Warmup samples should never be used for inference, but may
@@ -391,6 +393,7 @@ pairs_admb <- function(posterior, mle, divergences=NULL, diag=c("acf","hist", "t
 #'   and correlation matrices, and other output from ADMB.
 #' @details This is based loosely off read.admbFit from r4ss.
 #'
+#' @export
 read_mle_fit <- function(model, path=getwd()){
   oldwd <- getwd(); on.exit(setwd(oldwd))
   setwd(path)
@@ -416,8 +419,7 @@ read_mle_fit <- function(model, path=getwd()){
   names.all <- as.vector(do.call(c, sapply(unique(names.all), function(n){
     x <- names.all[names.all==n]
     if(length(x)==1) return(x)
-    paste0(x, '[',1:length(x),']')
-    })))
+    list(paste0(x, '[',1:length(x),']'))})))
 
   est <- as.numeric(unlist(lapply(sublin,function(x)x[3])))
   std <- as.numeric(unlist(lapply(sublin,function(x)x[4])))
