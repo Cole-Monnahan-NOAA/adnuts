@@ -161,7 +161,7 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
   adapt_delta <- control$adapt_delta
 
   ## Build the command to run the model
-  cmd <- paste(model," -nohess -nuts -mcmc ",iter)
+  cmd <- paste(model,"-noest -nuts -mcmc ",iter)
   cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
   if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
   if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
@@ -169,11 +169,11 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
   if(!is.null(eps)) cmd <- paste(cmd, "-hyeps", eps)
 
   ## Three options for metric. NULL (default) is to use the MLE estimates
-  ## in admodel.cov. These need to be rescaled (see below), which means
-  ## the model needs to be re-estimated. If a matrix is passed, this is
-  ## written to file and no scaling is done. Option 'unit' means
-  ## identity. Note: these are all in unbounded space.
-  est <- FALSE
+  ## in admodel.cov. These need to be rescaled but this is done internally
+  ## in ADMB now by reading in the MLE in the admodel.hes file.  If a
+  ## matrix is passed, this is written to file and no scaling is done b/c
+  ## hbf is set to 1. Option 'unit' means identity. Note: these are all in
+  ## unbounded space.
   if(is.matrix(metric)){
     ## User defined one will be writen to admodel.cov
     cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
@@ -181,8 +181,7 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
       stop("Invalid mass matrix, not positive definite")
     write.admb.cov(metric, hbf=1)
   } else if(is.null(metric)) {
-    ## MLE one. Need to re-estimate model to rescale covar
-    est <- TRUE
+    ## Use MLE (default).  Do nothing different
   } else if(metric=='unit') {
     ## Identity in unbounded space
     cmd <- paste(cmd, "-mcdiag")
@@ -195,7 +194,6 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
     cmd <- paste(cmd, "-mcpin init.pin")
     write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
   }
-  if(!est) cmd <- paste(cmd, "-noest ")
   if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
 
   ## Run it and get results
@@ -262,18 +260,16 @@ sample_admb_rwm <-
     if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
     ## Build the command to run the model
-    cmd <- paste(model," -nohess -mcmc ",iter)
+    cmd <- paste(model,"-noest -mcmc ",iter)
     cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
     if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
     if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
     cmd <- paste(cmd, "-nosdmcmc -mcsave", thin)
 
     ## Three options for metric. NULL (default) is to use the MLE estimates
-    ## in admodel.cov. These need to be rescaled (see below), which means
-    ## the model needs to be re-estimated. If a matrix is passed, this is
-    ## written to file and no scaling is done. Option 'unit' means
-    ## identity. Note: these are all in unbounded space.
-    est <- FALSE
+    ## in admodel.cov.  If a matrix is passed, this is written to file and
+    ## no scaling is done. Option 'unit' means identity. Note: these are
+    ## all in unbounded space.
     if(is.matrix(metric)){
       ## User defined one will be writen to admodel.cov
       cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
@@ -282,7 +278,6 @@ sample_admb_rwm <-
       write.admb.cov(metric)
     } else if(is.null(metric)) {
       ## MLE one. Should not need to re-estimate model to rescale covar
-      est <- FALSE
     } else if(metric=='unit') {
       ## Identity in unbounded space
       cmd <- paste(cmd, "-mcdiag")
@@ -295,7 +290,6 @@ sample_admb_rwm <-
       cmd <- paste(cmd, "-mcpin init.pin")
       write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
     }
-    if(!est) cmd <- paste(cmd, "-noest ")
     if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
 
     ## Run it and get results
