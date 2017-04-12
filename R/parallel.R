@@ -29,7 +29,7 @@ sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
   library(adnuts)
   olddir <- getwd()
   on.exit(setwd(olddir))
-  newdir <- paste0(getwd(),'/model',parallel_number)
+  newdir <- paste0(file.path(getwd(),dir),"_chain_",parallel_number)
   if(dir.exists(newdir)) unlink(newdir, TRUE)
   dir.create(newdir)
   trash <- file.copy(from=list.files(dir, full.names=TRUE), to=newdir)
@@ -37,5 +37,6 @@ sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
     fit <- adnuts:::sample_admb_nuts(dir=newdir, chain=parallel_number,...)
   if(algorithm=="RWM")
     fit <- adnuts:::sample_admb_rwm(dir=newdir, chain=parallel_number, ...)
+  unlink(newdir, TRUE)
   return(fit)
 }
