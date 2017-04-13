@@ -230,7 +230,8 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
 #' @return Produces a plot, and returns nothing.
 #' @author Cole Monnahan
 #' @export
-pairs_admb <- function(posterior, mle, divergences=NULL, diag=c("acf","hist", "trace"),
+pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
+                       diag=c("acf","hist", "trace"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        pars=NULL,label.cex=.5, limits=NULL, ...){
   ## reset to old par when exiting
@@ -381,7 +382,7 @@ pairs_admb <- function(posterior, mle, divergences=NULL, diag=c("acf","hist", "t
         par( mgp=c(.05, ifelse(row %% 2 ==1, .15, .65),0) )
         axis(2, col=axis.col, lwd=.5)
       }
-      if(row==1) mtext(par.names[col], line=.1, cex=label.cex)
+      if(row==1) mtext(par.names[col], line=ifelse(col %% 2 ==1, .1, 1.1), cex=label.cex)
     }
   }
 }
