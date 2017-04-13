@@ -30,7 +30,10 @@ sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
   olddir <- getwd()
   on.exit(setwd(olddir))
   newdir <- paste0(file.path(getwd(),dir),"_chain_",parallel_number)
-  if(dir.exists(newdir)) unlink(newdir, TRUE)
+  if(dir.exists(newdir)){
+    unlink(newdir, TRUE)
+    if(dir.exists(newdir)) stop(paste("Could not remove folder:", newdir))
+  }
   dir.create(newdir)
   trash <- file.copy(from=list.files(dir, full.names=TRUE), to=newdir)
   if(algorithm=="NUTS")
