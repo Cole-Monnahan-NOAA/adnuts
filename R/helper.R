@@ -302,7 +302,7 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
   cexs <- ifelse(divergences, .25, .1)
   cols <- ifelse(divergences, rgb(1,0,0), mycol)
   par(mfrow=c(n,n), mar=0*c(.1,.1,.1,.1), yaxs="i", xaxs="i", mgp=c(.25, .25,0),
-      tck=-.02, cex.axis=.65, col.axis=axis.col, oma=c(2, 2, 2,.5))
+      tck=-.02, cex.axis=.65, col.axis=axis.col, oma=c(2, 2, 2,2))
   temp.box <- function() box(col=axis.col, lwd=.5)
   ## Row and col here are not the posterior, but the matrix of pairwise
   ## combinations
@@ -352,13 +352,13 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
           ## Add bivariate 95% normal levels for both the MLE
           ## estimated covariance, but also the user supplied cov.user
           points(x=mle.par[col], y=mle.par[row],
-                 pch=16, cex=.1, col=2)
+                 pch=16, cex=.5, col=2)
           ## Get points of a bivariate normal 95% confidence contour
           ellipse.temp <- ellipse::ellipse(x=mle.cor[col, row],
                                            scale=mle.se[c(col, row)],
                                            centre= mle.par[c(col, row)], npoints=1000,
                                            level=.95)
-          lines(ellipse.temp , lwd=1.5, lty=1, col="red")
+          lines(ellipse.temp , lwd=.5, lty=1, col="red")
         }
         par(xaxs="i", yaxs="i")
         temp.box()
@@ -389,7 +389,10 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
         par( mgp=c(.05, ifelse(row %% 2 ==1, .15, .65),0) )
         axis(2, col=axis.col, lwd=.5)
       }
-      if(row==1) mtext(par.names[col], line=ifelse(col %% 2 ==1, .1, 1.1), cex=label.cex)
+      if(row==1) mtext(par.names[col], line=ifelse(col %% 2 ==1, .1, 1.1),
+                       cex=label.cex)
+      if(col==n)
+        mtext(par.names[row], side=4, line=ifelse(row %% 2 ==1, 0, 1), cex=label.cex)
     }
   }
 }
