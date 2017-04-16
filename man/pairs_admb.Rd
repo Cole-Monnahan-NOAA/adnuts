@@ -4,15 +4,16 @@
 \alias{pairs_admb}
 \title{Plot pairs for MCMC output from an ADMB model.}
 \usage{
-pairs_admb(posterior, mle, divergences = NULL, diag = c("acf", "hist",
-  "trace"), acf.ylim = c(-1, 1), ymult = NULL, axis.col = gray(0.5),
-  pars = NULL, label.cex = 0.5, limits = NULL, ...)
+pairs_admb(posterior, mle, divergences = NULL, chains = NULL,
+  diag = c("acf", "hist", "trace"), acf.ylim = c(-1, 1), ymult = NULL,
+  axis.col = gray(0.5), pars = NULL, label.cex = 0.5, limits = NULL,
+  ...)
 }
 \arguments{
 \item{posterior}{Dataframe containing the MCMC output, as read in using
-function \link{\code{run.mcmc}}}
+function \code{extract_samples}}
 
-\item{mle}{A list as read in by \code{\link{r4ss::read.admbFit}}. It
+\item{mle}{A list as read in by \code{read_mle_fit}. It
 uses the parameter estimates and covariance and correlation matrices
 as estimated asymptotically.}
 

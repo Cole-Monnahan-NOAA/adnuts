@@ -70,7 +70,6 @@ This function implements algorithm 6 of Hoffman and Gelman
   in Hamiltonian Monte Carlo. J. Mach. Learn. Res.  15:1593-1623.}  }
 }
 \seealso{
-\code{\link{run_mcmc}}, \code{\link{run_mcmc.hmc}},
-  \code{\link{run_mcmc.rwm}}
+\code{sample_tmb} and \code{run_mcmc.rwm}
 }
 

@@ -3,7 +3,6 @@
 #' @param control A list passed from \code{sample_tmb}.
 #' @return A list with default control elements updated by those supplied
 #'   in \code{control}
-#' @export
 update_control <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
                   algorithm="NUTS", adapt_engaged=TRUE,
@@ -22,7 +21,7 @@ update_control <- function(control){
 #' @return Nothing. Prints to message to console.
 #'
 #' @details This function was modeled after the functionality provided by
-#' the R package \link{rstan}.
+#' the R package rstan.
 .print.mcmc.progress <- function(iteration, iter, warmup, chain){
   i <- iteration
   refresh <- max(10, floor(iter/10))
@@ -41,7 +40,7 @@ update_control <- function(control){
 #' @return Nothing. Prints message to console.
 #'
 #' @details This function was modeled after the functionality provided by
-#'   the R package \link{rstan}.
+#'   the R package \code{rstan}.
 .print.mcmc.timing <- function(time.warmup, time.total){
   x <- ' Elapsed Time: '
   message(paste0(x, sprintf("%.1f", time.warmup), ' seconds (Warmup)'))
@@ -59,38 +58,39 @@ update_control <- function(control){
 #'   fits from adnuts (TMB or ADMB). The user can thus explore their model
 #'   with \code{launch_shinystan(as.shinystan.tmb(fit))} in the same way
 #'   that Stan models are examined.
-#' @param fit Output list from \link{\code{sample_tmb}} or
-#'   \link{\code{sample_admb}}.
+#' @param fit Output list from \code{sample_tmb} or
+#'   \code{sample_admb}.
 #' @seealso launch_shinytmb, launch_shinyadmb
 #' @return An S4 object of class shinystan. Depending on the algorithm
 #'   used, this list will have slight differences.
 #' @export
 as.shinyadnuts <- function(fit){
   if(fit$algorithm=="NUTS"){
-    sso <- with(fit, as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
+    sso <- with(fit, shinystan::as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
              sampler_params=sampler_params, algorithm='NUTS', model_name=model))
   } else if(fit$algorithm=="HMC"){
-    sso <- with(fit, as.shinystan(samples, warmup=warmup,
+    sso <- with(fit, shinystan::as.shinystan(samples, warmup=warmup,
              sampler_params=sampler_params, algorithm='HMC', model_name=model))
   } else {
-    sso <- with(fit, as.shinystan(samples, warmup=warmup,
+    sso <- with(fit, shinystan::as.shinystan(samples, warmup=warmup,
              algorithm='RWM', model_name=model))
   }
-  return(sso)
+  return(invisible(sso))
 }
 
 #' A high level wrapper to launch shinystan for a TMB fit.
 #'
 #' @details This function simply calls
 #'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+#' @param fit A named list returned by \code{sample_tmb}.
 #' @export
 launch_shinytmb <- function(fit){
-  launch_shinystan(as.shinyadnuts(fit))
+  shinystan::launch_shinystan(as.shinyadnuts(fit))
 }
 
 #' Extract posterior samples from a TMB MCMC fit list.
 #'
-#' @param fit.tmb A list returned by \code{\link{run_mcmc}}.
+#' @param fit A list returned by \code{sample_tmb} or \code{sample_admb}.
 #' @param inc_warmup Whether to extract the warmup samples or not
 #'   (default). Warmup samples should never be used for inference, but may
 #'   be useful for diagnostics.
@@ -100,10 +100,10 @@ launch_shinytmb <- function(fit){
 #'   parameter (columns). If multiple chains exist they will be rbinded
 #'   together.
 #' @export
-extract_samples <- function(fit.tmb, inc_warmup=FALSE, inc_lp=FALSE){
-  x <- fit.tmb$samples
-  if(!is.array(x)) stop("fit.tmb$samples is not an array -- valid TMB output?")
-  ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit.tmb$warmup)
+extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
+  x <- fit$samples
+  if(!is.array(x)) stop("fit$samples is not an array -- valid TMB output?")
+  ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
   ## Drop LP
   if(inc_lp){
   y <- do.call(rbind, lapply(1:dim(x)[2], function(i) x[ind, i,]))
@@ -115,7 +115,7 @@ extract_samples <- function(fit.tmb, inc_warmup=FALSE, inc_lp=FALSE){
 
 #' Extract sampler parameters from a fit
 #'
-#' @param fit A list returned by \code{\link{run_mcmc}}.
+#' @param fit A list returned by \code{sample_admb} or \code{sample_tmb}.
 #' @param inc_warmup Whether to extract the warmup samples or not
 #'   (default). Warmup samples should never be used for inference, but may
 #'   be useful for diagnostics.
@@ -138,7 +138,7 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
 #'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
 #' @export
 launch_shinyadmb <- function(fit){
-  launch_shinystan(as.shinyadnuts(fit))
+  shinystan::launch_shinystan(as.shinyadnuts(fit))
 }
 
 #' Write matrix of samples to a binary .psv file.
@@ -159,6 +159,7 @@ write_psv <- function(fn, samples, model.path=getwd()){
 
 #' Read in the ADMB covariance file.
 #'
+#' @param model.path Path to model (defaults to working directory)
 #' @export
 get.admb.cov <- function(model.path=getwd()){
     wd.old <- getwd(); on.exit(setwd(wd.old))
@@ -177,6 +178,11 @@ get.admb.cov <- function(model.path=getwd()){
     return(result)
 }
 
+#' Write a covariance matrix to admodel.cov.
+#'
+#' @param cov.unbounded The cov matrix in unbounded space.
+#' @param hbf The hybrid_bounded_flag value. Use hbf=1 for HMC.
+#' @param model.path Path to model.
 write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
   temp <- file.exists(paste0(model.path, "/admodel.cov"))
   if(!temp) stop(paste0("Couldn't find file ",model.path, "/admodel.cov"))
@@ -209,8 +215,8 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
 #' properties.
 #'
 #' @param posterior Dataframe containing the MCMC output, as read in using
-#'   function \link{\code{run.mcmc}}
-#' @param mle A list as read in by \code{\link{r4ss::read.admbFit}}. It
+#'   function \code{extract_samples}
+#' @param mle A list as read in by \code{read_mle_fit}. It
 #'   uses the parameter estimates and covariance and correlation matrices
 #'   as estimated asymptotically.
 #' @param diag What type of plot to include on the diagonal, options are

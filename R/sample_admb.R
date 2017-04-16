@@ -1,5 +1,25 @@
-#' @export
+#' Sample from and ADMB object, using the NUTS or RWM algorithms.
 #'
+#' @param model Name of model
+#' @param iter Total iterations to run.
+#' @param init Initial values. Can be NULL (use MLE), or a list of vectors,
+#'   one for each chain.
+#' @param chains The number of chains to run.
+#' @param warmup The number of warmup samples.
+#' @param seeds Random number seeds one for each chain.
+#' @param thin The thinning rate.
+#' @param dir The name of a folder containing the ADMB model, which should
+#'   not not be the working directory. This function requires this for
+#'   parallel since the folder is copied and run in parallel.
+#' @param mceval Whether to run the model with \code{-mceval} afterward.
+#' @param duration The number of minutes after which the model will quit
+#'   running.
+#' @param parallel Whether to run chains in parallel.
+#' @param cores If parallel is \code{TRUE}, how many cores to use.
+#' @param control A list of control options for the algorithms. See
+#'   \code{sample_tmb} for more information.
+#' @param algorithm Which algorithm to use, either "NUTS" or "RWM".
+#' @export
 #'
 sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
                         thin=1, dir=getwd(), mceval=FALSE, duration=NULL,

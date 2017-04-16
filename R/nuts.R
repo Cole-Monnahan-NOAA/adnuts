@@ -42,8 +42,7 @@
 #' @return A list containing samples ('par') and algorithm details such as
 #'   step size adaptation and acceptance probabilities per iteration
 #'   ('sampler_params').
-#' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.hmc}},
-#'   \code{\link{run_mcmc.rwm}}
+#' @seealso \code{sample_tmb} and \code{run_mcmc.rwm}
 run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                           chain, thin=1, control=NULL){
   ## Now contains all required NUTS arguments

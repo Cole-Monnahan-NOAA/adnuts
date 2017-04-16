@@ -7,8 +7,8 @@
 as.shinyadnuts(fit)
 }
 \arguments{
-\item{fit}{Output list from \link{\code{sample_tmb}} or
-\link{\code{sample_admb}}.}
+\item{fit}{Output list from \code{sample_tmb} or
+\code{sample_admb}.}
 }
 \value{
 An S4 object of class shinystan. Depending on the algorithm

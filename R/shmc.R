@@ -36,8 +36,8 @@
 #'   dynamics. Handbook of Markov Chain Monte Carlo.}  \item{Hoffman and
 #'   Gelman (2014). The No-U-Turn sampler: Adaptively setting path lengths
 #'   in Hamiltonian Monte Carlo. J. Mach. Learn. Res.  15:1593-1623.}  }
-#' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.nuts}},
-#'   \code{\link{run_mcmc.rwm}}
+#' @seealso \code{run_mcmc}, \code{run_mcmc.nuts},
+#'   \code{run_mcmc.rwm}
 #' @return A list containing samples ('par') and algorithm details such as
 #'   step size adaptation and acceptance probabilities per iteration
 #'   ('sampler_params').
