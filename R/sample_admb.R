@@ -181,7 +181,7 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
   adapt_delta <- control$adapt_delta
 
   ## Build the command to run the model
-  cmd <- paste(model,"-nohess -hbf 1 -nuts -mcmc ",iter)
+  cmd <- paste(model,"-nox -nohess -hbf 1 -nuts -mcmc ",iter)
   cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
   if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
   if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
@@ -280,7 +280,7 @@ sample_admb_rwm <-
     if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
     ## Build the command to run the model
-    cmd <- paste(model,"-nohess -mcmc ",iter)
+    cmd <- paste(model,"-nox -nohess -mcmc ",iter)
     cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
     if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
     if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
