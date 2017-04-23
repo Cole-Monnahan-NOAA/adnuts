@@ -240,43 +240,50 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
                        diag=c("acf","hist", "trace"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        pars=NULL,label.cex=.5, limits=NULL, ...){
+  wp <- function(par.name) {
+    ## Temporary function that finds (w)hich (p)arameter position par.name
+    ## is in for the MLE. These will not always match due to things like
+    ## log-posterior and derived quantities, in this case, MLEs are NA's
+    x <- which(mle$par.names == par.name)
+    if(length(x)==0) return(NA)
+    if(length(x)>1) stop("Par matched multiple??")
+    return(x)
+  }
   ## reset to old par when exiting
   old.par <- par(no.readonly=TRUE)
   on.exit(par(old.par))
   diag <- match.arg(diag)
-  if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
-    stop("Number of parameters in posterior and mle not the same")
+  par.names <- names(posterior)
+
+  ## if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
+  ##   stop("Number of parameters in posterior and mle not the same")
   ## pars will either be NULL, so use all parameters. OR a vector of
   ## indices OR a vector of characters. Want to force lp__ to be the very
   ## last one stylistically, and b/c there is no ellipse for it.
   if(is.null(pars)){
-    ## Use all or first 50
-    if(NCOL(posterior)>50){
-      warning("Only showing first 50 parameters, use 'pars' argument to adjust")
-      pars <- 1:50
+    ## Use all or first 10
+    if(NCOL(posterior)>10){
+      warning("Only showing first 10 parameters, use 'pars' argument to adjust")
+      pars <- par.names[1:10]
     } else {
-      pars <- 1:NCOL(posterior)
+      pars <- par.names[1:NCOL(posterior)]
     }
-  } else if(is.character(pars[1])){
-    ## Drop lp__ here and force below to be the very last column
-    pars <- pars[pars!='lp__']
-    pars <- match(x=pars, table=names(posterior))
-    if(any(is.na(pars))){
-      warning("Some par names did not match -- dropped")
-      pars <- pars[!is.na(pars)]
-    }
+  } else if(is.numeric(pars[1])){
+    pars <- pars.names[pars]
   }
-  ## pars is now vector of column indices of the parameters, so get the
-  ## pieces needed.
-  lp <- which(names(posterior)=='lp__')
-  pars <- pars[pars!=lp]
-  par.names <- mle$names[pars]
-  mle.par <- mle$est[pars]
-  mle.se <- mle$se[pars]
-  mle.cor <- mle$cor[pars, pars]
+  pars.bad <- match(x=pars, table=names(posterior))
+  if(any(is.na(pars.bad))){
+    warning("Some par names did not match -- dropped")
+    pars <- pars[!is.na(pars.bad)]
+  }
+
+  ## pars is now vector of names of the parameters                                        #pars <- pars[pars!=lp]
+  ## mle.par <- mle$est[pars]
+  ## mle.se <- mle$se[pars]
+  ## mle.cor <- mle$cor[pars, pars]
   ## Now force log density to be last one.
-  pars <- c(pars, lp)
-  par.names <- c(par.names, 'log-density')
+  ## pars <- c(pars, lp)
+  ## par.names <- c(par.names, 'log-density')
   n <- length(pars)
   if(n==1) stop("This function is only meaningful for >1 parameter")
   posterior <- posterior[,pars]
@@ -286,7 +293,8 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
   if(is.null(limits)){
     limits <- list()
     for(i in 1:n){
-      limit.temp <- if(i==n) NULL else mle.par[i]+c(-1,1)*1.96*mle.se[i]
+      pp <- wp(pars[i])
+      limit.temp <- if(is.na(pp)) NULL else mle$est[pp]+c(-1,1)*1.96*mle$se[pp]
       ## multiplier for the ranges, adjusts the whitespace around the
       ## plots
       min.temp <- min(posterior[,i], limit.temp[1])
@@ -349,23 +357,26 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
           temp.box()
         }
       }
-      ## If lower triangle add scatterplot
+      ## If lower triangle and covariance known, add scatterplot
       if(row>col){
         par(xaxs="r", yaxs="r")
         plot(x=posterior[,col], y=posterior[,row], axes=FALSE, ann=FALSE,
              pch=mypch, cex=cexs, col=cols, xlim=limits[[col]], ylim=limits[[row]], ...)
-        if(row != n){
+        p1 <- wp(pars[row]); p2 <- wp(pars[col])
+        if(!is.na(p1) & !is.na(p2)){
           ## Add bivariate 95% normal levels for both the MLE
           ## estimated covariance, but also the user supplied cov.user
-          points(x=mle.par[col], y=mle.par[row],
+          points(x=mle$est[p2], y=mle$est[p1],
                  pch=16, cex=.5, col=2)
           ## Get points of a bivariate normal 95% confidence contour
-          ellipse.temp <- ellipse::ellipse(x=mle.cor[col, row],
-                                           scale=mle.se[c(col, row)],
-                                           centre= mle.par[c(col, row)], npoints=1000,
+
+          ellipse.temp <- ellipse::ellipse(x=mle$cor[p2, p1],
+                                           scale=mle$se[c(p2, p1)],
+                                           centre= mle$est[c(p2, p1)], npoints=1000,
                                            level=.95)
           lines(ellipse.temp , lwd=.5, lty=1, col="red")
         }
+
         par(xaxs="i", yaxs="i")
         temp.box()
       }
@@ -395,10 +406,10 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
         par( mgp=c(.05, ifelse(row %% 2 ==1, .15, .65),0) )
         axis(2, col=axis.col, lwd=.5)
       }
-      if(row==1) mtext(par.names[col], line=ifelse(col %% 2 ==1, .1, 1.1),
+      if(row==1) mtext(pars[col], line=ifelse(col %% 2 ==1, .1, 1.1),
                        cex=label.cex)
       if(col==n)
-        mtext(par.names[row], side=4, line=ifelse(row %% 2 ==1, 0, 1), cex=label.cex)
+        mtext(pars[row], side=4, line=ifelse(row %% 2 ==1, 0, 1), cex=label.cex)
     }
   }
 }

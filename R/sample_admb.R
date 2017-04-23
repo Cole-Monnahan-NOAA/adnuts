@@ -90,9 +90,9 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   ## done posthoc by recombining chains AFTER thinning and warmup and
   ## discarded into a single chain, written to file, then call -mceval.
   ## Merge all chains together and run mceval
-  message(paste("... Merging chains into main folder:", dir))
+  message(paste("... Merging post-warmup chains into main folder:", dir))
   samples2 <- do.call(rbind, lapply(1:chains, function(i)
-    samples[, i, -dim(samples)[3]]))
+    samples[-(1:warmup), i, -dim(samples)[3]]))
   write_psv(fn=model, samples=samples2, model.path=dir)
   ## These already exclude warmup
   rotated <- do.call(rbind, lapply(mcmc.out, function(x) x$rotated))
@@ -104,7 +104,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   write.table(rotated, file='rotated.csv', sep=",", col.names=FALSE, row.names=FALSE)
   write.table(bounded, file='bounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
   if(mceval){
-    messsage("... Running -mceval on merged chains")
+    message("... Running -mceval on merged chains")
     system(paste(model, "-mceval -noest -nohess"), ignore.stdout=FALSE)
   }
   message("... Calculating ESS and Rhat")
