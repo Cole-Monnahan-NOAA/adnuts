@@ -457,10 +457,10 @@ read_mle_fit <- function(model, path=getwd()){
   cor[upper.tri(cor, diag=TRUE)] <- as.numeric(corvec)
   cor[lower.tri(cor)]  <-  t(cor)[lower.tri(cor)]
   ## Covariance matrix
-  cov <- cor*(std %o% std)
+  ## cov <- cor*(std %o% std)
   result <- list(nopar=nopar, nll=nll, maxgrad=maxgrad,
                  par.names=names.all[1:nopar],
                  names.all=names.all,
-                 est=est, se=std, cor=cor, cov=cov)
+                 est=est, se=std, cor=cor[1:nopar,1:nopar])
   return(result)
 }
