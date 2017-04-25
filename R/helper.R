@@ -269,7 +269,7 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
       pars <- par.names[1:NCOL(posterior)]
     }
   } else if(is.numeric(pars[1])){
-    pars <- pars.names[pars]
+    pars <- par.names[pars]
   }
   pars.bad <- match(x=pars, table=names(posterior))
   if(any(is.na(pars.bad))){
