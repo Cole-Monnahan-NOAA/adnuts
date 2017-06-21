@@ -237,7 +237,7 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
 #' @author Cole Monnahan
 #' @export
 pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
-                       diag=c("acf","hist", "trace"),
+                       diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        pars=NULL,label.cex=.5, limits=NULL, ...){
   wp <- function(par.name) {
