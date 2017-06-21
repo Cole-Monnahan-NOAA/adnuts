@@ -347,12 +347,12 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
         } else if(diag=="trace") {
           ## If user passed a vector of chains, plot these separately,
           ## otherwise not.
-          if(is.null(chain)) chain <- rep(1, length=nrow(posterior))
-          xlim <- c(1, length(chain[chain==1]))
+          if(is.null(chains)) chains <- rep(1, length=nrow(posterior))
+          xlim <- c(1, length(chains[chains==1]))
           plot(x=0, y=0, lwd=.5, col=gray(.5), type="n", axes=FALSE,
                ann=F, ylim=limits[[row]], xlim=xlim)
-          for(ll in unique(chain)){
-            lines(posterior[chain==ll,row], col=rgb(0,0,0,.5), lwd=.1)
+          for(ll in unique(chains)){
+            lines(posterior[chains==ll,row], col=rgb(0,0,0,.5), lwd=.1)
           }
           temp.box()
         }
