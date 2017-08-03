@@ -95,14 +95,10 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
     samples[-(1:warmup), i, -dim(samples)[3]]))
   write_psv(fn=model, samples=samples2, model.path=dir)
   ## These already exclude warmup
-  rotated <- do.call(rbind, lapply(mcmc.out, function(x) x$rotated))
-  bounded <- do.call(rbind, lapply(mcmc.out, function(x) x$bounded))
   unbounded <- do.call(rbind, lapply(mcmc.out, function(x) x$unbounded))
   oldwd <- getwd(); on.exit(setwd(oldwd))
   setwd(dir)
   write.table(unbounded, file='unbounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
-  write.table(rotated, file='rotated.csv', sep=",", col.names=FALSE, row.names=FALSE)
-  write.table(bounded, file='bounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
   if(mceval){
     message("... Running -mceval on merged chains")
     system(paste(model, "-mceval -noest -nohess"), ignore.stdout=FALSE)
@@ -220,18 +216,14 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
   time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
   sampler_params<- as.matrix(read.csv("adaptation.csv"))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
-  rotated <- as.matrix(read.csv("rotated.csv", header=FALSE))
-  bounded <- as.matrix(read.csv("bounded.csv", header=FALSE))
-  dimnames(unbounded) <- dimnames(rotated) <- dimnames(bounded) <- NULL
+  dimnames(unbounded) <- NULL
   pars <- get_psv(model)
   if(is.null(par.names)) par.names <- names(pars)
   pars[,'log-posterior'] <- sampler_params[,'energy__']
   pars <- as.matrix(pars)
   ## Thin samples and adaptation post hoc for NUTS
   pars <- pars[seq(1, nrow(pars), by=thin),]
-  bounded <- bounded[seq(1, nrow(bounded), by=thin),]
   unbounded <- unbounded[seq(1, nrow(unbounded), by=thin),]
-  rotated <- rotated[seq(1, nrow(rotated), by=thin),]
   sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
   time.total <- time; time.warmup <- NA
   warmup <- warmup/thin
@@ -239,7 +231,7 @@ sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
               time.total=time.total, time.warmup=time.warmup,
               warmup=warmup, max_treedepth=max_td,
               model=model, par.names=par.names, cmd=cmd,
-              unbounded=unbounded, rotated=rotated, bounded=bounded))
+              unbounded=unbounded))
 }
 
 
@@ -315,9 +307,7 @@ sample_admb_rwm <-
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
-    rotated <- as.matrix(read.csv("rotated.csv", header=FALSE))
-    bounded <- as.matrix(read.csv("bounded.csv", header=FALSE))
-    dimnames(unbounded) <- dimnames(rotated) <- dimnames(bounded) <- NULL
+    dimnames(unbounded) <- NULL
     pars <- get_psv(model)
     if(is.null(par.names))  par.names <- names(pars)
     lp <- as.vector(read.table('rwm_lp.txt', header=TRUE)[,1])
@@ -329,8 +319,7 @@ sample_admb_rwm <-
     warmup <- warmup/thin
     return(list(samples=pars, sampler_params=NULL, time.total=time.total,
                 time.warmup=time.warmup, warmup=warmup,  model=model,
-                par.names=par.names, cmd=cmd, unbounded=unbounded,
-                rotated=rotated, bounded=bounded))
+                par.names=par.names, cmd=cmd, unbounded=unbounded))
   }
 
 
