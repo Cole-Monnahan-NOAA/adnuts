@@ -10,7 +10,7 @@
 #'   extended to the end of that window.
 compute_next_window <- function(i, anw, warmup, w1, aws, w3){
  ##  if(anw == warmup-w3) stop("Something bad")
-  aws <- aws*2
+  aws <- aws
   anw <- i+aws
   if(anw== (warmup-w3) ) return(anw)
   ## Check that the next anw is not too long. This will be the anw for the
@@ -34,7 +34,7 @@ compute_next_window <- function(i, anw, warmup, w1, aws, w3){
 #'   expanding windows. See Stan manual on adaptation.
 slow_phase <- function(i, warmup, w1, w3){
   ## After w1, before start of w3
-  x1 <- i>= w1 # after initial fast window
+  x1 <- i> w1 # after initial fast window
   x2 <- i< (warmup-w3) # but before last fast window
   x3 <- i < warmup # definitely not during sampling
   return(x1 & x2 & x3)
@@ -54,50 +54,92 @@ rotate_space <- function(fn, gr, M, theta.cur){
   x <- list(gr2=gr2, fn2=fn2, theta.cur=theta.cur, chd=chd)
 }
 
-## ## Quick sketch of algorithm used to test.
-## w1 <- 75
-## w2 <- 50
-## w3 <- 25
-## aws <- w2
-## anw <- w1+w2
-## warmup <- 2500
-## ## Initialize algorithm
-## M <- c(.5,.5)
-## sd <- 1
-## m <- m0 <- rnorm(2, sd=sd)
-## s <- s0 <- c(0,0)
-## i <- 1
-## k <- 2
-## X <- matrix(NA, warmup, 2)
-## for(i in 1:warmup){
-##   X[i,] <- theta <- rnorm(2, sd=sd)
-##   ## If in slow phase, update running estimate of variances
-##   if(slow_phase(i,warmup, w1, w3)){
-##     ## The Welford running variance calculation, see
-##     ## https://www.johndcook.com/blog/standard_deviation/
-##     ## Save last iteration
-##     m0 <- m; s0 <- s
-##     ## Update M and S
-##     m <- m0+(theta-m0)/k
-##     s <- s0+(theta-m0)*(theta-m)
-##     k <- k+1
-##     if(i < 10+w1) print(s)
-##   }
-##   ## If at end of adaptation window, update the mass matrix to the estimated
-##   ## variances
-##   if(i==anw & slow_phase(i,warmup, w1, w3)){
-##     ## Update the mass matrix
-##     M <- s/(k-1)
-##     message(paste("Updating M:", i, M[1]))
-##     ## temp <- rotate_space(fn, gr, M, theta.cur)
-##     ## Reset the running variance calculation
-##     k <- 2; m0 <- m <- theta; s0 <- s <- 0
-##     ## Calculate the next end window. If this overlaps into the final fast
-##     ## period, it will be stretched to that point (warmup-w3)
-##     aws <- 2*aws
-##     anw <- compute_next_window(i, anw, warmup, w1, aws, w3)
-##   }
-## }
+## The basic algorithm
+m <- m0 <- c(1,1)
+s <- s0 <- c(0,0)
+k <- 1
+warmup <- 20
+X <- matrix(NA, warmup, 2)
+results <- matrix(NA, warmup, 7)
+X[1,] <- m
+results[1,] <- c(1, m, m, s)
+for(i in 1:warmup){
+  X[i,] <- theta <- rnorm(2)
+  ## The Welford running variance calculation, see
+  ## https://www.johndcook.com/blog/standard_deviation/
+  m0 <- m; s0 <- s
+  ## Update M and S
+  m <- m0+(theta-m0)/k
+  s <- s0+(theta-m0)*(theta-m)
+  results[i,] <- c(k, theta, m, s)
+  if(i!=warmup) k <- k+1
+}
+sqrt(s/(k-1)) - apply(X,2, sd)
 
+
+## Quick sketch of algorithm used to test.
+w1 <- 3
+w2 <- 5
+w3 <- 4
+aws <- w2
+anw <- w1+w2
+warmup <- 56
+sd <- c(1,.01)
+X <- matrix(NA, warmup, 2)
+X[1,] <- c(1,1)
+s1 <- m1 <- c(NA,NA)
+k <- 0
+phase <- 'no adapt'
+temp2 <- matrix(NA, nrow=warmup, ncol=6)
+temp2[1,] <- c(1, k,X[1,1], 0, 0, 0)
+for(i in 2:warmup){
+  X[i,] <- theta <- c(i,i)# rnorm(2, sd=sd)
+  if(slow_phase(i,warmup, w1, w3)){
+    ## If in slow phase, update running estimate of variances
+    ## The Welford running variance calculation, see
+    ## https://www.johndcook.com/blog/standard_deviation/
+    ## Save last iteration
+    if(i== (w1+1)){
+      phase <- c(phase,"init")
+      ## Initialize algorithm from end of first fast window
+      m1 <- theta
+      s1 <- c(0,0)
+      k <- 1
+    } else if(i==anw+1){
+      phase <- c(phase,"update + reset")
+      ## If at end of adaptation window, update the mass matrix to the estimated
+      ## variances
+      vars <- s1/(k-1)
+      message(paste("Updating M:", i, vars[1]))
+      ## Reset the running variance calculation
+      k <- 1; m1 <- theta; s1 <- c(0,0)
+      ## Calculate the next end window. If this overlaps into the final fast
+      ## period, it will be stretched to that point (warmup-w3)
+      aws <- 2*aws
+      anw0 <- anw
+      anw <- compute_next_window(i, anw, warmup, w1, aws, w3)
+      message(c("window=",anw0, "-", anw))
+    } else if(i==warmup-
+
+    else {
+      phase <- c(phase,"adapt")
+      k <- k+1
+      m0 <- m1; s0 <- s1
+      ## Update M and S
+      m1 <- m0+(theta-m0)/k
+      s1 <- s0+(theta-m0)*(theta-m1)
+    }
+  } else {
+    phase <- c(phase, 'no adapt')
+  }
+  temp2[i,] <- c(i, k, theta[1], m1[1], s1[1], (s1/(k-1))[1])
+}
+
+temp2 <- as.data.frame(temp2)
+names(temp2) <- c('i', 'k', 'x', 'm', 's', 'var')
+xx <- 19:52
+apply(X[xx,], 2, var) - s1/(k-1)
+var(xx)
+temp2[xx,]
 
 

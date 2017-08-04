@@ -90,10 +90,10 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   aws <- w2
   anw <- w1+w2
   vars <- rep(1, len=length(theta.cur))
-  mm <- m0 <- rep(1, len=length(theta.cur))
+  mm <- theta.cur
   s1 <- s0 <- rep(0, len=length(theta.cur))
   k <- 2
-
+  temp2 <- matrix(NA, nrow=iter, ncol=2+length(theta.cur))
   ## Start of MCMC chain
   time.start <- Sys.time()
   message('')
@@ -133,6 +133,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       if(res$s==1) {
         if(runif(n=1, min=0,max=1) <= res$n/n){
           theta.cur <- theta.out[m,] <- res$theta.prime
+
           lp[m] <- fn2(theta.cur)
         }
       }
@@ -182,34 +183,40 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       s1 <- s0+(theta.cur-m0)*(theta.cur-mm)
       k <- k+1
     }
+    temp2[m,] <- c(m, k, as.numeric(s1/(k-1)))
     ## If at end of adaptation window, update the mass matrix to the estimated
     ## variances
     if(m==anw & slow_phase(m,warmup, w1, w3)){
       ## Update the mass matrix
-      vars <- s1/(k-1)
+      vars <- as.numeric(s1/(k-1))
       message(paste("Updating mass matrix:", m, vars[1]))
+      print(vars)
+      print(temp2[m,])
+      M <- diag(x=vars)
+      ## Update density and gradient functions for new mass matrix
+      temp <- rotate_space(fn=fn, gr=gr, M=M, theta.cur=theta.cur)
+      fn2 <- temp$fn2; gr2 <- temp$gr2
+      theta.cur <- temp$theta.cur
       ## temp <- rotate_space(fn, gr, M, theta.cur)
       ## Reset the running variance calculation
-      k <- 2; m0 <- mm <- theta.cur
-      s0 <- s1 <- rep(0, len=length(theta.cur))
+      k <- 2; mm <- theta.cur
+      s1 <- rep(0, len=length(theta.cur))
       ## Calculate the next end window. If this overlaps into the final fast
       ## period, it will be stretched to that point (warmup-w3)
       aws <- 2*aws
       anw <- compute_next_window(m, anw, warmup, w1, aws, w3)
-      M <- diag(x=as.numeric(vars))
-      temp <- rotate_space(fn=fn, gr=gr, M=M, theta.cur=theta.cur)
-      fn2 <- temp$fn2; gr2 <- temp$gr2
-      theta.cur <- temp$theta.cur
-      print(chd)
-      chd <- temp$chd
     }
+    ## End of mass matrix adaptation
+    ### ---------------
 
     ## Save adaptation info.
     sampler_params[m,] <-
       c(alpha2, eps, j, info$n.calls, info$divergent, fn2(theta.cur))
     if(m==warmup) time.warmup <- difftime(Sys.time(), time.start, units='secs')
-    .print.mcmc.progress(m, iter, warmup, chain)
+ ##    .print.mcmc.progress(m, iter, warmup, chain)
   } ## end of MCMC loop
+  print(temp2)
+  print(vars)
   ## Back transform parameters if covar is used
   if(!is.null(covar)) {
     theta.out <- t(apply(theta.out, 1, function(x) chd %*% x))
@@ -227,7 +234,6 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                            "; after ", warmup, " warmup iterations"))
   time.total <- difftime(Sys.time(), time.start, units='secs')
   .print.mcmc.timing(time.warmup=time.warmup, time.total=time.total)
-  print(vars)
   return(list(par=theta.out, sampler_params=sampler_params,
               time.total=time.total, time.warmup=time.warmup,
               warmup=warmup/thin, max_treedepth=max_td))
