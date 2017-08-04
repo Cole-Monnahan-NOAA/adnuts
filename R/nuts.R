@@ -85,6 +85,15 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     ## dummy values to return
     epsvec <- epsbar <- Hbar <- NULL
   }
+  ## Initialize mass matrix adapatation algorithm
+  w1 <- 75; w2 <- 50; w3 <- 25
+  aws <- w2
+  anw <- w1+w2
+  vars <- rep(1, len=length(theta.cur))
+  mm <- m0 <- rep(1, len=length(theta.cur))
+  s1 <- s0 <- rep(0, len=length(theta.cur))
+  k <- 2
+
   ## Start of MCMC chain
   time.start <- Sys.time()
   message('')
@@ -160,8 +169,40 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         eps <- epsbar[warmup]
       }
     }
-    ## Do the adaptation of M
-
+    ### ---------------
+    ## Do the adaptation of mass matrix
+    ## If in slow phase, update running estimate of variances
+    if(slow_phase(m,warmup, w1, w3)){
+      ## The Welford running variance calculation, see
+      ## https://www.johndcook.com/blog/standard_deviation/
+      ## Save last iteration
+      m0 <- mm; s0 <- s1
+      ## Update M and S
+      mm <- m0+(theta.cur-m0)/k
+      s1 <- s0+(theta.cur-m0)*(theta.cur-mm)
+      k <- k+1
+    }
+    ## If at end of adaptation window, update the mass matrix to the estimated
+    ## variances
+    if(m==anw & slow_phase(m,warmup, w1, w3)){
+      ## Update the mass matrix
+      vars <- s1/(k-1)
+      message(paste("Updating mass matrix:", m, vars[1]))
+      ## temp <- rotate_space(fn, gr, M, theta.cur)
+      ## Reset the running variance calculation
+      k <- 2; m0 <- mm <- theta.cur
+      s0 <- s1 <- rep(0, len=length(theta.cur))
+      ## Calculate the next end window. If this overlaps into the final fast
+      ## period, it will be stretched to that point (warmup-w3)
+      aws <- 2*aws
+      anw <- compute_next_window(m, anw, warmup, w1, aws, w3)
+      M <- diag(x=as.numeric(vars))
+      temp <- rotate_space(fn=fn, gr=gr, M=M, theta.cur=theta.cur)
+      fn2 <- temp$fn2; gr2 <- temp$gr2
+      theta.cur <- temp$theta.cur
+      print(chd)
+      chd <- temp$chd
+    }
 
     ## Save adaptation info.
     sampler_params[m,] <-
@@ -186,6 +227,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                            "; after ", warmup, " warmup iterations"))
   time.total <- difftime(Sys.time(), time.start, units='secs')
   .print.mcmc.timing(time.warmup=time.warmup, time.total=time.total)
+  print(vars)
   return(list(par=theta.out, sampler_params=sampler_params,
               time.total=time.total, time.warmup=time.warmup,
               warmup=warmup/thin, max_treedepth=max_td))

@@ -1,10 +1,13 @@
 
-#' Check whether adaptation is in the slow phase
+#' Compute the next window size
 #'
 #' @param i MCMC iteration number
 #' @param warmup Number of warmup iterations
 #' @param w1 The first adapation window (usually 75)
 #' @param w3 The last adaptation window (usually 50)
+#' @details This function calculates the size of the next window for
+#'   adapation. If the next window size would be too long then this is
+#'   extended to the end of that window.
 compute_next_window <- function(i, anw, warmup, w1, aws, w3){
  ##  if(anw == warmup-w3) stop("Something bad")
   aws <- aws*2
@@ -32,7 +35,7 @@ compute_next_window <- function(i, anw, warmup, w1, aws, w3){
 slow_phase <- function(i, warmup, w1, w3){
   ## After w1, before start of w3
   x1 <- i>= w1 # after initial fast window
-  x2 <- i<= (warmup-w3) # but before last fast window
+  x2 <- i< (warmup-w3) # but before last fast window
   x3 <- i < warmup # definitely not during sampling
   return(x1 & x2 & x3)
 }
@@ -51,18 +54,16 @@ rotate_space <- function(fn, gr, M, theta.cur){
   x <- list(gr2=gr2, fn2=fn2, theta.cur=theta.cur, chd=chd)
 }
 
-
-
 ## ## Quick sketch of algorithm used to test.
 ## w1 <- 75
 ## w2 <- 50
 ## w3 <- 25
 ## aws <- w2
 ## anw <- w1+w2
-## warmup <- 400
+## warmup <- 2500
 ## ## Initialize algorithm
 ## M <- c(.5,.5)
-## sd <- .1
+## sd <- 1
 ## m <- m0 <- rnorm(2, sd=sd)
 ## s <- s0 <- c(0,0)
 ## i <- 1
@@ -80,6 +81,7 @@ rotate_space <- function(fn, gr, M, theta.cur){
 ##     m <- m0+(theta-m0)/k
 ##     s <- s0+(theta-m0)*(theta-m)
 ##     k <- k+1
+##     if(i < 10+w1) print(s)
 ##   }
 ##   ## If at end of adaptation window, update the mass matrix to the estimated
 ##   ## variances
@@ -96,5 +98,6 @@ rotate_space <- function(fn, gr, M, theta.cur){
 ##     anw <- compute_next_window(i, anw, warmup, w1, aws, w3)
 ##   }
 ## }
-## M
-## apply(X[125:375,],2, var)
+
+
+
