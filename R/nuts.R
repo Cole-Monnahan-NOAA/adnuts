@@ -48,19 +48,30 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   ## Now contains all required NUTS arguments
   control <- update_control(control)
   eps <- control$stepsize
-  metric <- control$metric
   init <- as.vector(unlist(init))
+  metric <- control$metric
+  if(is.null(metric)) metric <- diag(length(init))
   if(is.matrix(metric)){
-    covar <- metric
+    M <- metric
   } else {
-    stop("Only allowed to pass covar matrix as metric")
+    stop("Only allowed to pass M matrix as metric")
   }
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
+  adapt_mass <- control$adapt_mass
+  if(warmup < 100 & adapt_mass){
+    warning("Mass matrix adaptation not allowed if warmup < 100")
+    adapt_mass <- FALSE
+  }
+  ## Mass matrix adapatation algorithm arguments
+  w1 <- 75; w2 <- 50; w3 <- 25
+  aws <- w2 # adapt window size
+  anw <- w1+w2 # adapt next window
+
   ## Using a mass matrix means redefining what fn and gr do and
   ## backtransforming the initial value.
-  if(!is.null(covar)){
-    temp <- rotate_space(fn=fn, gr=gr, M=covar, theta.cur=init)
+  if(!is.null(M)){
+    temp <- rotate_space(fn=fn, gr=gr, M=M, y.cur=init)
     fn2 <- temp$fn2; gr2 <- temp$gr2
     theta.cur <- temp$theta.cur
     chd <- temp$chd
@@ -68,10 +79,12 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     fn2 <- fn; gr2 <- gr
     theta.cur <- init
   }
+  npar <- length(theta.cur)
   sampler_params <- matrix(numeric(0), nrow=iter, ncol=6,
                            dimnames=list(NULL, c("accept_stat__", "stepsize__", "treedepth__",
                                                  "n_leapfrog__", "divergent__", "energy__")))
-  theta.out <- matrix(NA, nrow=iter, ncol=length(theta.cur))
+  ## This holds the rotated but untransformed variables ("y" space)
+  theta.out <- matrix(NA, nrow=iter, ncol=npar)
   ## how many steps were taken at each iteration, useful for tuning
   j.results <- lp <- rep(NA, len=iter)
   useDA <- is.null(eps)               # whether to use DA algorithm
@@ -92,9 +105,10 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   for(m in 1:iter){
     ## Initialize this iteration from previous in case divergence at first
     ## treebuilding. If successful trajectory they are overwritten
-    theta.out[m,] <- theta.minus <- theta.plus <- theta.cur
+    theta.minus <- theta.plus <- theta.cur
+    theta.out[m,] <- if(is.null(M)) theta.cur else t(chd %*% theta.cur)
     lp[m] <- if(m==1) fn2(theta.cur) else lp[m-1]
-    r.cur <- r.plus <- r.minus <-  rnorm(length(theta.cur),0,1)
+    r.cur <- r.plus <- r.minus <-  rnorm(npar,0,1)
     H0 <- .calculate.H(theta=theta.cur, r=r.cur, fn=fn2)
 
     ## Draw a slice variable u
@@ -123,8 +137,10 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       if(!is.finite(res$s)) res$s <- 0
       if(res$s==1) {
         if(runif(n=1, min=0,max=1) <= res$n/n){
-          theta.cur <- theta.out[m,] <- res$theta.prime
+          theta.cur <- res$theta.prime
           lp[m] <- fn2(theta.cur)
+          ## Rotate parameters
+          theta.out[m,] <- if(is.null(M)) theta.cur else t(chd %*% theta.cur)
         }
       }
       n <- n+res$n
@@ -141,6 +157,8 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
 
     alpha2 <- res$alpha/res$nalpha
     if(!is.finite(alpha2)) alpha2 <- 0
+    ## ---------------
+    ## Step size adapation with the
     ## Do the adapting of eps.
     if(useDA){
       if(m <= warmup){
@@ -160,8 +178,40 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         eps <- epsbar[warmup]
       }
     }
-    ## Do the adaptation of M
-
+    ## ---------------
+    ## Do the adaptation of mass matrix. The algorithm is working in X
+    ## space but I need to calculate the mass matrix in Y space. So need to
+    ## do this coversion in the calcs below.
+    if(adapt_mass & slow_phase(m, warmup, w1, w3)){
+      ## If in slow phase, update running estimate of variances
+      ## The Welford running variance calculation, see
+      ## https://www.johndcook.com/blog/standard_deviation/
+      if(m== w1){
+        ## Initialize algorithm from end of first fast window
+        m1 <- theta.out[m,]; s1 <- rep(0, len=npar); k <- 1
+      } else if(m==anw){
+        ## If at end of adaptation window, update the mass matrix to the estimated
+        ## variances
+        vars <- as.numeric(s1/(k-1)) # estimated variance
+        M <- diag(x=vars)
+        ## Update density and gradient functions for new mass matrix
+        temp <- rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
+        fn2 <- temp$fn2; gr2 <- temp$gr2; chd <- temp$chd;
+        theta.cur <- temp$theta.cur
+        ## Reset the running variance calculation
+        k <- 1; m1 <- theta.out[m,]; s1 <- rep(0, len=npar)
+        ## Calculate the next end window. If this overlaps into the final fast
+        ## period, it will be stretched to that point (warmup-w3)
+        anw <- compute_next_window(m, anw, warmup, w1, aws, w3)
+      } else {
+        k <- k+1; m0 <- m1; s0 <- s1
+        ## Update M and S
+        m1 <- m0+(theta.out[m,]-m0)/k
+        s1 <- s0+(theta.out[m,]-m0)*(theta.out[m,]-m1)
+      }
+    }
+    ## End of mass matrix adaptation
+    ##---------------
 
     ## Save adaptation info.
     sampler_params[m,] <-
@@ -169,10 +219,8 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     if(m==warmup) time.warmup <- difftime(Sys.time(), time.start, units='secs')
     .print.mcmc.progress(m, iter, warmup, chain)
   } ## end of MCMC loop
-  ## Back transform parameters if covar is used
-  if(!is.null(covar)) {
-    theta.out <- t(apply(theta.out, 1, function(x) chd %*% x))
-  }
+
+  ## Process the output for returning
   theta.out <- cbind(theta.out, lp)
   theta.out <- theta.out[seq(1, nrow(theta.out), by=thin),]
   sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
