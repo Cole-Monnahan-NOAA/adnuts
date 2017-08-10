@@ -41,7 +41,8 @@
 #' @seealso \code{\link{extract_samples}}, \code{\link{launch_shinytmb}}
 #' @export
 sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
-                       thin=1, upper=NULL, control=NULL,  ...){
+                       upper=NULL, thin=1, parallel=FALSE,
+                       cores=NULL, control=NULL, ...){
   control <- update_control(control)
   ## Argument checking.
   if(is.null(init)){
@@ -96,19 +97,28 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
   }))))
 
   ## Select and run the chain.
-  if(algorithm=="HMC"){
-    mcmc.out <- lapply(1:chains, function(i)
-      run_mcmc.hmc(iter=iter, fn=fn, gr=gr, init=init[[i]],
-                   covar=covar, chain=i, thin=thin, ...))
-  } else if(algorithm=="NUTS"){
-    mcmc.out <- lapply(1:chains, function(i)
-      run_mcmc.nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
-                    chain=i, thin=thin, control=control, ...))
-  } else if(algorithm=="RWM")
-    mcmc.out <- lapply(1:chains, function(i)
-      run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]], covar=covar,
-                   thin=thin, ...))
-
+  if(!parallel){
+    if(algorithm=="HMC"){
+      mcmc.out <- lapply(1:chains, function(i)
+        run_mcmc.hmc(iter=iter, fn=fn, gr=gr, init=init[[i]],
+                     covar=covar, chain=i, thin=thin, ...))
+    } else if(algorithm=="NUTS"){
+      mcmc.out <- lapply(1:chains, function(i)
+        run_mcmc.nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
+                      chain=i, thin=thin, control=control, ...))
+    } else if(algorithm=="RWM")
+      mcmc.out <- lapply(1:chains, function(i)
+        run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]], covar=covar,
+                     thin=thin, ...))
+  } else {
+    message("Setting up parallel execution with snowfall")
+    mcmc.out <- sfLapply(1:chains, function(i)
+      sample_tmb_parallel(parallel_number=i, dir=dir, model=model,
+                          duration=duration,
+                          algorithm=algorithm,
+                          iter=iter, init=init[[i]], warmup=warmup,
+                          seed=seeds[i], thin=thin, control=control, ...))
+  }
   ## Clean up returned output
   samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
