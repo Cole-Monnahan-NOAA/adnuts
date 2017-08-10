@@ -6,6 +6,9 @@
 \usage{
 get.admb.cov(model.path = getwd())
 }
+\arguments{
+\item{model.path}{Path to model (defaults to working directory)}
+}
 \description{
 Read in the ADMB covariance file.
 }
