@@ -23,19 +23,26 @@ seeds <- 1:3
 ## First use a diagonal mass matrix (not recommended)
 fit1 <- sample_tmb(obj=obj, iter=iter, chains=3, init=init, seeds=seeds,
                    control=list(adapt_mass=FALSE))
-## launch_shinytmb(fit1)
+## Extra posterior samples like this
+posterior <- extract_samples(fit1)
+apply(posterior, 2, mean)
+## Check diagnostics with shinystan:
+launch_shinytmb(fit1)
+## Or look at the values directly
+sp <- extract_sampler_params(fit1)
+str(sp)
+min(fit1$ess)
+max(fit1$Rhat)
 
 ## Can also use mass matrix adaptation (default -- diagonal only)
 fit2 <- sample_tmb(obj=obj, iter=iter, chains=3, init=init, seeds=seeds,
                    control=list(adapt_mass=TRUE))
-## launch_shinytmb(fit2)
 
 ## Or pass an estimated one from a previous run (or could be MLE if it
 ## exists). This will help a lot of there are strong correlations in the
 ## model.
 fit3 <- sample_tmb(obj=obj, iter=iter, chains=3, init=init, seeds=seeds,
                    control=list(metric=fit2$covar.est))
-## launch_shinytmb(fit3)
 
 ## Parallel works too
 library(snowfall)
@@ -45,7 +52,6 @@ path <- system.file("examples", package = "TMB")
 compile(file.path(path,'simple.cpp'))
 fit4 <- sample_tmb(obj=obj, iter=iter, chains=3, seeds=1:3, init=init,
                    parallel=TRUE, cores=3, path=path)
-launch_shinytmb(fit4)
 
 library(vioplot)
 ## The mass matrix typically doesn't effect ESS since it runs long enough
