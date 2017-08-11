@@ -5,10 +5,13 @@
 #'   in \code{control}
 update_control <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
-                  algorithm="NUTS", adapt_mass=FALSE,
-                  max_treedepth=12)
+                  adapt_mass=TRUE, max_treedepth=12)
   if(!is.null(control))
     for(i in names(control))  default[[i]] <- control[[i]]
+  if(is.matrix(default$metric) & default$adapt_mass){
+    warning("Mass matrix adaptation disabled if metrix is a matrix")
+    default$adapt_mass <- FALSE
+  }
   return(default)
 }
 
