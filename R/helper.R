@@ -5,8 +5,7 @@
 #'   in \code{control}
 update_control <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
-                  algorithm="NUTS", adapt_mass=FALSE,
-                  max_treedepth=12)
+                  adapt_mass=FALSE, max_treedepth=12)
   if(!is.null(control))
     for(i in names(control))  default[[i]] <- control[[i]]
   return(default)

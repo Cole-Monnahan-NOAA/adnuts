@@ -57,12 +57,15 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
     }
     ## Parallel execution
   } else {
+    sfInit(parallel=TRUE, cpus=cores)
+    sfExportAll()
     mcmc.out <- sfLapply(1:chains, function(i)
       sample_admb_parallel(parallel_number=i, dir=dir, model=model,
                            duration=duration,
                            algorithm=algorithm,
                            iter=iter, init=init[[i]], warmup=warmup,
                            seed=seeds[i], thin=thin, control=control, ...))
+    sfStop()
   }
   warmup <- mcmc.out[[1]]$warmup
   par.names <- mle$par.names

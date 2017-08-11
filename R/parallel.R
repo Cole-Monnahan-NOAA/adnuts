@@ -7,7 +7,6 @@
 combine_fits <- function(fits){
   z <- list()
   test <- lapply(fits, function(x) x$samples)
-  browser()
   samples <- array(NA, dim=c(nrow(test[[1]]), length(test), ncol(test[[1]])))
   dimnames(samples) <- dimnames(fits[[1]]$samples)
   for(i in 1:length(test)) samples[,i,] <- test[[i]]
@@ -23,10 +22,9 @@ combine_fits <- function(fits){
   return(z)
 }
 
-#' A wrapper for running SS models in parallel
+#' A wrapper for running ADMB models in parallel
 #' @export
 sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
-  library(adnuts)
   olddir <- getwd()
   on.exit(setwd(olddir))
   newdir <- paste0(file.path(getwd(),dir),"_chain_",parallel_number)
@@ -37,9 +35,53 @@ sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
   dir.create(newdir)
   trash <- file.copy(from=list.files(dir, full.names=TRUE), to=newdir)
   if(algorithm=="NUTS")
-    fit <- adnuts:::sample_admb_nuts(dir=newdir, chain=parallel_number,...)
+    fit <- adnuts:::sample_admb_nuts(dir=newdir, chain=parallel_number, ...)
   if(algorithm=="RWM")
     fit <- adnuts:::sample_admb_rwm(dir=newdir, chain=parallel_number, ...)
   unlink(newdir, TRUE)
+  return(fit)
+}
+
+#' A wrapper for running TMB models in parallel
+sample_tmb_parallel <-  function(parallel_number, obj, init, dir,
+                                 algorithm, lower, upper, seed, ...){
+  ## Each node starts in a random work directory. Rebuild TMB model obj so
+  ## can link it in each session.
+  setwd(dir)
+  dyn.load(dynlib(obj$env$DLL))
+  obj <- MakeADFun(data=obj$env$data, parameters=obj$env$parameters, random=obj$env$random,
+                   map=obj$env$map, DLL=obj$env$DLL)
+  obj$env$beSilent()
+  ## Parameter constraints, if provided, require the fn and gr functions to
+  ## be modified to account for differents in volume. There are four cases:
+  ## no constraints, bounded below, bounded above, or both (box
+  ## constraint).
+  bounded <- !(is.null(lower) & is.null(upper))
+  if(bounded){
+    if(is.null(lower)) lower <- rep(-Inf, len=length(upper))
+    if(is.null(upper)) upper <- rep(Inf, len=length(lower))
+    cases <- .transform.cases(lower, upper)
+    fn <- function(y){
+      x <- .transform(y, lower, upper, cases)
+      scales <- .transform.grad(y, lower, upper, cases)
+      -obj$fn(x) + sum(log(scales))
+    }
+    gr <- function(y){
+      x <- .transform(y, lower, upper, cases)
+      scales <- .transform.grad(y, lower, upper, cases)
+      scales2 <- .transform.grad2(y, lower, upper, cases)
+      -as.vector(obj$gr(x))*scales + scales2
+    }
+    init <- lapply(init, function(x) .transform.inv(x=unlist(x), a=lower, b=upper, cases=cases))
+  } else {
+    fn <- function(x) -obj$fn(x)
+    gr <- function(x) -as.vector(obj$gr(x))
+  }
+  if(algorithm=="NUTS")
+    fit <- run_mcmc.nuts(chain=parallel_number, fn=fn, gr=gr,
+                         init=init, seed=seed, ...)
+  if(algorithm=="RWM")
+    fit <- run_mcmc.rwm(chain=parallel_number, fn=fn, init=init,
+                        seed=seed, ...)
   return(fit)
 }
