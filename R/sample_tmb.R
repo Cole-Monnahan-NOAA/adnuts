@@ -43,6 +43,9 @@
 sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
                        cores=NULL, control=NULL, ...){
+
+  if(!is.null(obj$env$random))
+    warning("Some parameters declated as random.  Are you sure? For MCMC this is usually turned off")
   control <- update_control(control)
   ## Argument checking.
   if(is.null(init)){
