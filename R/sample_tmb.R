@@ -132,7 +132,7 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
   ## Before transforming, get estimated covariance to be used as metrix
   ## later.
-  covar.est <- cov(do.call(rbind, lapply(1:3, function(i) mcmc.out[[i]]$par[-(1:warmup),1:length(par.names)])))
+  covar.est <- cov(do.call(rbind, lapply(1:chains, function(i) mcmc.out[[i]]$par[-(1:warmup),1:length(par.names)])))
   dimnames(covar.est) <- NULL
   for(i in 1:chains){
     if(bounded){
