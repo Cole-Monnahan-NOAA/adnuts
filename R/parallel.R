@@ -50,7 +50,7 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
   setwd(path)
   dyn.load(dynlib(obj$env$DLL))
   obj <- MakeADFun(data=obj$env$data, parameters=obj$env$parameters, random=obj$env$random,
-                   map=obj$env$map, DLL=obj$env$DLL)
+                   map=obj$env$map, DLL=obj$env$DLL, silent=TRUE)
   obj$env$beSilent()
   ## Parameter constraints, if provided, require the fn and gr functions to
   ## be modified to account for differents in volume. There are four cases:
