@@ -35,7 +35,7 @@ sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
   dir.create(newdir)
   trash <- file.copy(from=list.files(dir, full.names=TRUE), to=newdir)
   if(algorithm=="NUTS")
-    fit <- adnuts:::sample_admb_nuts(dir=newdir, chain=parallel_number,...)
+    fit <- adnuts:::sample_admb_nuts(dir=newdir, chain=parallel_number, ...)
   if(algorithm=="RWM")
     fit <- adnuts:::sample_admb_rwm(dir=newdir, chain=parallel_number, ...)
   unlink(newdir, TRUE)
@@ -44,8 +44,9 @@ sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
 
 #' A wrapper for running TMB models in parallel
 sample_tmb_parallel <-  function(parallel_number, obj, init, dir,
-                                 algorithm, lower, upper, ...){
-  ## Each node starts in a random work directory so fix that
+                                 algorithm, lower, upper, seed, ...){
+  ## Each node starts in a random work directory. Rebuild TMB model obj so
+  ## can link it in each session.
   setwd(dir)
   dyn.load(dynlib(obj$env$DLL))
   obj <- MakeADFun(data=obj$env$data, parameters=obj$env$parameters, random=obj$env$random,
@@ -78,9 +79,9 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, dir,
   }
   if(algorithm=="NUTS")
     fit <- run_mcmc.nuts(chain=parallel_number, fn=fn, gr=gr,
-                                  init=init, ...)
+                         init=init, seed=seed, ...)
   if(algorithm=="RWM")
     fit <- run_mcmc.rwm(chain=parallel_number, fn=fn, init=init,
-                                 ...)
+                        seed=seed, ...)
   return(fit)
 }

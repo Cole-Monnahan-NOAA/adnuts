@@ -28,7 +28,10 @@
 #' ('n.calls'), which for this algorithm is \code{iter}
 #' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.nuts}}, \code{\link{run_mcmc.hmc}}
 run_mcmc.rwm <- function(iter, fn, init, alpha=1, chain=1,
-                         warmup=floor(iter/2), covar=NULL, thin=1){
+                         warmup=floor(iter/2), thin=1,
+                         seed=NULL, control){
+  if(!is.null(seed)) set.seed(seed)
+  control <- update_control(control)
   lp <- accepted <- rep(0, length=iter)
   init <- as.vector(unlist(init))
   n.params <- length(init)
@@ -36,9 +39,10 @@ run_mcmc.rwm <- function(iter, fn, init, alpha=1, chain=1,
   ## If using covariance matrix and Cholesky decomposition, redefine
   ## these functions to include this transformation. The algorithm will
   ## work in the transformed space.
-  if(!is.null(covar)){
+  metric <- control$metric
+  if(!is.null(metric)){
     fn2 <- function(theta) fn(chd %*% theta)
-    chd <- t(chol(covar))               # lower triangular Cholesky decomp.
+    chd <- t(chol(metric))               # lower triangular Cholesky decomp.
     chd.inv <- solve(chd)               # inverse
     theta.cur <- chd.inv %*% init
   } else {
@@ -67,8 +71,8 @@ run_mcmc.rwm <- function(iter, fn, init, alpha=1, chain=1,
     .print.mcmc.progress(m, iter, warmup, chain)
   } ## end of MCMC loop
 
-  ## Back transform parameters if covar is used
-  if(!is.null(covar)) {
+  ## Back transform parameters if metric is used
+  if(!is.null(metric)) {
     theta.out <- t(apply(theta.out, 1, function(x) chd %*% x))
   }
   theta.out <- cbind(theta.out, lp)

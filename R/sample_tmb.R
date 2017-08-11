@@ -42,7 +42,7 @@
 #' @export
 sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
-                       cores=NULL, control=NULL, dir=getwd(), ...){
+                       cores=NULL, algorithm="NUTS", control=NULL, dir=getwd(), ...){
 
   if(!is.null(obj$env$random))
     warning("Some parameters declated as random.  Are you sure? For MCMC this is usually turned off")
@@ -58,7 +58,7 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
   } else if(any(unlist(lapply(init, function(x) length(x) != length(obj$par))))){
     stop("Initial parameter vector is wrong length")
   }
-  algorithm <- match.arg(control$algorithm, choices=c("NUTS", "RWM", "HMC"))
+  algorithm <- match.arg(algorithm, choices=c("NUTS", "RWM", "HMC"))
   stopifnot(thin >=1)
   stopifnot(chains >= 1)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
@@ -104,25 +104,26 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
     if(algorithm=="HMC"){
       mcmc.out <- lapply(1:chains, function(i)
         run_mcmc.hmc(iter=iter, fn=fn, gr=gr, init=init[[i]],
-                     covar=covar, chain=i, thin=thin, ...))
+                     covar=covar, chain=i, thin=thin, seed=seeds[i], ...))
     } else if(algorithm=="NUTS"){
       mcmc.out <- lapply(1:chains, function(i)
         run_mcmc.nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
-                      chain=i, thin=thin, control=control, ...))
+                      chain=i, thin=thin, seed=seeds[i], control=control, ...))
     } else if(algorithm=="RWM")
       mcmc.out <- lapply(1:chains, function(i)
-        run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]], covar=covar,
-                     thin=thin, ...))
+        run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]],
+                     thin=thin, seed=seeds[i], control=control, ...))
   } else {
-    warning("Note: Console output routed to mcmc_progress.html when using parallel execution")
-    sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.html')
+    warning("Note: Console output routed to mcmc_progress.txt when using parallel execution")
+    if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
+    sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
     sfLibrary(TMB)
-    ## sfLibrary(adnuts)
-    ## sfExportAll()
     mcmc.out <- sfLapply(1:chains, function(i)
       sample_tmb_parallel(parallel_number=i, iter=iter, obj=obj,  dir=getwd(),
                           init=init[[i]], algorithm=algorithm,
-                          lower=lower, upper=upper, ...))
+                          lower=lower, upper=upper, seed=seeds[i],
+                          control=control, ...))
+    sfStop()
   }
   ## Clean up returned output
   samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),

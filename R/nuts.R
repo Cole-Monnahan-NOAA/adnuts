@@ -44,8 +44,9 @@
 #'   ('sampler_params').
 #' @seealso \code{sample_tmb} and \code{run_mcmc.rwm}
 run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
-                          chain, thin=1, control=NULL){
+                          chain, thin=1, seed=NULL, control=NULL){
   ## Now contains all required NUTS arguments
+  if(!is.null(seed)) set.seed(seed)
   control <- update_control(control)
   eps <- control$stepsize
   init <- as.vector(unlist(init))
