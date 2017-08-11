@@ -42,7 +42,7 @@
 #' @export
 sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
-                       cores=NULL, algorithm="NUTS", control=NULL, dir=getwd(), ...){
+                       cores=NULL, algorithm="NUTS", control=NULL, path=getwd(), ...){
 
   if(!is.null(obj$env$random))
     warning("Some parameters declated as random.  Are you sure? For MCMC this is usually turned off")
@@ -118,12 +118,13 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
     if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
     sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
     sfLibrary(TMB)
+    sfExportAll()
+    on.exit(sfStop())
     mcmc.out <- sfLapply(1:chains, function(i)
-      sample_tmb_parallel(parallel_number=i, iter=iter, obj=obj,  dir=getwd(),
+      sample_tmb_parallel(parallel_number=i, iter=iter, obj=obj, path=path,
                           init=init[[i]], algorithm=algorithm,
                           lower=lower, upper=upper, seed=seeds[i],
                           control=control, ...))
-    sfStop()
   }
   ## Clean up returned output
   samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),

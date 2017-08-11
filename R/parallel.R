@@ -24,30 +24,30 @@ combine_fits <- function(fits){
 
 #' A wrapper for running ADMB models in parallel
 #' @export
-sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
+sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
   olddir <- getwd()
   on.exit(setwd(olddir))
-  newdir <- paste0(file.path(getwd(),dir),"_chain_",parallel_number)
+  newdir <- paste0(file.path(getwd(),path),"_chain_",parallel_number)
   if(dir.exists(newdir)){
     unlink(newdir, TRUE)
     if(dir.exists(newdir)) stop(paste("Could not remove folder:", newdir))
   }
   dir.create(newdir)
-  trash <- file.copy(from=list.files(dir, full.names=TRUE), to=newdir)
+  trash <- file.copy(from=list.files(path, full.names=TRUE), to=newdir)
   if(algorithm=="NUTS")
-    fit <- adnuts:::sample_admb_nuts(dir=newdir, chain=parallel_number, ...)
+    fit <- adnuts:::sample_admb_nuts(path=newdir, chain=parallel_number, ...)
   if(algorithm=="RWM")
-    fit <- adnuts:::sample_admb_rwm(dir=newdir, chain=parallel_number, ...)
+    fit <- adnuts:::sample_admb_rwm(path=newdir, chain=parallel_number, ...)
   unlink(newdir, TRUE)
   return(fit)
 }
 
 #' A wrapper for running TMB models in parallel
-sample_tmb_parallel <-  function(parallel_number, obj, init, dir,
+sample_tmb_parallel <-  function(parallel_number, obj, init, path,
                                  algorithm, lower, upper, seed, ...){
   ## Each node starts in a random work directory. Rebuild TMB model obj so
   ## can link it in each session.
-  setwd(dir)
+  setwd(path)
   dyn.load(dynlib(obj$env$DLL))
   obj <- MakeADFun(data=obj$env$data, parameters=obj$env$parameters, random=obj$env$random,
                    map=obj$env$map, DLL=obj$env$DLL)
