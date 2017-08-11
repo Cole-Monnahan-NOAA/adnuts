@@ -129,6 +129,10 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
   ## Clean up returned output
   samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
+  ## Before transforming, get estimated covariance to be used as metrix
+  ## later.
+  covar.est <- cov(do.call(rbind, lapply(1:3, function(i) mcmc.out[[i]]$par[-(1:mcmc.out[[1]]$warmup),1:length(par.names)])))
+  dimnames(covar.est) <- NULL
   for(i in 1:chains){
     if(bounded){
       temp <- mcmc.out[[i]]$par
@@ -146,7 +150,7 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
   result <- list(samples=samples, sampler_params=sampler_params,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=mcmc.out[[1]]$warmup,
-                 model=obj$env$DLL)
+                 model=obj$env$DLL, covar.est=covar.est)
   if(algorithm=="NUTS") result$max_treedepth <- mcmc.out[[1]]$max_treedepth
   return(invisible(result))
 }
