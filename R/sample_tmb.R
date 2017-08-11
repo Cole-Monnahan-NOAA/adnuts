@@ -63,8 +63,8 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
   stopifnot(chains >= 1)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
   obj$env$beSilent()                  # silence console output
-  if(control$adapt_mass)
-    warning("Mass matrix adaptation is experimental -- use with caution")
+  ## if(control$adapt_mass)
+  ##   warning("Mass matrix adaptation is experimental -- use with caution")
 
   ## Parameter constraints, if provided, require the fn and gr functions to
   ## be modified to account for differents in volume. There are four cases:
