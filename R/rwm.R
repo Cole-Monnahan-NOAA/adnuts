@@ -30,6 +30,7 @@
 run_mcmc.rwm <- function(iter, fn, init, alpha=1, chain=1,
                          warmup=floor(iter/2), covar=NULL, thin=1){
   lp <- accepted <- rep(0, length=iter)
+  init <- as.vector(unlist(init))
   n.params <- length(init)
   theta.out <- matrix(NA, nrow=iter, ncol=n.params)
   ## If using covariance matrix and Cholesky decomposition, redefine

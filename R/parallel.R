@@ -7,7 +7,6 @@
 combine_fits <- function(fits){
   z <- list()
   test <- lapply(fits, function(x) x$samples)
-  browser()
   samples <- array(NA, dim=c(nrow(test[[1]]), length(test), ncol(test[[1]])))
   dimnames(samples) <- dimnames(fits[[1]]$samples)
   for(i in 1:length(test)) samples[,i,] <- test[[i]]
@@ -26,7 +25,6 @@ combine_fits <- function(fits){
 #' A wrapper for running ADMB models in parallel
 #' @export
 sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
-  library(adnuts)
   olddir <- getwd()
   on.exit(setwd(olddir))
   newdir <- paste0(file.path(getwd(),dir),"_chain_",parallel_number)
@@ -45,19 +43,18 @@ sample_admb_parallel <- function(parallel_number, dir, algorithm, ...){
 }
 
 #' A wrapper for running TMB models in parallel
-#' @export
-sample_tmb_parallel <-  function(parallel_number, inputs, init, dir,
-                                  model, ...){
+sample_tmb_parallel <-  function(parallel_number, obj, init, dir,
+                                 algorithm, lower, upper, ...){
+  ## Each node starts in a random work directory so fix that
   setwd(dir)
-  dyn.load(dynlib(model))
-  obj <- MakeADFun(data=inputs$data, parameters=init)
+  dyn.load(dynlib(obj$env$DLL))
+  obj <- MakeADFun(data=obj$env$data, parameters=obj$env$parameters, random=obj$env$random,
+                   map=obj$env$map, DLL=obj$env$DLL)
   obj$env$beSilent()
   ## Parameter constraints, if provided, require the fn and gr functions to
   ## be modified to account for differents in volume. There are four cases:
   ## no constraints, bounded below, bounded above, or both (box
   ## constraint).
-  lower <- inputs$lower
-  upper <- inputs$upper
   bounded <- !(is.null(lower) & is.null(upper))
   if(bounded){
     if(is.null(lower)) lower <- rep(-Inf, len=length(upper))
@@ -80,10 +77,10 @@ sample_tmb_parallel <-  function(parallel_number, inputs, init, dir,
     gr <- function(x) -as.vector(obj$gr(x))
   }
   if(algorithm=="NUTS")
-    fit <- adnuts:::run_mcmc.nuts(chain=parallel_number, fn=fn, gr=gr,
+    fit <- run_mcmc.nuts(chain=parallel_number, fn=fn, gr=gr,
                                   init=init, ...)
   if(algorithm=="RWM")
-    fit <- adnuts:::run_mcmc.rwm(chain=parallel_number, fn=fn, init=init,
+    fit <- run_mcmc.rwm(chain=parallel_number, fn=fn, init=init,
                                  ...)
   return(fit)
 }

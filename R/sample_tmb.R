@@ -42,15 +42,15 @@
 #' @export
 sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
-                       cores=NULL, control=NULL, ...){
+                       cores=NULL, control=NULL, dir=getwd(), ...){
 
   if(!is.null(obj$env$random))
     warning("Some parameters declated as random.  Are you sure? For MCMC this is usually turned off")
   control <- update_control(control)
   ## Argument checking.
   if(is.null(init)){
-    if(chains>1) warning('Using same inits for each chain -- strongly recommended to use dispersed inits')
-    init <- rep(list(obj$par), times=chains)
+    if(chains>1) warning('Using same starting values for each chain -- strongly recommended to use dispersed inits')
+    init <- lapply(1:chains, function(i) as.numeric(unlist(obj$par)))
   } else if(is.function(init)){
     init <- lapply(1:chains, function(i) unlist(init()))
   } else if(length(init) != chains){
@@ -114,13 +114,15 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
         run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]], covar=covar,
                      thin=thin, ...))
   } else {
-    message("Setting up parallel execution with snowfall")
+    warning("Note: Console output routed to mcmc_progress.html when using parallel execution")
+    sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.html')
+    sfLibrary(TMB)
+    ## sfLibrary(adnuts)
+    ## sfExportAll()
     mcmc.out <- sfLapply(1:chains, function(i)
-      sample_tmb_parallel(parallel_number=i, dir=dir, model=model,
-                          duration=duration,
-                          algorithm=algorithm,
-                          iter=iter, init=init[[i]], warmup=warmup,
-                          seed=seeds[i], thin=thin, control=control, ...))
+      sample_tmb_parallel(parallel_number=i, iter=iter, obj=obj,  dir=getwd(),
+                          init=init[[i]], algorithm=algorithm,
+                          lower=lower, upper=upper, ...))
   }
   ## Clean up returned output
   samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),
