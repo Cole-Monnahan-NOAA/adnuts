@@ -50,13 +50,11 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   control <- update_control(control)
   eps <- control$stepsize
   init <- as.vector(unlist(init))
-  metric <- control$metric
-  if(is.null(metric)) metric <- diag(length(init))
-  if(is.matrix(metric)){
-    M <- metric
-  } else {
-    stop("Only allowed to pass M matrix as metric")
-  }
+  npar <- length(init)
+  M <- control$metric
+  if(is.null(M)) M <- rep(1, len=npar)
+  if( !(is.vector(M) | is.matrix(M)) )
+    stop("Metric must be vector or matrix")
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
   adapt_mass <- control$adapt_mass
@@ -71,19 +69,14 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
 
   ## Using a mass matrix means redefining what fn and gr do and
   ## backtransforming the initial value.
-  if(!is.null(M)){
-    temp <- rotate_space(fn=fn, gr=gr, M=M, y.cur=init)
-    fn2 <- temp$fn2; gr2 <- temp$gr2
-    theta.cur <- temp$theta.cur
-    chd <- temp$chd
-  } else {
-    fn2 <- fn; gr2 <- gr
-    theta.cur <- init
-  }
-  npar <- length(theta.cur)
-  sampler_params <- matrix(numeric(0), nrow=iter, ncol=6,
-                           dimnames=list(NULL, c("accept_stat__", "stepsize__", "treedepth__",
-                                                 "n_leapfrog__", "divergent__", "energy__")))
+  rotation <- rotate_space(fn=fn, gr=gr, M=M, y.cur=init)
+  fn2 <- rotation$fn2; gr2 <- rotation$gr2
+  theta.cur <- rotation$x.cur
+  chd <- rotation$chd
+  sampler_params <-
+    matrix(numeric(0), nrow=iter, ncol=6, dimnames=list(NULL,
+      c("accept_stat__", "stepsize__", "treedepth__", "n_leapfrog__",
+        "divergent__", "energy__")))
   ## This holds the rotated but untransformed variables ("y" space)
   theta.out <- matrix(NA, nrow=iter, ncol=npar)
   ## how many steps were taken at each iteration, useful for tuning
@@ -107,7 +100,8 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     ## Initialize this iteration from previous in case divergence at first
     ## treebuilding. If successful trajectory they are overwritten
     theta.minus <- theta.plus <- theta.cur
-    theta.out[m,] <- if(is.null(M)) theta.cur else t(chd %*% theta.cur)
+    theta.out[m,] <-
+      if(is.vector(M)) sqrt(M)*theta.cur else t(chd %*% theta.cur)
     lp[m] <- if(m==1) fn2(theta.cur) else lp[m-1]
     r.cur <- r.plus <- r.minus <-  rnorm(npar,0,1)
     H0 <- .calculate.H(theta=theta.cur, r=r.cur, fn=fn2)
@@ -196,9 +190,9 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         vars <- as.numeric(s1/(k-1)) # estimated variance
         M <- diag(x=vars)
         ## Update density and gradient functions for new mass matrix
-        temp <- rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
-        fn2 <- temp$fn2; gr2 <- temp$gr2; chd <- temp$chd;
-        theta.cur <- temp$theta.cur
+        rotation <- rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
+        fn2 <- rotation$fn2; gr2 <- rotation$gr2; chd <- rotation$chd;
+        theta.cur <- rotation$x.cur
         ## Reset the running variance calculation
         k <- 1; m1 <- theta.out[m,]; s1 <- rep(0, len=npar)
         ## Calculate the next end window. If this overlaps into the final fast
