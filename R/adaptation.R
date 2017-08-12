@@ -41,24 +41,6 @@ slow_phase <- function(i, warmup, w1, w3){
   return(x1 & x2 & x3)
 }
 
-#' Update algorithm for mass matrix.
-#' @param fn The current fn function.
-#' @param gr The current gr function
-#' @param y.cur The current parameter vector in unrotated (Y) space.
-#' @param M The new mass matrix
-rotate_space <- function(fn, gr, M,  y.cur){
-  ## Rotation done using choleski decomposition
-  chd <- t(chol(M))               # lower triangular Cholesky decomp.
-  chd.inv <- solve(chd)               # inverse
-  ## Redefine these functions
-  fn2 <- function(theta) fn(chd %*% theta)
-  gr2 <- function(theta) as.vector( t( gr(chd %*% theta) ) %*% chd )
-  ## Need to adjust the current parameters so the chain is
-  ## continuous. First rotate to be in Y space.
-  ## Now rotate back to "x" space using the new mass matrix M
-  x.cur <- chd.inv %*% y.cur
-  return(list(gr2=gr2, fn2=fn2, theta.cur=x.cur, chd=chd))
-}
 
 ## ## The basic algorithm
 ## m <- m0 <- c(1,1)
