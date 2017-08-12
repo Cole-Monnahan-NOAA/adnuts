@@ -22,7 +22,7 @@ rotate_space <- function(fn, gr, M,  y.cur){
     ## Now rotate back to "x" space using the new mass matrix M. M is a
     ## vector here. Note the big difference in efficiency without the
     ## matrix operations.
-    x.cur <- sqrt(1/M)* y.cur
+    x.cur <- (1/chd) * y.cur
   } else {
     stop("Mass matrix must be vector or matrix")
   }

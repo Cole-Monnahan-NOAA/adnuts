@@ -101,7 +101,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     ## treebuilding. If successful trajectory they are overwritten
     theta.minus <- theta.plus <- theta.cur
     theta.out[m,] <-
-      if(is.vector(M)) sqrt(M)*theta.cur else t(chd %*% theta.cur)
+      if(is.vector(M)) chd*theta.cur else t(chd %*% theta.cur)
     lp[m] <- if(m==1) fn2(theta.cur) else lp[m-1]
     r.cur <- r.plus <- r.minus <-  rnorm(npar,0,1)
     H0 <- .calculate.H(theta=theta.cur, r=r.cur, fn=fn2)
@@ -135,7 +135,8 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
           theta.cur <- res$theta.prime
           lp[m] <- fn2(theta.cur)
           ## Rotate parameters
-          theta.out[m,] <- if(is.null(M)) theta.cur else t(chd %*% theta.cur)
+          theta.out[m,] <-
+            if(is.vector(M)) chd*theta.cur else t(chd %*% theta.cur)
         }
       }
       n <- n+res$n
@@ -187,8 +188,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       } else if(m==anw){
         ## If at end of adaptation window, update the mass matrix to the estimated
         ## variances
-        vars <- as.numeric(s1/(k-1)) # estimated variance
-        M <- diag(x=vars)
+        M <- as.numeric(s1/(k-1)) # estimated variance
         ## Update density and gradient functions for new mass matrix
         rotation <- rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
         fn2 <- rotation$fn2; gr2 <- rotation$gr2; chd <- rotation$chd;
