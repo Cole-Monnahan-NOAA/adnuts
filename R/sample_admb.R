@@ -8,7 +8,7 @@
 #' @param warmup The number of warmup samples.
 #' @param seeds Random number seeds one for each chain.
 #' @param thin The thinning rate.
-#' @param dir The name of a folder containing the ADMB model, which should
+#' @param path The name of a folder containing the ADMB model, which should
 #'   not not be the working directory. This function requires this for
 #'   parallel since the folder is copied and run in parallel.
 #' @param mceval Whether to run the model with \code{-mceval} afterward.
@@ -22,7 +22,7 @@
 #' @export
 #'
 sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
-                        thin=1, dir=getwd(), mceval=FALSE, duration=NULL,
+                        thin=1, path=getwd(), mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
                         algorithm="NUTS", ...){
   ## Argument checking and processing
@@ -41,17 +41,17 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   ## Delete any psv files in case something goes wrong we dont use old
   ## values by accident
   trash <- file.remove(list.files()[grep('.psv', x=list.files())])
-  mle <- read_mle_fit(model=model, path=dir)
+  mle <- read_mle_fit(model=model, path=path)
   ## Run in serial
   if(!parallel){
     if(algorithm=="NUTS"){
       mcmc.out <- lapply(1:chains, function(i)
-        sample_admb_nuts(dir=dir, model=model, warmup=warmup, duration=duration,
+        sample_admb_nuts(path=path, model=model, warmup=warmup, duration=duration,
                          iter=iter, init=init[[i]], chain=i,
                          seed=seeds[i], thin=thin, control=control, ...))
     } else {
       mcmc.out <- lapply(1:chains, function(i)
-        sample_admb_rwm(dir=dir, model=model, warmup=warmup, duration=duration,
+        sample_admb_rwm(path=path, model=model, warmup=warmup, duration=duration,
                         iter=iter, init=init[[i]], chain=i,
                         seed=seeds[i], thin=thin, control=control, ...))
     }
@@ -60,7 +60,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
     sfInit(parallel=TRUE, cpus=cores)
     sfExportAll()
     mcmc.out <- sfLapply(1:chains, function(i)
-      sample_admb_parallel(parallel_number=i, dir=dir, model=model,
+      sample_admb_parallel(parallel_number=i, path=path, model=model,
                            duration=duration,
                            algorithm=algorithm,
                            iter=iter, init=init[[i]], warmup=warmup,
@@ -93,14 +93,14 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
   ## done posthoc by recombining chains AFTER thinning and warmup and
   ## discarded into a single chain, written to file, then call -mceval.
   ## Merge all chains together and run mceval
-  message(paste("... Merging post-warmup chains into main folder:", dir))
+  message(paste("... Merging post-warmup chains into main folder:", path))
   samples2 <- do.call(rbind, lapply(1:chains, function(i)
     samples[-(1:warmup), i, -dim(samples)[3]]))
-  write_psv(fn=model, samples=samples2, model.path=dir)
+  write_psv(fn=model, samples=samples2, model.path=path)
   ## These already exclude warmup
   unbounded <- do.call(rbind, lapply(mcmc.out, function(x) x$unbounded))
   oldwd <- getwd(); on.exit(setwd(oldwd))
-  setwd(dir)
+  setwd(path)
   write.table(unbounded, file='unbounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
   if(mceval){
     message("... Running -mceval on merged chains")
@@ -124,7 +124,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
 #' draws, MLE fits and covariance/correlation matrices, and some
 #' MCMC convergence diagnostics using CODA.
 #'
-#' @param dir (Character) A path to the folder containing
+#' @param path (Character) A path to the folder containing
 #'   the model. NULL indicates the current folder.
 #' @param mode.name (Character) The name of the model
 #'   executable. A character string, without '.exe'.
@@ -161,11 +161,11 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
 #'   and object of class 'admb', read in using the results read
 #'   in using \code{read_admb}, and (3) some MCMC convergence
 #'   diagnostics using CODA.
-sample_admb_nuts <- function(dir, model, iter, thin, warmup, duration=NULL,
+sample_admb_nuts <- function(path, model, iter, thin, warmup, duration=NULL,
                              init=NULL,  chain=1, par.names=NULL, seed=NULL, control=NULL,
                              verbose=TRUE, extra.args=NULL){
   wd.old <- getwd(); on.exit(setwd(wd.old))
-  setwd(dir)
+  setwd(path)
   ## Now contains all required NUTS arguments
   control <- adnuts:::update_control(control)
   eps <- control$stepsize
@@ -258,12 +258,12 @@ get_psv <- function(model){
 
 
 sample_admb_rwm <-
-  function(dir, model, iter=2000, thin=1, warmup=ceiling(iter/2),
+  function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL,  chain=1, seed=NULL, control=NULL, par.names=NULL,
            verbose=TRUE, extra.args=NULL, duration=NULL,
            mceval=TRUE){
     wd.old <- getwd(); on.exit(setwd(wd.old))
-    setwd(dir)
+    setwd(path)
     ## Now contains all required NUTS arguments
     control <- update_control(control)
     metric <- control$metric
