@@ -72,3 +72,21 @@ min(fit3$ess)/sum(fit3$time.total)
 min(fit4$ess)/max(fit4$time.total)
 
 
+### ----------- ADMB example
+### Note: ADMB functionality is still in flux so this will change a bit.
+path <- 'mvn' # a toy multivariate normal model
+## Compile and run model with hbf 1 (needed for NUTS). It is best to have
+## your ADMB files in a separate folder and provide that path.
+setwd(path)
+## note: you need to compile this ADMB fork:
+## https://github.com/colemonnahan/admb
+system('admb mvn.tpl')
+system('mvn -hbf 1')
+setwd('..')
+init <-  lapply(1:3, function(i) list(mu=rnorm(50)))
+fit5 <- sample_admb(model='mvn', iter=2000, init=init, chains=3, path=path)
+## Can also run parallel
+library(snowfall)
+fit6 <- sample_admb(model='mvn', iter=2000, init=init, chains=3, path=path,
+                   parallel=TRUE, cores=3)
+launch_shinyadmb(fit6)
