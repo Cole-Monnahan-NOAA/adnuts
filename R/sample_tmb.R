@@ -41,12 +41,16 @@
 #' @seealso \code{\link{extract_samples}}, \code{\link{launch_shinytmb}}
 #' @export
 sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
-                       thin=1, upper=NULL, control=NULL,  ...){
+                       upper=NULL, thin=1, parallel=FALSE,
+                       cores=NULL, algorithm="NUTS", control=NULL, path=getwd(), ...){
+
+  if(!is.null(obj$env$random))
+    warning("Some parameters declated as random.  Are you sure? For MCMC this is usually turned off")
   control <- update_control(control)
   ## Argument checking.
   if(is.null(init)){
-    if(chains>1) warning('Using same inits for each chain -- strongly recommended to use dispersed inits')
-    init <- rep(list(obj$par), times=chains)
+    if(chains>1) warning('Using same starting values for each chain -- strongly recommended to use dispersed inits')
+    init <- lapply(1:chains, function(i) as.numeric(unlist(obj$par)))
   } else if(is.function(init)){
     init <- lapply(1:chains, function(i) unlist(init()))
   } else if(length(init) != chains){
@@ -54,11 +58,13 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
   } else if(any(unlist(lapply(init, function(x) length(x) != length(obj$par))))){
     stop("Initial parameter vector is wrong length")
   }
-  algorithm <- match.arg(control$algorithm, choices=c("NUTS", "RWM", "HMC"))
+  algorithm <- match.arg(algorithm, choices=c("NUTS", "RWM", "HMC"))
   stopifnot(thin >=1)
   stopifnot(chains >= 1)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
   obj$env$beSilent()                  # silence console output
+  ## if(control$adapt_mass)
+  ##   warning("Mass matrix adaptation is experimental -- use with caution")
 
   ## Parameter constraints, if provided, require the fn and gr functions to
   ## be modified to account for differents in volume. There are four cases:
@@ -94,22 +100,40 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
   }))))
 
   ## Select and run the chain.
-  if(algorithm=="HMC"){
-    mcmc.out <- lapply(1:chains, function(i)
-      run_mcmc.hmc(iter=iter, fn=fn, gr=gr, init=init[[i]],
-                   covar=covar, chain=i, thin=thin, ...))
-  } else if(algorithm=="NUTS"){
-    mcmc.out <- lapply(1:chains, function(i)
-      run_mcmc.nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
-                    chain=i, thin=thin, control=control, ...))
-  } else if(algorithm=="RWM")
-    mcmc.out <- lapply(1:chains, function(i)
-      run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]], covar=covar,
-                   thin=thin, ...))
-
+  if(!parallel){
+    if(algorithm=="HMC"){
+      mcmc.out <- lapply(1:chains, function(i)
+        run_mcmc.hmc(iter=iter, fn=fn, gr=gr, init=init[[i]],
+                     covar=covar, chain=i, thin=thin, seed=seeds[i], ...))
+    } else if(algorithm=="NUTS"){
+      mcmc.out <- lapply(1:chains, function(i)
+        run_mcmc.nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
+                      chain=i, thin=thin, seed=seeds[i], control=control, ...))
+    } else if(algorithm=="RWM")
+      mcmc.out <- lapply(1:chains, function(i)
+        run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]],
+                     thin=thin, seed=seeds[i], control=control, ...))
+  } else {
+    warning("Note: Console output routed to mcmc_progress.txt when using parallel execution")
+    if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
+    sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
+    sfLibrary(TMB)
+    sfExportAll()
+    on.exit(sfStop())
+    mcmc.out <- sfLapply(1:chains, function(i)
+      sample_tmb_parallel(parallel_number=i, iter=iter, obj=obj, path=path,
+                          init=init[[i]], algorithm=algorithm,
+                          lower=lower, upper=upper, seed=seeds[i],
+                          control=control, ...))
+  }
+  warmup <- mcmc.out[[1]]$warmup
   ## Clean up returned output
   samples <-  array(NA, dim=c(nrow(mcmc.out[[1]]$par), chains, 1+length(par.names)),
                     dimnames=list(NULL, NULL, c(par.names,'lp__')))
+  ## Before transforming, get estimated covariance to be used as metrix
+  ## later.
+  covar.est <- cov(do.call(rbind, lapply(1:chains, function(i) mcmc.out[[i]]$par[-(1:warmup),1:length(par.names)])))
+  dimnames(covar.est) <- NULL
   for(i in 1:chains){
     if(bounded){
       temp <- mcmc.out[[i]]$par
@@ -121,13 +145,16 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
       samples[,i,] <- mcmc.out[[i]]$par
     }
   }
+  message("... Calculating ESS and Rhat")
+  temp <- (rstan::monitor(samples, warmup=warmup, probs=.5, print=FALSE))
+  Rhat <- temp[,6]; ess <- temp[,5]
   sampler_params <- lapply(mcmc.out, function(x) x$sampler_params)
   time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
   time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
   result <- list(samples=samples, sampler_params=sampler_params,
                  time.warmup=time.warmup, time.total=time.total,
-                 algorithm=algorithm, warmup=mcmc.out[[1]]$warmup,
-                 model=obj$env$DLL)
+                 algorithm=algorithm, warmup=warmup,
+                 model=obj$env$DLL, covar.est=covar.est, Rhat=Rhat, ess=ess)
   if(algorithm=="NUTS") result$max_treedepth <- mcmc.out[[1]]$max_treedepth
   return(invisible(result))
 }
