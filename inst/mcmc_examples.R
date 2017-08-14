@@ -90,3 +90,7 @@ library(snowfall)
 fit6 <- sample_admb(model='mvn', iter=2000, init=init, chains=3, path=path,
                    parallel=TRUE, cores=3)
 launch_shinyadmb(fit6)
+fit6$cmd[1] # this is the command line arguments used
+
+## Mass matrix adapation is almost done but not quite ready, check back
+## soon!
