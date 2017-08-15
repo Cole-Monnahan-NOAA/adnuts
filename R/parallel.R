@@ -49,7 +49,11 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
   ## can link it in each session.
   setwd(path)
   dyn.load(dynlib(obj$env$DLL))
-  obj <- MakeADFun(data=obj$env$data, parameters=obj$env$parameters, random=obj$env$random,
+  ## Use 'shape' attribute to obtain full length of 'map'ped parameters.
+  map.index <- which(names(obj$env$parameters) %in% names(obj$env$map))
+  new.par <- obj$env$parameters
+  new.par[map.index] <- lapply(obj$env$parameters[map.index], function(x) attr(x, "shape"))
+  obj <- MakeADFun(data=obj$env$data, parameters=new.par, random=obj$env$random,
                    map=obj$env$map, DLL=obj$env$DLL, silent=TRUE)
   obj$env$beSilent()
   ## Parameter constraints, if provided, require the fn and gr functions to
