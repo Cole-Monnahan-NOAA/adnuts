@@ -55,7 +55,7 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
     init <- lapply(1:chains, function(i) unlist(init()))
   } else if(length(init) != chains){
     stop("Length of init does not equal number of chains.")
-  } else if(any(unlist(lapply(init, function(x) length(x) != length(obj$par))))){
+  } else if(any(unlist(lapply(init, function(x) length(unlist(x)) != length(obj$par))))){
     stop("Initial parameter vector is wrong length")
   }
   algorithm <- match.arg(algorithm, choices=c("NUTS", "RWM", "HMC"))
