@@ -76,7 +76,9 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
       scales2 <- .transform.grad2(y, lower, upper, cases)
       -as.vector(obj$gr(x))*scales + scales2
     }
-    init <- .transform.inv(x=unlist(init), a=lower, b=upper, cases=cases)
+    ## Don't need to adjust this b/c init is already backtransformed in
+    ## sample_tmb.
+    ## init <- .transform.inv(x=unlist(init), a=lower, b=upper, cases=cases)
   } else {
     fn <- function(x) -obj$fn(x)
     gr <- function(x) -as.vector(obj$gr(x))
