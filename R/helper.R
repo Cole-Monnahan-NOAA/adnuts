@@ -1,3 +1,37 @@
+#' Update algorithm for mass matrix.
+#'
+#' @param fn The current fn function.
+#' @param gr The current gr function
+#' @param y.cur The current parameter vector in unrotated (Y) space.
+#' @param M The new mass matrix
+rotate_space <- function(fn, gr, M,  y.cur){
+  ## Rotation done using choleski decomposition
+  ## First case is a dense mass matrix
+  if(is.matrix(M)){
+    chd <- t(chol(M))               # lower triangular Cholesky decomp.
+    chd.inv <- solve(chd)               # inverse
+    ## Define rotated fn and gr functions
+    fn2 <- function(x) fn(chd %*% x)
+    gr2 <- function(x) {as.vector( gr(chd %*% x) %*% chd )}
+    ## Now rotate back to "x" space using the new mass matrix M
+    x.cur <- as.numeric(chd.inv %*% y.cur)
+  } else if(is.vector(M)){
+    chd <- sqrt(M)
+    fn2 <- function(x) fn(chd * x)
+    gr2 <- function(x) as.vector(gr(chd * x) ) * chd
+    ## Now rotate back to "x" space using the new mass matrix M. M is a
+    ## vector here. Note the big difference in efficiency without the
+    ## matrix operations.
+    x.cur <- (1/chd) * y.cur
+  } else {
+    stop("Mass matrix must be vector or matrix")
+  }
+  ## Redefine these functions
+  ## Need to adjust the current parameters so the chain is
+  ## continuous. First rotate to be in Y space.
+  return(list(gr2=gr2, fn2=fn2, x.cur=x.cur, chd=chd))
+}
+
 #' Update the control list.
 #'
 #' @param control A list passed from \code{sample_tmb}.

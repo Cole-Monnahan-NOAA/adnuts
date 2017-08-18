@@ -49,7 +49,11 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
   ## can link it in each session.
   setwd(path)
   dyn.load(dynlib(obj$env$DLL))
-  obj <- MakeADFun(data=obj$env$data, parameters=obj$env$parameters, random=obj$env$random,
+  ## Use 'shape' attribute to obtain full length of 'map'ped parameters.
+  map.index <- which(names(obj$env$parameters) %in% names(obj$env$map))
+  new.par <- obj$env$parameters
+  new.par[map.index] <- lapply(obj$env$parameters[map.index], function(x) attr(x, "shape"))
+  obj <- MakeADFun(data=obj$env$data, parameters=new.par, random=obj$env$random,
                    map=obj$env$map, DLL=obj$env$DLL, silent=TRUE)
   obj$env$beSilent()
   ## Parameter constraints, if provided, require the fn and gr functions to
@@ -72,7 +76,9 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
       scales2 <- .transform.grad2(y, lower, upper, cases)
       -as.vector(obj$gr(x))*scales + scales2
     }
-    init <- lapply(init, function(x) .transform.inv(x=unlist(x), a=lower, b=upper, cases=cases))
+    ## Don't need to adjust this b/c init is already backtransformed in
+    ## sample_tmb.
+    ## init <- .transform.inv(x=unlist(init), a=lower, b=upper, cases=cases)
   } else {
     fn <- function(x) -obj$fn(x)
     gr <- function(x) -as.vector(obj$gr(x))
