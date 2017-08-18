@@ -178,6 +178,7 @@ sample_admb_nuts <- function(path, model, iter, thin, warmup, duration=NULL,
   if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
+  adapt_mass <- control$adapt_mass
 
   ## Build the command to run the model
   cmd <- paste(model,"-nox -nohess -hbf 1 -nuts -mcmc ",iter)
@@ -187,23 +188,29 @@ sample_admb_nuts <- function(path, model, iter, thin, warmup, duration=NULL,
   cmd <- paste(cmd, "-max_treedepth", max_td, "-adapt_delta", adapt_delta)
   if(!is.null(eps)) cmd <- paste(cmd, "-hyeps", eps)
 
-  ## Three options for metric. NULL (default) is to use the MLE estimates
-  ## in admodel.cov. These need to be rescaled but this is done internally
-  ## in ADMB now by reading in the MLE in the admodel.hes file.  If a
-  ## matrix is passed, this is written to file and no scaling is done b/c
-  ## hbf is set to 1. Option 'unit' means identity. Note: these are all in
-  ## unbounded space.
+  ## Three options for metric. (1) 'mle' is to use the MLE estimates in
+  ## admodel.cov without mass adaptation. (2) If a matrix is passed, this
+  ## is written to file admodel.cov and no adaptation is done. (3) (default)
+  ## Adaptation starting with diagonal. (4) Diagonal without mass adaptation.
   if(is.matrix(metric)){
     ## User defined one will be writen to admodel.cov
     cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
     if(!matrixcalc:::is.positive.definite(x=cor.user))
       stop("Invalid mass matrix, not positive definite")
     write.admb.cov(metric, hbf=1)
-  } else if(is.null(metric)) {
-    ## Use MLE (default).  Do nothing different
+    warning("admodel.cov overwritten, revert admodel_original.cov if needed")
+    if(adapt_mass){
+      warning("Mass matrix adaptation not allowed with user-specified matrix")
+      adapt_mass <- FALSE
+    }
+  } else if(is.null(metric) | adapt_mass) {
+    ## Use mass matrix adaptating starting from unit diag.
+    cmd <- paste(cmd, '-adapt_mass')
   } else if(metric=='unit') {
-    ## Identity in unbounded space
+    ## Identity in unbounded space, without mass adapataion
     cmd <- paste(cmd, "-mcdiag")
+  } else if(metric=='mle') {
+    ## ADMB default so do nothing special. No adaptation, will use
   } else {
     stop("Invalid metric option")
   }
