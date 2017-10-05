@@ -116,12 +116,12 @@ sample_admb <-
     message("... Running -mceval on merged chains")
     system(paste(model, "-mceval -noest -nohess"), ignore.stdout=FALSE)
   }
-  message("... Calculating ESS and Rhat")
-  temp <- (rstan::monitor(samples, warmup=warmup, probs=.5, print=FALSE))
-  Rhat <- temp[,6]; ess <- temp[,5]
+  ## message("... Calculating ESS and Rhat")
+  ## temp <- (rstan::monitor(samples, warmup=warmup, probs=.5, print=FALSE))
+  ## Rhat <- temp[,6]; ess <- temp[,5]
   covar.est <- cov(unbounded)
   result <- list(samples=samples, sampler_params=sampler_params,
-                 ess=ess, Rhat=Rhat,
+                 ## ess=ess, Rhat=Rhat,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
                  model=model, max_treedepth=mcmc.out[[1]]$max_treedepth,
