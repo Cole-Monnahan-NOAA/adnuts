@@ -34,6 +34,9 @@
 #' @param cores The number of cores to use for parallel execution.
 #' @param path The path to the TMB DLL. This is only required if using
 #'   parallel, since each core needs to link to the DLL again.
+#' @param laplace Whether to use the Laplace approximation if some
+#'   parameters are delcared as random. Default is to turn off this
+#'   functionality and integrate across all parameters with MCMC.
 #' @param control A list to control the sampler. Elements are \itemize{
 #'   \item{"adapt_delta"}{The target acceptance rate.}  \item{"metric"}{
 #'   The mass metric to use. Options are: "unit" for a unit diagonal
@@ -50,10 +53,10 @@
 #' @export
 sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
-                       cores=NULL, path=NULL, algorithm="NUTS", control=NULL, ...){
+                       cores=NULL, path=NULL, algorithm="NUTS",
+                       laplace=FALSE,
+                       control=NULL, ...){
 
-  if(!is.null(obj$env$random))
-    warning("Some parameters declated as random.  Are you sure? For MCMC this is usually turned off")
   control <- update_control(control)
   ## Argument checking.
   if(is.null(init)){
@@ -74,6 +77,17 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
   ## if(control$adapt_mass)
   ##   warning("Mass matrix adaptation is experimental -- use with caution")
 
+  ## Ignore parameters declared as random? Borrowed from tmbstan.
+  if(laplace){
+    par <- obj$env$last.par.best[-obj$env$random]
+    fn0 <- obj$fn
+    gr0 <- obj$gr
+  } else {
+    par <- obj$env$last.par.best
+    fn0 <- obj$env$f
+    gr0 <- function(x) obj$env$f(x, order=1)
+  }
+
   ## Parameter constraints, if provided, require the fn and gr functions to
   ## be modified to account for differents in volume. There are four cases:
   ## no constraints, bounded below, bounded above, or both (box
@@ -86,22 +100,22 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
     fn <- function(y){
       x <- .transform(y, lower, upper, cases)
       scales <- .transform.grad(y, lower, upper, cases)
-      -obj$fn(x) + sum(log(scales))
+      -fn0(x) + sum(log(scales))
     }
     gr <- function(y){
       x <- .transform(y, lower, upper, cases)
       scales <- .transform.grad(y, lower, upper, cases)
       scales2 <- .transform.grad2(y, lower, upper, cases)
-      -as.vector(obj$gr(x))*scales + scales2
+      -as.vector(gr0(x))*scales + scales2
     }
     init <- lapply(init, function(x) .transform.inv(x=unlist(x), a=lower, b=upper, cases=cases))
   } else {
-    fn <- function(x) -obj$fn(x)
-    gr <- function(x) -as.vector(obj$gr(x))
+    fn <- function(x) -fn0(x)
+    gr <- function(x) -as.vector(gr0(x))
   }
 
   ## Make parameter names unique if vectors exist
-  par.names <- names(obj$par)
+  par.names <- names(par)
   par.names <- as.vector((unlist(sapply(unique(par.names), function(x){
     temp <- par.names[par.names==x]
     if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
