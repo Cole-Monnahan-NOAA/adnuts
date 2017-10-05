@@ -1,36 +1,29 @@
-## A very quick demonstration of the samplers. More to come.
-
-## Run the simple example, so that obj and opt are loaded into workspace
-library(TMB)
-library(adnuts)
-TMB::runExample("simple")
-## Remake obj without random components
-obj <- MakeADFun(data=list(x=x, B=B, A=A),
-                 parameters=list(u=u*0, beta=beta*0, logsdu=1, logsd0=1),
-                 random=NULL, DLL="simple", silent=TRUE)
+### A very quick demonstration of no-U-turn sampling in ADMB and TMB.
 
 ## Note that this model does not use any box constraints. These can be
 ## passed to sample_tmb just like with nlminb. Also, there are no explicit
 ## priors in this model, which can be influential particularly for the
-## logsd params.
+## logsd params. The user is solely responsible for properly defining a
+## Bayesian model, including priors and bounds.
+library(TMB)
+library(adnuts)
+TMB::runExample("simple")
 
 ## init can be a function, or a list of lists, or NULL to use starting
 ## values in obj.
 init <- function() list(mu=u, beta=beta, logsdu=0, logsd0=0)
-iter <- 2000
 seeds <- 1:3
-
 ## The default is to run 3 chains, 50% warmup, and use diagonal mass matrix
-## adapation. This is the same as Stan.
+## adapation. This is the same as rtan.
 fit1 <- sample_tmb(obj=obj, init=init, seeds=seeds)
 
-## Can also run in parallel
+## Can also run in parallel, but the DLL needs to be available in this
+## folder since each node calls MakeADFun again to remake obj.  This
+## usually is your working directory.
 path <- system.file("examples", package = "TMB")
-## DLL needs to be available in this folder since each node calls MakeADFun
-## again to remake obj. So recompile here. This usually is your working
-## directory.
+## This line is only needed b/c of how TMB::runexample works above.
 compile(file.path(path,'simple.cpp'))
-fit2 <- sample_tmb(obj=obj, seeds=seeds, init=init,
+fit2 <- sample_tmb(obj=obj, seeds=seeds, init=init, iter=100,
                    parallel=TRUE, cores=3, path=path)
 
 ## Extract samples like this

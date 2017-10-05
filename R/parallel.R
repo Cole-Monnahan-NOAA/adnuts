@@ -44,7 +44,7 @@ sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
 
 #' A wrapper for running TMB models in parallel
 sample_tmb_parallel <-  function(parallel_number, obj, init, path,
-                                 algorithm, lower, upper, seed, ...){
+                                 algorithm, lower, upper, seed, laplace, ...){
   ## Each node starts in a random work directory. Rebuild TMB model obj so
   ## can link it in each session.
   setwd(path)
@@ -56,6 +56,17 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
   obj <- MakeADFun(data=obj$env$data, parameters=new.par, random=obj$env$random,
                    map=obj$env$map, DLL=obj$env$DLL, silent=TRUE)
   obj$env$beSilent()
+
+  ## Ignore parameters declared as random? Borrowed from tmbstan.
+  if(laplace){
+    par <- obj$env$last.par.best[-obj$env$random]
+    fn0 <- obj$fn
+    gr0 <- obj$gr
+  } else {
+    par <- obj$env$last.par.best
+    fn0 <- obj$env$f
+    gr0 <- function(x) obj$env$f(x, order=1)
+  }
   ## Parameter constraints, if provided, require the fn and gr functions to
   ## be modified to account for differents in volume. There are four cases:
   ## no constraints, bounded below, bounded above, or both (box
@@ -68,20 +79,20 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
     fn <- function(y){
       x <- .transform(y, lower, upper, cases)
       scales <- .transform.grad(y, lower, upper, cases)
-      -obj$fn(x) + sum(log(scales))
+      -fn0(x) + sum(log(scales))
     }
     gr <- function(y){
       x <- .transform(y, lower, upper, cases)
       scales <- .transform.grad(y, lower, upper, cases)
       scales2 <- .transform.grad2(y, lower, upper, cases)
-      -as.vector(obj$gr(x))*scales + scales2
+      -as.vector(gr0(x))*scales + scales2
     }
     ## Don't need to adjust this b/c init is already backtransformed in
     ## sample_tmb.
     ## init <- .transform.inv(x=unlist(init), a=lower, b=upper, cases=cases)
   } else {
-    fn <- function(x) -obj$fn(x)
-    gr <- function(x) -as.vector(obj$gr(x))
+    fn <- function(x) -fn0(x)
+    gr <- function(x) -as.vector(gr0(x))
   }
   if(algorithm=="NUTS")
     fit <- run_mcmc.nuts(chain=parallel_number, fn=fn, gr=gr,

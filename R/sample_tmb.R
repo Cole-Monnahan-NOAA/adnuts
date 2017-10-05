@@ -137,17 +137,20 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
                      thin=thin, seed=seeds[i], control=control, ...))
   } else {
     if(!require(snowfall)) stop("Package 'snowfall' is required")
-    warning("Note: Console output routed to mcmc_progress.txt when using parallel execution")
     if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
     sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
     sfLibrary(TMB)
     sfExportAll()
     on.exit(sfStop())
+    message("Starting parallel chains... ")
+    ##mcmc.out <- lapply(1:chains, function(i)
     mcmc.out <- sfLapply(1:chains, function(i)
       sample_tmb_parallel(parallel_number=i, iter=iter, obj=obj, path=path,
                           init=init[[i]], algorithm=algorithm,
                           lower=lower, upper=upper, seed=seeds[i],
+                          laplace=laplace,
                           control=control, ...))
+    message("... Finished parallel chains")
   }
   warmup <- mcmc.out[[1]]$warmup
   ## Clean up returned output
