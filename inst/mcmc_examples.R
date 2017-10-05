@@ -20,71 +20,55 @@ init <- function() list(mu=u, beta=beta, logsdu=0, logsd0=0)
 iter <- 2000
 seeds <- 1:3
 
-## First use a diagonal mass matrix (not recommended)
-fit1 <- sample_tmb(obj=obj, iter=iter, chains=3, init=init, seeds=seeds,
-                   control=list(adapt_mass=FALSE))
-## Extra posterior samples like this
-posterior <- extract_samples(fit1)
-apply(posterior, 2, mean)
-## Check diagnostics with shinystan:
-launch_shinytmb(fit1)
-## Or look at the values directly
-sp <- extract_sampler_params(fit1)
-str(sp)
-min(fit1$ess)
-max(fit1$Rhat)
+## The default is to run 3 chains, 50% warmup, and use diagonal mass matrix
+## adapation. This is the same as Stan.
+fit1 <- sample_tmb(obj=obj, init=init, seeds=seeds)
 
-## Can also use mass matrix adaptation (default -- diagonal only)
-fit2 <- sample_tmb(obj=obj, iter=iter, chains=3, init=init, seeds=seeds,
-                   control=list(adapt_mass=TRUE))
-
-## Or pass an estimated one from a previous run (or could be MLE if it
-## exists). This will help a lot of there are strong correlations in the
-## model.
-fit3 <- sample_tmb(obj=obj, iter=iter, chains=3, init=init, seeds=seeds,
-                   control=list(metric=fit2$covar.est))
-
-## Parallel works too
-library(snowfall)
+## Can also run in parallel
 path <- system.file("examples", package = "TMB")
 ## DLL needs to be available in this folder since each node calls MakeADFun
-## again to remake obj. So recompile here.
+## again to remake obj. So recompile here. This usually is your working
+## directory.
 compile(file.path(path,'simple.cpp'))
-fit4 <- sample_tmb(obj=obj, iter=iter, chains=3, seeds=1:3, init=init,
+fit2 <- sample_tmb(obj=obj, seeds=seeds, init=init,
                    parallel=TRUE, cores=3, path=path)
 
-library(vioplot)
-## The mass matrix typically doesn't effect ESS since it runs long enough
-## to get nearly independent samples. Instead each trajectory is shorter
-## and hence the chains run faster
-vioplot(fit1$ess, fit2$ess, fit3$ess, fit4$ess)
+## Extract samples like this
+post1 <- extract_samples(fit1)
+## You can use these however you want. For instance, loop through each
+## saved row and call object$report(post1[i,]) to do any calculations or
+## projections (equivalent to -mceval in ADMB).
 
-## Run time:
+## Run time, one for each chain. In parallel constrained by longest one.
+fit1$time.total
 sum(fit1$time.total)
-sum(fit2$time.total)
-sum(fit3$time.total)
-max(fit4$time.total)
+max(fit2$time.total)
 
-## Efficiency:
-min(fit1$ess)/sum(fit1$time.total)
-min(fit2$ess)/sum(fit2$time.total)
-min(fit3$ess)/sum(fit3$time.total)
-min(fit4$ess)/max(fit4$time.total)
+## Use rstan functions to calculate effective sample sizes (ESS) and Rhat
+## (potential scale reduction.
+m1 <- rstan::monitor(fit1$samples, print=FALSE)
+Rhat <- m1[,"Rhat"]
+max(Rhat)
+ess <- m1[, 'n_eff']
+min(ess)
 
+## Or explore with shinystan. Make sure to click "Save and close" to exit
+## properly.
+launch_shinytmb(fit1)
 
 ### ----------- ADMB example
 ### Note: ADMB functionality is still in flux so this will change a bit.
-path <- 'mvn' # a toy multivariate normal model
+path <- 'simple' # a toy multivariate normal model
 ## Compile and run model with hbf 1 (needed for NUTS). It is best to have
 ## your ADMB files in a separate folder and provide that path.
 setwd(path)
 ## note: you need to compile this ADMB fork:
 ## https://github.com/colemonnahan/admb
-system('admb mvn.tpl')
-system('mvn -hbf 1')
+system('admb simple.tpl')
+system('simple -hbf 1')
 setwd('..')
-init <-  lapply(1:3, function(i) list(mu=rnorm(50)))
-fit5 <- sample_admb(model='mvn', iter=2000, init=init, chains=3, path=path)
+init <-  lapply(1:3, function(i) rnorm(2))
+fit3 <- sample_admb(model='simple', init=init, chains=3, path=path)
 ## Can also run parallel
 library(snowfall)
 fit6 <- sample_admb(model='mvn', iter=2000, init=init, chains=3, path=path,
