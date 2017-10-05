@@ -32,6 +32,8 @@
 #' @param parallel A boolean for whether to use parallel cores. The package
 #'   snowfall is used if TRUE.
 #' @param cores The number of cores to use for parallel execution.
+#' @param path The path to the TMB DLL. This is only required if using
+#'   parallel, since each core needs to link to the DLL again.
 #' @param control A list to control the sampler. Elements are \itemize{
 #'   \item{"adapt_delta"}{The target acceptance rate.}  \item{"metric"}{
 #'   The mass metric to use. Options are: "unit" for a unit diagonal
@@ -48,7 +50,7 @@
 #' @export
 sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
-                       cores=NULL, algorithm="NUTS", control=NULL, ...){
+                       cores=NULL, path=NULL, algorithm="NUTS", control=NULL, ...){
 
   if(!is.null(obj$env$random))
     warning("Some parameters declated as random.  Are you sure? For MCMC this is usually turned off")
@@ -120,9 +122,9 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
         run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]],
                      thin=thin, seed=seeds[i], control=control, ...))
   } else {
+    if(!require(snowfall)) stop("Package 'snowfall' is required")
     warning("Note: Console output routed to mcmc_progress.txt when using parallel execution")
     if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
-    path <- getwd()
     sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
     sfLibrary(TMB)
     sfExportAll()
@@ -165,5 +167,3 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
   if(algorithm=="NUTS") result$max_treedepth <- mcmc.out[[1]]$max_treedepth
   return(invisible(result))
 }
-
-
