@@ -480,10 +480,10 @@ read_mle_fit <- function(model, path=getwd()){
   ## Log of the determinant of the hessian
   logDetHess <- as.numeric(strsplit(xx[1], '=')[[1]][2])
   sublin <- lapply(strsplit(xx[1:totPar+2], ' '),function(x)x[x!=''])
-  names.all <- unlist(lapply(sublin,function(x)x[2]))
+  names.all <- unlist(lapply(sublin,function(x)x[2]))[1:nopar]
   names.all <- as.vector(do.call(c, sapply(unique(names.all), function(n){
     x <- names.all[names.all==n]
-    if(length(x)==1) return(x)
+    if(length(x)==1) return(list(x))
     list(paste0(x, '[',1:length(x),']'))})))
 
   est <- as.numeric(unlist(lapply(sublin,function(x)x[3])))
