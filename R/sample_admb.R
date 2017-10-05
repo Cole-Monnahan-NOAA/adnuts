@@ -1,9 +1,12 @@
 #' Sample from and ADMB object, using the NUTS or RWM algorithms.
 #'
-#' @param model Name of model
+#' @param model Name of model (i.e., model.tpl)
+#' @param path Path to model executable. Defaults to working
+#'   directory. Often best to have model files in a separate subdirectory,
+#'   particularly for parallel.
 #' @param iter Total iterations to run.
-#' @param init Initial values. Can be NULL (use MLE), or a list of vectors,
-#'   one for each chain.
+#' @param init Initial values. Can be NULL (use MLE), a list of vectors, or
+#'   a function which returns a vector
 #' @param chains The number of chains to run.
 #' @param warmup The number of warmup samples.
 #' @param seeds Random number seeds one for each chain.
@@ -11,7 +14,8 @@
 #' @param path The name of a folder containing the ADMB model, which should
 #'   not not be the working directory. This function requires this for
 #'   parallel since the folder is copied and run in parallel.
-#' @param mceval Whether to run the model with \code{-mceval} afterward.
+#' @param mceval Whether to run the model with \code{-mceval} on samples
+#'   from merged chains.
 #' @param duration The number of minutes after which the model will quit
 #'   running.
 #' @param parallel Whether to run chains in parallel.
@@ -21,23 +25,29 @@
 #' @param algorithm Which algorithm to use, either "NUTS" or "RWM".
 #' @export
 #'
-sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
-                        thin=1, path=getwd(), mceval=FALSE, duration=NULL,
-                        parallel=FALSE, cores=NULL, control=NULL,
-                        algorithm="NUTS", ...){
+sample_admb <-
+  function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
+           seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
+           parallel=FALSE, cores=NULL, control=NULL, algorithm="NUTS", ...){
   ## Argument checking and processing
+  stopifnot(thin >=1); stopifnot(chains >= 1)
+  if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
+  if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
+  ## Update control with defaults
   control <- adnuts:::update_control(control)
   if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM')))
     stop("Invalid algorithm specified")
   if(is.null(init)){
     warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
-  } else if(length(init) != chains){
+  }  else if(is.function(init)){
+    init <- lapply(1:chains, function(x) init())
+  } else if(!is.list(init)){
+    stop("init must be NULL, a list, or a function")
+  }
+  if(!is.null(init) & length(init) != chains){
     stop("Length of init does not equal number of chains.")
   }
-  if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
-  stopifnot(thin >=1) ;stopifnot(chains >= 1)
-  if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
   ## Delete any psv files in case something goes wrong we dont use old
   ## values by accident
   trash <- file.remove(list.files()[grep('.psv', x=list.files())])
@@ -130,6 +140,7 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
 #'   executable. A character string, without '.exe'.
 #' @param iter (Integer) The number of draws after thinning and
 #'   burn in.
+#' @param chains The number of chains to run.
 #' @param thin (Integer) Controls thinning of samples. Save every
 #'   thin value, such that 1 corresponds to keeping all draws,
 #'   and 100 saving every 100th draw.
@@ -161,8 +172,10 @@ sample_admb <- function(model, iter, init, chains=1, warmup=NULL, seeds=NULL,
 #'   and object of class 'admb', read in using the results read
 #'   in using \code{read_admb}, and (3) some MCMC convergence
 #'   diagnostics using CODA.
-sample_admb_nuts <- function(path, model, iter, thin, warmup, duration=NULL,
-                             init=NULL,  chain=1, par.names=NULL, seed=NULL, control=NULL,
+sample_admb_nuts <- function(path, model, iter=2000,
+                             init=NULL, chain=1,
+                             thin=1, warmup=NULL,
+                             seed=NULL, duration=NULL, control=NULL,
                              verbose=TRUE, extra.args=NULL){
   wd.old <- getwd(); on.exit(setwd(wd.old))
   setwd(path)
@@ -228,7 +241,7 @@ sample_admb_nuts <- function(path, model, iter, thin, warmup, duration=NULL,
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
   dimnames(unbounded) <- NULL
   pars <- get_psv(model)
-  if(is.null(par.names)) par.names <- names(pars)
+  par.names <- names(pars)
   pars[,'log-posterior'] <- sampler_params[,'energy__']
   pars <- as.matrix(pars)
   ## Thin samples and adaptation post hoc for NUTS
