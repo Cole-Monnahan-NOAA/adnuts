@@ -199,7 +199,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   adapt_mass <- control$adapt_mass
 
   ## Build the command to run the model
-  cmd <- paste(model,"-nox -noest -nohess -hbf 1 -nuts -mcmc ",iter)
+  cmd <- paste(model,"-nox -noest -nohess -nuts -mcmc ",iter)
   cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
   if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
   if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
@@ -210,7 +210,11 @@ sample_admb_nuts <- function(path, model, iter=2000,
   ## admodel.cov without mass adaptation. (2) If a matrix is passed, this
   ## is written to file admodel.cov and no adaptation is done. (3) (default)
   ## Adaptation starting with diagonal. (4) Diagonal without mass adaptation.
-  if(is.matrix(metric)){
+  if(is.null(metric)) {
+    ## The default: Use mass matrix adaptating starting from unit
+    ## diag. Currently the only option where mass adaptation is used.
+    cmd <- paste(cmd, '-adapt_mass')
+  } else if(is.matrix(metric)){
     ## User defined one will be writen to admodel.cov
     cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
     if(!matrixcalc:::is.positive.definite(x=cor.user))
@@ -221,14 +225,13 @@ sample_admb_nuts <- function(path, model, iter=2000,
       warning("Mass matrix adaptation not allowed with user-specified matrix")
       adapt_mass <- FALSE
     }
-  } else if(is.null(metric) | adapt_mass) {
-    ## Use mass matrix adaptating starting from unit diag.
-    cmd <- paste(cmd, '-adapt_mass')
   } else if(metric=='unit') {
     ## Identity in unbounded space, without mass adapataion
     cmd <- paste(cmd, "-mcdiag")
   } else if(metric=='mle') {
     ## ADMB default so do nothing special. No adaptation, will use
+    ## estimated MLE covariance matrix in unbounded space (read from
+    ## admodel.cov)
   } else {
     stop("Invalid metric option")
   }
