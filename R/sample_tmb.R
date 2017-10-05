@@ -19,30 +19,36 @@
 #'   initialize multiple chains from dispersed points. A of NULL signifies
 #'   to use the starting values present in the model (i.e., \code{obj$par})
 #'   for all chains.
-#' @param thin The thinning rate to apply to samples.
-#' @param control A list to control the sampler. Elements are
-#' \itemize{
-#' \item{"adapt_delta"}{The target acceptance rate.}
-#' \item{"metric"}{ The mass metric to use. Options are:
-#' "unit" for a unit diagonal matrix; "diag" to estimate a diagonal matrix
-#'   during warmup; a matrix to be used directly  (in untransformed space). For
-#'   instance from a previous run.}
-#' \item{"algorithm"}{ A string specifiying an algorithm. Currently supported
-#'   are "RWM" for the random walk Metropolis sampler and "NUTS" for the No-U-Turn sampler
-#'   These algorithms require different arguments; see their help files for
-#'   more information.}
-#' \item{"adapt_engaged"}{Whether adaptation of step size and metric is
-#'   turned on}
-#' }
+#' @param thin The thinning rate to apply to samples. Typically not used
+#'   with NUTS.
+#' @param lower A vector of lower bounds for parameters. The default
+#' @param upper
+#' @param algorithm The algorithm to use. NUTS is the default and
+#'   recommended one, but "RWM" for the random walk Metropolis sampler and
+#'   "HMC" for the static HMC sampler are available. These last two are
+#'   deprecated but may be of use in some situations. These algorithms
+#'   require different arguments; see their help files for more
+#'   information.
+#' @param parallel A boolean for whether to use parallel cores. The package
+#'   snowfall is used if TRUE.
+#' @param cores The number of cores to use for parallel execution.
+#' @param control A list to control the sampler. Elements are \itemize{
+#'   \item{"adapt_delta"}{The target acceptance rate.}  \item{"metric"}{
+#'   The mass metric to use. Options are: "unit" for a unit diagonal
+#'   matrix; "diag" to estimate a diagonal matrix during warmup; a matrix
+#'   to be used directly (in untransformed space). For instance from a
+#'   previous run.}  \item{"adapt_engaged"}{Whether adaptation of step size
+#'   and metric is turned on} \item{"max_treedepth"}{Maximum treedepth for
+#'   the NUTS algorithm} \item{"stepsize"}{The stepsize for the NUTS algorithm}}
 #' @param ... Further arguments to be passed to the algorithm. See help
 #'   files for the samplers for further arguments.
-#' @return A list containing the samples,  and properties of the sampler
+#' @return A list containing the samples, and properties of the sampler
 #'   useful for diagnosing behavior and efficiency.
 #' @seealso \code{\link{extract_samples}}, \code{\link{launch_shinytmb}}
 #' @export
-sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
+sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
-                       cores=NULL, algorithm="NUTS", control=NULL, path=getwd(), ...){
+                       cores=NULL, algorithm="NUTS", control=NULL, ...){
 
   if(!is.null(obj$env$random))
     warning("Some parameters declated as random.  Are you sure? For MCMC this is usually turned off")
@@ -116,6 +122,7 @@ sample_tmb <- function(obj, iter, init, chains=1, seeds=NULL, lower=NULL,
   } else {
     warning("Note: Console output routed to mcmc_progress.txt when using parallel execution")
     if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
+    path <- getwd()
     sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
     sfLibrary(TMB)
     sfExportAll()
