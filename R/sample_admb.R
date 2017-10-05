@@ -51,7 +51,6 @@ sample_admb <-
   ## Delete any psv files in case something goes wrong we dont use old
   ## values by accident
   trash <- file.remove(list.files()[grep('.psv', x=list.files())])
-  mle <- read_mle_fit(model=model, path=path)
   ## Run in serial
   if(!parallel){
     if(algorithm=="NUTS"){
@@ -77,10 +76,16 @@ sample_admb <-
                            seed=seeds[i], thin=thin, control=control, ...))
     sfStop()
   }
-  warmup <- mcmc.out[[1]]$warmup
-  par.names <- mle$par.names
-  iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
-  if(any(iters!=iter/thin)){
+    warmup <- mcmc.out[[1]]$warmup
+    mle <- read_mle_fit(model=model, path=path)
+    if(is.null(mle)){
+      par.names <- dimnames(mcmc.out[[1]]$samples)[[2]]
+      par.names <- par.names[-length(par.names)]
+    } else {
+      par.names <- mle$par.names
+    }
+    iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
+    if(any(iters!=iter/thin)){
     N <- min(iters)
     warning(paste("Variable chain lengths, truncating to minimum=", N))
   } else {

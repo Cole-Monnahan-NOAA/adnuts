@@ -464,8 +464,13 @@ read_mle_fit <- function(model, path=getwd()){
   setwd(path)
   ## Sequentially read .par file which contains model size, minimum NLL,
   ## and maxgrad at the top
-  par <- as.numeric(scan(paste(model,'.par', sep=''),
-    what='', n=16, quiet=TRUE)[c(6,11,16)])
+  f <- paste(model,'.par', sep='')
+  if(!file.exists(f)){
+    warning(paste("File", f,
+                  "not found so could not read in MLE quantities or parameter names"))
+    return(NULL)
+  }
+  par <- as.numeric(scan(f, what='', n=16, quiet=TRUE)[c(6,11,16)])
   nopar <- as.integer(par[1])
   nll <- par[2] #objective function value
   maxgrad <- par[3]
