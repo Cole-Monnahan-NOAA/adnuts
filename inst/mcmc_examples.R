@@ -23,7 +23,7 @@ fit1 <- sample_tmb(obj=obj, init=init, seeds=seeds)
 path <- system.file("examples", package = "TMB")
 ## This line is only needed b/c of how TMB::runexample works above.
 compile(file.path(path,'simple.cpp'))
-fit2 <- sample_tmb(obj=obj, seeds=seeds, init=init, iter=100,
+fit2 <- sample_tmb(obj=obj, seeds=seeds, init=init,
                    parallel=TRUE, cores=3, path=path)
 
 ## Extract samples like this
@@ -50,7 +50,7 @@ min(ess)
 launch_shinytmb(fit1)
 
 ### ----------- ADMB example
-### Note: ADMB functionality is still in flux so this will change a bit.
+## This is the packaged simple regression model
 path <- 'simple' # a toy multivariate normal model
 ## Compile and run model with hbf 1 (needed for NUTS). It is best to have
 ## your ADMB files in a separate folder and provide that path.
@@ -58,14 +58,41 @@ setwd(path)
 ## note: you need to compile this ADMB fork:
 ## https://github.com/colemonnahan/admb
 system('admb simple.tpl')
-system('simple -hbf 1')
 setwd('..')
+## Note, we don't have to get an MLE estimates or admodel.covar file for
+## this to run. Thus it will work for models that have no defined mode.
 init <-  lapply(1:3, function(i) rnorm(2))
 fit3 <- sample_admb(model='simple', init=init, path=path)
-## Can also run parallel
+fit3$cmd[1] # this is the command line arguments used
+## The downside is we don't know the parameter names
+post3 <- extract_samples(fit3)
+names(post3)
+
+## So run optimizer and run NUTS again
+setwd(path); system('simple'); setwd('..')
+fit3 <- sample_admb(model='simple', init=init, path=path)
+## The downside is we don't know the parameter names
+post3 <- extract_samples(fit3)
+names(post3)
+
+## Can also run in parallel
 library(snowfall)
 fit4 <- sample_admb(model='simple', init=init, path=path,
                    parallel=TRUE, cores=3)
-launch_shinyadmb(fit4)
-fit4$cmd[1] # this is the command line arguments used
+
+## If we want to use the MLE covariance as the metric set it using
+## control. This *should* make for more efficient sampling in most cases.
+##
+## For technical reasons, must optimize the model with flag -hbf 1
+setwd(path); system('simple -hbf 1'); setwd('..')
+fit5 <- sample_admb(model='simple', init=init, path=path,
+                    parallel=TRUE, cores=3, control=list(metric='mle'))
+
+fit4$time.total
+fit5$time.total
+
+## Like with TMB we can use shinystan tool
+launch_shinyadmb(fit5)
+
+
 
