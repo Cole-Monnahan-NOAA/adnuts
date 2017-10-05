@@ -68,13 +68,11 @@ system('admb simple.tpl')
 system('simple -hbf 1')
 setwd('..')
 init <-  lapply(1:3, function(i) rnorm(2))
-fit3 <- sample_admb(model='simple', init=init, chains=3, path=path)
+fit3 <- sample_admb(model='simple', init=init, path=path)
 ## Can also run parallel
 library(snowfall)
-fit6 <- sample_admb(model='mvn', iter=2000, init=init, chains=3, path=path,
+fit4 <- sample_admb(model='simple', init=init, path=path,
                    parallel=TRUE, cores=3)
-launch_shinyadmb(fit6)
-fit6$cmd[1] # this is the command line arguments used
+launch_shinyadmb(fit4)
+fit4$cmd[1] # this is the command line arguments used
 
-## Mass matrix adapation is almost done but not quite ready, check back
-## soon!
