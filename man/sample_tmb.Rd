@@ -90,7 +90,7 @@ The user is responsible for specifying the model properly (priors,
   the convergence and validity of the resulting samples (e.g., through
   the \code{coda} package), or with function
   \code{\link{launch_shinytmb}} before making inference. Specifically,
-  priors must be specified in the TMB template file for each
+  priors must be specified in the template file for each
   parameter. Unspecified priors will be impliticly uniform.
 }
 
@@ -103,6 +103,7 @@ fit1 <- sample_tmb(obj=obj, init=init, seeds=1:3)
 post <- extract_samples(fit1)
 apply(post, 2, median)
 }
+
 }
 \seealso{
 \code{\link{extract_samples}} to extract samples and

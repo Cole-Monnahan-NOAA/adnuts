@@ -2,69 +2,16 @@
 % Please edit documentation in R/sample_admb.R
 \name{sample_admb_nuts}
 \alias{sample_admb_nuts}
-\title{Run an MCMC using an ADMB model, return (1) the posterior
-draws, MLE fits and covariance/correlation matrices, and some
-MCMC convergence diagnostics using CODA.}
+\title{Run a single NUTS chain for an ADMB model}
 \usage{
 sample_admb_nuts(path, model, iter = 2000, init = NULL, chain = 1,
   thin = 1, warmup = NULL, seed = NULL, duration = NULL,
   control = NULL, verbose = TRUE, extra.args = NULL)
 }
-\arguments{
-\item{path}{(Character) A path to the folder containing
-the model. NULL indicates the current folder.}
-
-\item{iter}{(Integer) The number of draws after thinning and
-burn in.}
-
-\item{init}{(Numeric vector) A vector of initial values, which
-are written to file and used in the model via the -mcpin
-option.}
-
-\item{thin}{(Integer) Controls thinning of samples. Save every
-thin value, such that 1 corresponds to keeping all draws,
-and 100 saving every 100th draw.}
-
-\item{warmup}{(Integer) How many samples to discard from the
-beginning of the chain, *after* thining. The burn in period
-(i.e., the first warmup*thin draws) should be at least large
-enough to cover dynamic scaling.}
-
-\item{seed}{(Integer) Which seed (integer value) to pass
-ADMB. Used for reproducibility.}
-
-\item{verbose}{(Logical) Whether to print ADMB warnings and
-other information. Useful for testing and troubleshooting.}
-
-\item{extra.args}{(Character) A string which is passed to ADMB
-at runtime. Useful for passing additional arguments to the
-model executable.}
-
-\item{mode.name}{(Character) The name of the model
-executable. A character string, without '.exe'.}
-
-\item{chains}{The number of chains to run.}
-
-\item{covar}{(Numeric matrix) A manually defined covariance
-matrix (in bounded space) to use in the Metropolis-Hastings
-algorithm.}
-
-\item{mcdiag}{(Logical) Whether to use the \code{mcdiag}
-feature. This uses an identity matrix for the covariance
-matrix.}
-
-\item{eps}{(Numeric) The size of the leapfrog jump in the
-hybrid method, with smaller values leading to smaller but
-more accurate jumps. Must be a positive value.}
-}
-\value{
-Returns a list containing (1) the posterior draws, (2)
-  and object of class 'admb', read in using the results read
-  in using \code{read_admb}, and (3) some MCMC convergence
-  diagnostics using CODA.
-}
 \description{
-Run an MCMC using an ADMB model, return (1) the posterior
-draws, MLE fits and covariance/correlation matrices, and some
-MCMC convergence diagnostics using CODA.
+A low level function to run a single chain. Unlikely to be used by a
+user, instead prefer \code{\link{sample_admb}}
+}
+\seealso{
+sample_admb
 }
