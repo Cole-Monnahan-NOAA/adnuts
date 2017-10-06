@@ -1,28 +1,42 @@
-#' Sample from and ADMB object, using the NUTS or RWM algorithms.
+#' Bayesian inference of an ADMB model using the no-U-turn sampler.
 #'
+#' Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
+#' using an MCMC algorithm. This function generates posterior samples from
+#' which inference can be made. Adaptation schemes are used so
+#' specificying tuning parameters is not necessary, and parallel
+#' execution reduces overall run time.
+#'
+#' @details This function implements algorithm 6 of Hoffman and Gelman (2014),
+#' and loosely follows package \code{rstan}. The step size can be
+#'   adapated or specified manually. The metric (i.e., mass matrix) can be
+#'   unit diagonal, adapated diagonal (default and recommended), or a dense
+#'   matrix specified by the user. Further control of algorithms can be
+#'   specified with the \code{control} argument.  Elements are:
+#' \describe{
+#' \item{adapt_delta}{The target acceptance rate. D}
+#' \item{metric}{The mass metric to use. Options are: "unit" for a unit diagonal
+#'   matrix; \code{NULL} to estimate a diagonal matrix during warmup; a matrix
+#'   to be used directly (in untransformed space).}
+#' \item{adapt_delta}{Whether adaptation of step size is turned on.}
+#' \item{adapt_mass}{Whether adaptation of mass matrix is turned
+#'   on. Currently only allowed for diagonal metric.}
+#' \item{max_treedepth}{Maximum treedepth for the NUTS algorithm.}
+#' \item{stepsize}{The stepsize for the NUTS algorithm. If \code{NULL} it
+#'   will be adapted during warmup.}
+#' }
+#'
+#' @author Cole Monnahan
 #' @param model Name of model (i.e., model.tpl)
 #' @param path Path to model executable. Defaults to working
 #'   directory. Often best to have model files in a separate subdirectory,
 #'   particularly for parallel.
-#' @param iter Total iterations to run.
-#' @param init Initial values. Can be NULL (use MLE), a list of vectors, or
-#'   a function which returns a vector
-#' @param chains The number of chains to run.
-#' @param warmup The number of warmup samples.
-#' @param seeds Random number seeds one for each chain.
-#' @param thin The thinning rate.
-#' @param path The name of a folder containing the ADMB model, which should
-#'   not not be the working directory. This function requires this for
-#'   parallel since the folder is copied and run in parallel.
 #' @param mceval Whether to run the model with \code{-mceval} on samples
 #'   from merged chains.
 #' @param duration The number of minutes after which the model will quit
 #'   running.
-#' @param parallel Whether to run chains in parallel.
-#' @param cores If parallel is \code{TRUE}, how many cores to use.
-#' @param control A list of control options for the algorithms. See
-#'   \code{sample_tmb} for more information.
 #' @param algorithm Which algorithm to use, either "NUTS" or "RWM".
+#' @inheritParams sample_tmb
+#' @inheritSection sample_tmb Warning
 #' @export
 #'
 sample_admb <-
@@ -134,49 +148,11 @@ sample_admb <-
   return(invisible(result))
 }
 
-
-#' Run an MCMC using an ADMB model, return (1) the posterior
-#' draws, MLE fits and covariance/correlation matrices, and some
-#' MCMC convergence diagnostics using CODA.
+#' Run a single NUTS chain for an ADMB model
 #'
-#' @param path (Character) A path to the folder containing
-#'   the model. NULL indicates the current folder.
-#' @param mode.name (Character) The name of the model
-#'   executable. A character string, without '.exe'.
-#' @param iter (Integer) The number of draws after thinning and
-#'   burn in.
-#' @param chains The number of chains to run.
-#' @param thin (Integer) Controls thinning of samples. Save every
-#'   thin value, such that 1 corresponds to keeping all draws,
-#'   and 100 saving every 100th draw.
-#' @param warmup (Integer) How many samples to discard from the
-#'   beginning of the chain, *after* thining. The burn in period
-#'   (i.e., the first warmup*thin draws) should be at least large
-#'   enough to cover dynamic scaling.
-#' @param covar (Numeric matrix) A manually defined covariance
-#'   matrix (in bounded space) to use in the Metropolis-Hastings
-#'   algorithm.
-#' @param init (Numeric vector) A vector of initial values, which
-#'   are written to file and used in the model via the -mcpin
-#'   option.
-#' @param seed (Integer) Which seed (integer value) to pass
-#'   ADMB. Used for reproducibility.
-#' @param mcdiag (Logical) Whether to use the \code{mcdiag}
-#'   feature. This uses an identity matrix for the covariance
-#'   matrix.
-#' @param eps (Numeric) The size of the leapfrog jump in the
-#'   hybrid method, with smaller values leading to smaller but
-#'   more accurate jumps. Must be a positive value.
-#' @param verbose (Logical) Whether to print ADMB warnings and
-#'   other information. Useful for testing and troubleshooting.
-#' @param extra.args (Character) A string which is passed to ADMB
-#'   at runtime. Useful for passing additional arguments to the
-#'   model executable.
-#' @export
-#' @return Returns a list containing (1) the posterior draws, (2)
-#'   and object of class 'admb', read in using the results read
-#'   in using \code{read_admb}, and (3) some MCMC convergence
-#'   diagnostics using CODA.
+#' A low level function to run a single chain. Unlikely to be used by a
+#' user, instead prefer \code{\link{sample_admb}}
+#' @seealso sample_admb
 sample_admb_nuts <- function(path, model, iter=2000,
                              init=NULL, chain=1,
                              thin=1, warmup=NULL,
@@ -290,7 +266,11 @@ get_psv <- function(model){
   return(pars)
 }
 
-
+#' Run a single random walk Metropolis chain for an ADMB model
+#'
+#' A low level function to run a single chain. Unlikely to be used by a
+#' user, instead prefer \code{\link{sample_admb}}
+#' @seealso sample_admb
 sample_admb_rwm <-
   function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL,  chain=1, seed=NULL, control=NULL, par.names=NULL,

@@ -1,6 +1,3 @@
-## Copyright (C) 2015 Cole Monnahan
-## License: GPL-2
-
 #' Bayesian inference of a TMB model using the no-U-turn sampler.
 #'
 #' Draw Bayesian posterior samples from a Template Model Builder (TMB)
@@ -32,7 +29,7 @@
 #'   the convergence and validity of the resulting samples (e.g., through
 #'   the \code{coda} package), or with function
 #'   \code{\link{launch_shinytmb}} before making inference. Specifically,
-#'   priors must be specified in the TMB template file for each
+#'   priors must be specified in the template file for each
 #'   parameter. Unspecified priors will be impliticly uniform.
 #' @author Cole Monnahan
 #' @param obj A TMB model object.
