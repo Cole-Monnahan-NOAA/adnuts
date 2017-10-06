@@ -21,4 +21,3 @@ An invisible data.frame containing samples (rows) of each
 \description{
 Extract sampler parameters from a fit
 }
-

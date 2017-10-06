@@ -1,29 +1,28 @@
 
-#' Combine multiple fits as returned from \code{sample_tmb} or
-#' \code{sample_admb} run as a single chain.
-#'
-#' @param fits A list of fits, each having a single chain
-#' @return A merged fit across chains.
-combine_fits <- function(fits){
-  z <- list()
-  test <- lapply(fits, function(x) x$samples)
-  samples <- array(NA, dim=c(nrow(test[[1]]), length(test), ncol(test[[1]])))
-  dimnames(samples) <- dimnames(fits[[1]]$samples)
-  for(i in 1:length(test)) samples[,i,] <- test[[i]]
-  z$samples <- samples
-  sp <- sapply(fits, function(x) x$sampler_params)
-  z$sampler_params <- sp
-  z$time.warmup <- unlist(lapply(fits, function(x) x$time.warmup))
-  z$time.total <- unlist(lapply(fits, function(x) x$time.total))
-  z$algorithm <- fits[[1]]$algorithm
-  z$warmup <- fits[[1]]$warmup
-  z$model <- fits[[1]]$model
-  z$max_treedepth <- fits[[1]]$max_treedepth
-  return(z)
-}
+## #' Combine multiple fits as returned from \code{sample_tmb} or
+## #' \code{sample_admb} run as a single chain.
+## #'
+## #' @param fits A list of fits, each having a single chain
+## #' @return A merged fit across chains.
+## combine_fits <- function(fits){
+##   z <- list()
+##   test <- lapply(fits, function(x) x$samples)
+##   samples <- array(NA, dim=c(nrow(test[[1]]), length(test), ncol(test[[1]])))
+##   dimnames(samples) <- dimnames(fits[[1]]$samples)
+##   for(i in 1:length(test)) samples[,i,] <- test[[i]]
+##   z$samples <- samples
+##   sp <- sapply(fits, function(x) x$sampler_params)
+##   z$sampler_params <- sp
+##   z$time.warmup <- unlist(lapply(fits, function(x) x$time.warmup))
+##   z$time.total <- unlist(lapply(fits, function(x) x$time.total))
+##   z$algorithm <- fits[[1]]$algorithm
+##   z$warmup <- fits[[1]]$warmup
+##   z$model <- fits[[1]]$model
+##   z$max_treedepth <- fits[[1]]$max_treedepth
+##   return(z)
+## }
 
-#' A wrapper for running ADMB models in parallel
-#' @export
+## A wrapper for running ADMB models in parallel
 sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
   olddir <- getwd()
   on.exit(setwd(olddir))
@@ -35,27 +34,38 @@ sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
   dir.create(newdir)
   trash <- file.copy(from=list.files(path, full.names=TRUE), to=newdir)
   if(algorithm=="NUTS")
-    fit <- adnuts:::sample_admb_nuts(path=newdir, chain=parallel_number, ...)
+    fit <- sample_admb_nuts(path=newdir, chain=parallel_number, ...)
   if(algorithm=="RWM")
-    fit <- adnuts:::sample_admb_rwm(path=newdir, chain=parallel_number, ...)
+    fit <- sample_admb_rwm(path=newdir, chain=parallel_number, ...)
   unlink(newdir, TRUE)
   return(fit)
 }
 
-#' A wrapper for running TMB models in parallel
+## A wrapper for running TMB models in parallel
 sample_tmb_parallel <-  function(parallel_number, obj, init, path,
-                                 algorithm, lower, upper, seed, ...){
+                                 algorithm, lower, upper, seed, laplace, ...){
   ## Each node starts in a random work directory. Rebuild TMB model obj so
   ## can link it in each session.
   setwd(path)
-  dyn.load(dynlib(obj$env$DLL))
+  dyn.load(TMB::dynlib(obj$env$DLL))
   ## Use 'shape' attribute to obtain full length of 'map'ped parameters.
   map.index <- which(names(obj$env$parameters) %in% names(obj$env$map))
   new.par <- obj$env$parameters
   new.par[map.index] <- lapply(obj$env$parameters[map.index], function(x) attr(x, "shape"))
-  obj <- MakeADFun(data=obj$env$data, parameters=new.par, random=obj$env$random,
+  obj <- TMB::MakeADFun(data=obj$env$data, parameters=new.par, random=obj$env$random,
                    map=obj$env$map, DLL=obj$env$DLL, silent=TRUE)
   obj$env$beSilent()
+
+  ## Ignore parameters declared as random? Borrowed from tmbstan.
+  if(laplace){
+    par <- obj$env$last.par.best[-obj$env$random]
+    fn0 <- obj$fn
+    gr0 <- obj$gr
+  } else {
+    par <- obj$env$last.par.best
+    fn0 <- obj$env$f
+    gr0 <- function(x) obj$env$f(x, order=1)
+  }
   ## Parameter constraints, if provided, require the fn and gr functions to
   ## be modified to account for differents in volume. There are four cases:
   ## no constraints, bounded below, bounded above, or both (box
@@ -68,26 +78,26 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
     fn <- function(y){
       x <- .transform(y, lower, upper, cases)
       scales <- .transform.grad(y, lower, upper, cases)
-      -obj$fn(x) + sum(log(scales))
+      -fn0(x) + sum(log(scales))
     }
     gr <- function(y){
       x <- .transform(y, lower, upper, cases)
       scales <- .transform.grad(y, lower, upper, cases)
       scales2 <- .transform.grad2(y, lower, upper, cases)
-      -as.vector(obj$gr(x))*scales + scales2
+      -as.vector(gr0(x))*scales + scales2
     }
     ## Don't need to adjust this b/c init is already backtransformed in
     ## sample_tmb.
     ## init <- .transform.inv(x=unlist(init), a=lower, b=upper, cases=cases)
   } else {
-    fn <- function(x) -obj$fn(x)
-    gr <- function(x) -as.vector(obj$gr(x))
+    fn <- function(y) -fn0(y)
+    gr <- function(y) -as.vector(gr0(y))
   }
   if(algorithm=="NUTS")
-    fit <- run_mcmc.nuts(chain=parallel_number, fn=fn, gr=gr,
+    fit <- sample_tmb_nuts(chain=parallel_number, fn=fn, gr=gr,
                          init=init, seed=seed, ...)
   if(algorithm=="RWM")
-    fit <- run_mcmc.rwm(chain=parallel_number, fn=fn, init=init,
+    fit <- sample_tmb_rwm(chain=parallel_number, fn=fn, init=init,
                         seed=seed, ...)
   return(fit)
 }

@@ -24,4 +24,3 @@ An invisible data.frame containing samples (rows) of each
 \description{
 Extract posterior samples from a TMB MCMC fit list.
 }
-

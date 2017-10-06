@@ -6,48 +6,22 @@
 #'   algorithm called dual averaging. In theory neither the step length nor
 #'   step size needs to be input by the user to obtain efficient sampling
 #'   from the posterior.
-#' @param iter The number of samples to return.
-#' @param eps The length of the leapfrog steps. If a numeric value is
-#'   passed, it will be used throughout the entire chain. A \code{NULL}
-#'   value will initiate adaptation of \code{eps} using the dual averaging
-#'   algorithm during the first \code{warmup} steps.
-#' @param warmup An optional argument for how many iterations to adapt
-#'   \code{eps} in the dual averaging algorithm. A value of \code{NULL}
-#'   results in a default of \code{warmup=iter/2}.
-#' @param adapt_delta The target acceptance rate for the dual averaging
-#'   algorithm. Defaults to 80\%. NUTS does not include an accept/reject
-#'   Metropolis step, so this rate can be understood as the
-#'   "average acceptance probability that HMC would give to the position-momentum states explored during the final doubling iteration."
 #' @param fn A function that returns the log of the posterior density.
 #' @param gr A function that returns a vector of gradients of the log of
 #'   the posterior density (same as \code{fn}).
-#' @param covar An optional covariance matrix which can be used to improve
-#'   the efficiency of sampling. The lower Cholesky decomposition of this
-#'   matrix is used to transform the parameter space. If the posterior is
-#'   approximately multivariate normal and \code{covar} approximates the
-#'   covariance, then the transformed parameter space will be close to
-#'   multivariate standard normal. In this case the algorithm will be more
-#'   efficient, but there will be overhead in the matrix calculations which
-#'   need to be done at each step. The default of NULL specifies to not do
-#'   this transformation.
-#' @param init A vector of initial parameter values.
-#' @param max_treedepth Integer representing the maximum times the path
-#'   length should double within an MCMC iteration. Default of 4, so 16
-#'   steps. If a U-turn has not occured before this many steps the
-#'   algorithm will stop and return a sample from the given tree.
+#' @param chain The chain number, for printing only.
+#' @param seed The random seed to use.
 #' @references \itemize{ \item{Neal, R. M. (2011). MCMC using Hamiltonian
 #'   dynamics. Handbook of Markov Chain Monte Carlo.}  \item{Hoffman and
 #'   Gelman (2014). The No-U-Turn sampler: Adaptively setting path lengths
 #'   in Hamiltonian Monte Carlo. J. Mach. Learn. Res.  15:1593-1623.}  }
-#' @return A list containing samples ('par') and algorithm details such as
-#'   step size adaptation and acceptance probabilities per iteration
-#'   ('sampler_params').
-#' @seealso \code{sample_tmb} and \code{run_mcmc.rwm}
-run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
-                          chain, thin=1, seed=NULL, control=NULL){
+#' @inheritParams sample_tmb
+#' @seealso \code{sample_tmb}
+sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
+                          chain=1, thin=1, seed=NULL, control=NULL){
   ## Now contains all required NUTS arguments
   if(!is.null(seed)) set.seed(seed)
-  control <- update_control(control)
+  control <- .update_control(control)
   eps <- control$stepsize
   init <- as.vector(unlist(init))
   npar <- length(init)
@@ -69,7 +43,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
 
   ## Using a mass matrix means redefining what fn and gr do and
   ## backtransforming the initial value.
-  rotation <- rotate_space(fn=fn, gr=gr, M=M, y.cur=init)
+  rotation <- .rotate_space(fn=fn, gr=gr, M=M, y.cur=init)
   fn2 <- rotation$fn2; gr2 <- rotation$gr2
   theta.cur <- rotation$x.cur
   chd <- rotation$chd
@@ -178,7 +152,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     ## Do the adaptation of mass matrix. The algorithm is working in X
     ## space but I need to calculate the mass matrix in Y space. So need to
     ## do this coversion in the calcs below.
-    if(adapt_mass & slow_phase(m, warmup, w1, w3)){
+    if(adapt_mass & .slow_phase(m, warmup, w1, w3)){
       ## If in slow phase, update running estimate of variances
       ## The Welford running variance calculation, see
       ## https://www.johndcook.com/blog/standard_deviation/
@@ -190,14 +164,14 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         ## variances
         M <- as.numeric(s1/(k-1)) # estimated variance
         ## Update density and gradient functions for new mass matrix
-        rotation <- rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
+        rotation <- .rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
         fn2 <- rotation$fn2; gr2 <- rotation$gr2; chd <- rotation$chd;
         theta.cur <- rotation$x.cur
         ## Reset the running variance calculation
         k <- 1; m1 <- theta.out[m,]; s1 <- rep(0, len=npar)
         ## Calculate the next end window. If this overlaps into the final fast
         ## period, it will be stretched to that point (warmup-w3)
-        anw <- compute_next_window(m, anw, warmup, w1, aws, w3)
+        anw <- .compute_next_window(m, anw, warmup, w1, aws, w3)
       } else {
         k <- k+1; m0 <- m1; s0 <- s1
         ## Update M and S
@@ -234,17 +208,17 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
               warmup=warmup/thin, max_treedepth=max_td))
 }
 
-#' Draw a slice sample for given position and momentum variables
+## Draw a slice sample for given position and momentum variables
 .sample.u <- function(theta, r, fn)
   runif(n=1, min=0, max=exp(.calculate.H(theta=theta,r=r, fn=fn)))
-#' Calculate the log joint density (Hamiltonian) value for given position and
-#' momentum variables.
-#' @details This function currently assumes iid standard normal momentum
-#' variables.
+## Calculate the log joint density (Hamiltonian) value for given position and
+## momentum variables.
+## @details This function currently assumes iid standard normal momentum
+## variables.
 .calculate.H <- function(theta, r, fn) fn(theta)-(1/2)*sum(r^2)
-#' Test whether a "U-turn" has occured in a branch of the binary tree
-#' created by \ref\code{.buildtree} function. Returns TRUE if no U-turn,
-#' FALSE if one occurred
+## Test whether a "U-turn" has occured in a branch of the binary tree
+## created by \ref\code{.buildtree} function. Returns TRUE if no U-turn,
+## FALSE if one occurred
 .test.nuts <- function(theta.plus, theta.minus, r.plus, r.minus){
   theta.temp <- theta.plus-theta.minus
   res <- (crossprod(theta.temp,r.minus) >= 0) *
@@ -252,18 +226,18 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   return(res)
 }
 
-#' A recursive function that builds a leapfrog trajectory using a balanced
-#' binary tree.
-#'
-#' @references This is from the No-U-Turn sampler with dual averaging
-#' (algorithm 6) of Hoffman and Gelman (2014).
-#'
-#' @details The function repeatedly doubles (in a random direction) until
-#' either a U-turn occurs or the trajectory becomes unstable. This is the
-#' 'efficient' version that samples uniformly from the path without storing
-#' it. Thus the function returns a single proposed value and not the whole
-#' trajectory.
-#'
+## A recursive function that builds a leapfrog trajectory using a balanced
+## binary tree.
+##
+## @references This is from the No-U-Turn sampler with dual averaging
+## (algorithm 6) of Hoffman and Gelman (2014).
+##
+## @details The function repeatedly doubles (in a random direction) until
+## either a U-turn occurs or the trajectory becomes unstable. This is the
+## 'efficient' version that samples uniformly from the path without storing
+## it. Thus the function returns a single proposed value and not the whole
+## trajectory.
+##
 .buildtree <- function(theta, r, u, v, j, eps, H0, fn, gr,
                        delta.max=1000, info = environment() ){
   if(j==0){
@@ -342,26 +316,26 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   }
 }
 
-#' Estimate a reasonable starting value for epsilon (step size) for a given
-#' model, for use with Hamiltonian MCMC algorithms.
-                                        #
-#' This is Algorithm 4 from Hoffman and Gelman (2010) and is used in the
-#' dual-averaging algorithms for both HMC and NUTS to find a reasonable
-#' starting value.
-#' @title Estimate step size for Hamiltonian MCMC algorithms
-#' @param theta An initial parameter vector.
-#' @param fn A function returning the log-likelihood (not the negative of
-#' it) for a given parameter vector.
-#' @param gr A function returning the gradient of the log-likelihood of a
-#' model.
-#' @param eps A value for espilon to initiate the algorithm. Defaults to
-#' 1. If this is far too big the algorithm won't work well and an
-#' alternative value can be used.
-#' @return Returns the "reasonable" espilon invisible, while printing how
-#' many steps to reach it.
-#' @details The algorithm uses a while loop and will break after 50
-#' iterations.
-#'
+## Estimate a reasonable starting value for epsilon (step size) for a given
+## model, for use with Hamiltonian MCMC algorithms.
+##
+## This is Algorithm 4 from Hoffman and Gelman (2010) and is used in the
+## dual-averaging algorithms for both HMC and NUTS to find a reasonable
+## starting value.
+## @title Estimate step size for Hamiltonian MCMC algorithms
+## @param theta An initial parameter vector.
+## @param fn A function returning the log-likelihood (not the negative of
+## it) for a given parameter vector.
+## @param gr A function returning the gradient of the log-likelihood of a
+## model.
+## @param eps A value for espilon to initiate the algorithm. Defaults to
+## 1. If this is far too big the algorithm won't work well and an
+## alternative value can be used.
+## @return Returns the "reasonable" espilon invisible, while printing how
+## many steps to reach it.
+## @details The algorithm uses a while loop and will break after 50
+## iterations.
+##
 .find.epsilon <- function(theta,  fn, gr, eps=1, verbose=TRUE){
   r <- rnorm(n=length(theta), mean=0, sd=1)
   ## Do one leapfrog step

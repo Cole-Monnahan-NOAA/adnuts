@@ -6,11 +6,13 @@
 \usage{
 launch_shinyadmb(fit)
 }
+\arguments{
+\item{fit}{A named list returned by \code{sample_admb}.}
+}
 \description{
 A high level wrapper to launch shinystan for a ADMB fit.
 }
 \details{
 This function simply calls
-  \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+  \code{launch_shinystan(as.shinystan.admb(fit))}.
 }
-

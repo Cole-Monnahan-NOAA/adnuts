@@ -1,16 +1,16 @@
-#' Determine which transformation is to be used for each parameter.
-#'
-#' @details The 4 cases are (0) none, (1) lower only [a,Inf], (2) upper
-#'   only [-Inf, b], and (3) both lower and upper [a,b]. Each case requires
-#'   a different set of transformation functions.
-#' @param lower Vector of lower bounds, potentially -infinity for some
-#' @param upper Vector of upper bounds, potentially infinity for some
-#' @return Vector of cases, in 0:3, to be used in all other transformation
-#'   functions. Error checking is only done here, not in other functions.
-#' @seealso \code{\link{.transform}}, \code{\link{.transform.inv}},
-#'   \code{\link{.transform.grad}}, \code{\link{.transform.grad2}}
-#' @export
-#'
+## Determine which transformation is to be used for each parameter.
+##
+## @details The 4 cases are (0) none, (1) lower only [a,Inf], (2) upper
+##   only [-Inf, b], and (3) both lower and upper [a,b]. Each case requires
+##   a different set of transformation functions.
+## @param lower Vector of lower bounds, potentially -infinity for some
+## @param upper Vector of upper bounds, potentially infinity for some
+## @return Vector of cases, in 0:3, to be used in all other transformation
+##   functions. Error checking is only done here, not in other functions.
+## @seealso \code{\link{.transform}}, \code{\link{.transform.inv}},
+##   \code{\link{.transform.grad}}, \code{\link{.transform.grad2}}
+## @export
+##
 .transform.cases <- function(lower, upper){
   if(length(lower) != length(upper))
     stop("Lengths of lower and upper do not match")
@@ -29,9 +29,9 @@
   return(cases)
 }
 
-#' This function returns the transformed variable, x=f(y).
-#'
-#' @export
+## This function returns the transformed variable, x=f(y).
+##
+## @export
 .transform <- function(y, a, b, cases){
   x <- y
   ind <- cases==1
@@ -46,8 +46,8 @@
   return(x)
 }
 
-#' The inverse of the transformation, y=f-1(x).
-#' @export
+## The inverse of the transformation, y=f-1(x).
+## @export
 .transform.inv <- function(x, a, b, cases){
   if(any(x<a) | any(x>b)) stop("x outside limits provided -- not meaningful")
   y <- sapply(1:length(x), function(i) {
@@ -59,8 +59,8 @@
   return(y)
 }
 
-#' The absolute value of the derivative of transformation.
-#' @export
+## The absolute value of the derivative of transformation.
+## @export
 .transform.grad <- function(y, a, b, cases){
   x <- rep(1, length(y))
   ind <- cases %in% 1:2
@@ -74,9 +74,9 @@
   return(x)
 }
 
-#' The derivative of the log of the derivative of the transformation. I.e.,
-#' d/dy[log(.transform.grad(y,a,b))].
-#' @export
+## The derivative of the log of the derivative of the transformation. I.e.,
+## d/dy[log(.transform.grad(y,a,b))].
+## @export
 .transform.grad2 <- function(y, a, b, cases){
   x <- rep(0, len=length(y))
   ind <- cases %in% 1:2
