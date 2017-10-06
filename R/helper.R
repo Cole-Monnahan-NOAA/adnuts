@@ -134,33 +134,31 @@
   return(invisible(sso))
 }
 
-## A high level wrapper to launch shinystan for a TMB fit.
-##
-## @details This function simply calls
-##   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
-## @param fit A named list returned by \code{sample_tmb}.
-## @export
+#' A high level wrapper to launch shinystan for a TMB fit.
+#'
+#' @details This function simply calls
+#'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+#' @param fit A named list returned by \code{sample_tmb}.
 launch_shinytmb <- function(fit){
   shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
 
-## Extract posterior samples from a TMB MCMC fit list.
-##
-## @param fit A list returned by \code{sample_tmb} or \code{sample_admb}.
-## @param inc_warmup Whether to extract the warmup samples or not
-##   (default). Warmup samples should never be used for inference, but may
-##   be useful for diagnostics.
-## @param inc_lp Whether to drop the column of log posterior density (last
-##   column). For diagnostics it should be included.
-## @return An invisible data.frame containing samples (rows) of each
-##   parameter (columns). If multiple chains exist they will be rbinded
-##   together.
-## @export
+#' Extract posterior samples from a TMB MCMC fit list.
+#'
+#' @param fit A list returned by \code{sample_tmb} or \code{sample_admb}.
+#' @param inc_warmup Whether to extract the warmup samples or not
+#'   (default). Warmup samples should never be used for inference, but may
+#'   be useful for diagnostics.
+#' @param inc_lp Whether to drop the column of log posterior density (last
+#'   column). For diagnostics it should be included.
+#' @return An invisible data.frame containing samples (rows) of each
+#'   parameter (columns). If multiple chains exist they will be rbinded
+#'   together.
 extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
   x <- fit$samples
   if(!is.array(x)) stop("fit$samples is not an array -- valid TMB output?")
   ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
-  ## Drop LP
+  #' Drop LP
   if(inc_lp){
   y <- do.call(rbind, lapply(1:dim(x)[2], function(i) x[ind, i,]))
   } else {
@@ -169,16 +167,15 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
   return(invisible(as.data.frame(y)))
 }
 
-## Extract sampler parameters from a fit
-##
-## @param fit A list returned by \code{sample_admb} or \code{sample_tmb}.
-## @param inc_warmup Whether to extract the warmup samples or not
-##   (default). Warmup samples should never be used for inference, but may
-##   be useful for diagnostics.
-## @return An invisible data.frame containing samples (rows) of each
-##   parameter (columns). If multiple chains exist they will be rbinded
-##   together.
-## @export
+#' Extract sampler parameters from a fit
+#'
+#' @param fit A list returned by \code{sample_admb} or \code{sample_tmb}.
+#' @param inc_warmup Whether to extract the warmup samples or not
+#'   (default). Warmup samples should never be used for inference, but may
+#'   be useful for diagnostics.
+#' @return An invisible data.frame containing samples (rows) of each
+#'   parameter (columns). If multiple chains exist they will be rbinded
+#'   together.
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params
   if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid output?")
@@ -188,11 +185,10 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
 }
 
 
-## A high level wrapper to launch shinystan for a ADMB fit.
-##
-## @details This function simply calls
-##   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
-## @export
+#' A high level wrapper to launch shinystan for a ADMB fit.
+#'
+#' @details This function simply calls
+#'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
 launch_shinyadmb <- function(fit){
   shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
@@ -265,33 +261,32 @@ launch_shinyadmb <- function(fit){
 }
 
 
-## Plot pairs for MCMC output from an ADMB model.
-##
-## This function is useful for checking covergence and posterior
-## properties.
-##
-## @param posterior Dataframe containing the MCMC output, as read in using
-##   function \code{extract_samples}
-## @param mle A list as read in by \code{read_mle_fit}. It
-##   uses the parameter estimates and covariance and correlation matrices
-##   as estimated asymptotically.
-## @param diag What type of plot to include on the diagonal, options are
-##   'acf' which plots the autocorrelation function \code{acf}, 'hist'
-##   shows marginal posterior histograms, and 'trace' the trace plot.
-## @param pars A vector of parameter names or integers representing which
-##   parameters to subset. Useful if the model has a larger number of
-##   parameters and you just want to show a few key ones.
-## @param acf.ylim If using the acf function on the diagonal, specify the y
-##   limit. The default is c(-1,1).
-## @param ymult A vector of length ncol(posterior) specifying how much room
-##   to give when using the hist option for the diagonal. For use if the
-##   label is blocking part of the plot. The default is 1.3 for all
-##   parameters.
-## @param limits A list containing the ranges for each parameter to use in
-##   plotting.
-## @return Produces a plot, and returns nothing.
-## @author Cole Monnahan
-## @export
+#' [BETA] Plot pairs for MCMC output from an ADMB model.
+#'
+#' This function is useful for checking covergence and posterior
+#' properties.
+#'
+#' @param posterior Dataframe containing the MCMC output, as read in using
+#'   function \code{extract_samples}
+#' @param mle A list as read in by \code{read_mle_fit}. It
+#'   uses the parameter estimates and covariance and correlation matrices
+#'   as estimated asymptotically.
+#' @param diag What type of plot to include on the diagonal, options are
+#'   'acf' which plots the autocorrelation function \code{acf}, 'hist'
+#'   shows marginal posterior histograms, and 'trace' the trace plot.
+#' @param pars A vector of parameter names or integers representing which
+#'   parameters to subset. Useful if the model has a larger number of
+#'   parameters and you just want to show a few key ones.
+#' @param acf.ylim If using the acf function on the diagonal, specify the y
+#'   limit. The default is c(-1,1).
+#' @param ymult A vector of length ncol(posterior) specifying how much room
+#'   to give when using the hist option for the diagonal. For use if the
+#'   label is blocking part of the plot. The default is 1.3 for all
+#'   parameters.
+#' @param limits A list containing the ranges for each parameter to use in
+#'   plotting.
+#' @return Produces a plot, and returns nothing.
+#' @author Cole Monnahan
 pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),

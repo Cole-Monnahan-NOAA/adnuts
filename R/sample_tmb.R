@@ -77,7 +77,7 @@
 #' post <- extract_samples(fit1)
 #' apply(post, 2, median)
 #' }
-#' @export
+#'
 sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
                        cores=NULL, path=NULL, algorithm="NUTS",
