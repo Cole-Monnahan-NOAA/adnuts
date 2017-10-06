@@ -6,7 +6,7 @@
 No-U-Turn (NUTS) sampler with dual averaging.}
 \usage{
 run_mcmc.nuts(iter, fn, gr, init, warmup = floor(iter/2), chain, thin = 1,
-  control = NULL)
+  seed = NULL, control = NULL)
 }
 \arguments{
 \item{iter}{The number of samples to return.}
@@ -72,4 +72,3 @@ This function implements algorithm 6 of Hoffman and Gelman
 \seealso{
 \code{sample_tmb} and \code{run_mcmc.rwm}
 }
-

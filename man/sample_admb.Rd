@@ -4,18 +4,22 @@
 \alias{sample_admb}
 \title{Sample from and ADMB object, using the NUTS or RWM algorithms.}
 \usage{
-sample_admb(model, iter, init, chains = 1, warmup = NULL, seeds = NULL,
-  thin = 1, dir = getwd(), mceval = FALSE, duration = NULL,
-  parallel = FALSE, cores = NULL, control = NULL, algorithm = "NUTS",
-  ...)
+sample_admb(model, path = getwd(), iter = 2000, init = NULL, chains = 3,
+  warmup = NULL, seeds = NULL, thin = 1, mceval = FALSE,
+  duration = NULL, parallel = FALSE, cores = NULL, control = NULL,
+  algorithm = "NUTS", ...)
 }
 \arguments{
-\item{model}{Name of model}
+\item{model}{Name of model (i.e., model.tpl)}
+
+\item{path}{Path to model executable. Defaults to working
+directory. Often best to have model files in a separate subdirectory,
+particularly for parallel.}
 
 \item{iter}{Total iterations to run.}
 
-\item{init}{Initial values. Can be NULL (use MLE), or a list of vectors,
-one for each chain.}
+\item{init}{Initial values. Can be NULL (use MLE), a list of vectors, or
+a function which returns a vector}
 
 \item{chains}{The number of chains to run.}
 
@@ -25,11 +29,8 @@ one for each chain.}
 
 \item{thin}{The thinning rate.}
 
-\item{dir}{The name of a folder containing the ADMB model, which should
-not not be the working directory. This function requires this for
-parallel since the folder is copied and run in parallel.}
-
-\item{mceval}{Whether to run the model with \code{-mceval} afterward.}
+\item{mceval}{Whether to run the model with \code{-mceval} on samples
+from merged chains.}
 
 \item{duration}{The number of minutes after which the model will quit
 running.}
@@ -42,8 +43,11 @@ running.}
 \code{sample_tmb} for more information.}
 
 \item{algorithm}{Which algorithm to use, either "NUTS" or "RWM".}
+
+\item{path}{The name of a folder containing the ADMB model, which should
+not not be the working directory. This function requires this for
+parallel since the folder is copied and run in parallel.}
 }
 \description{
 Sample from and ADMB object, using the NUTS or RWM algorithms.
 }
-

@@ -2,10 +2,12 @@
 % Please edit documentation in R/sample_tmb.R
 \name{sample_tmb}
 \alias{sample_tmb}
-\title{MCMC sampling of TMB models}
+\title{Bayesian inference of a TMB model using the no-U-turn sampler.}
 \usage{
-sample_tmb(obj, iter, init, chains = 1, seeds = NULL, lower = NULL,
-  thin = 1, upper = NULL, control = NULL, ...)
+sample_tmb(obj, iter = 2000, init, chains = 3, seeds = NULL,
+  lower = NULL, upper = NULL, thin = 1, parallel = FALSE,
+  cores = NULL, path = NULL, algorithm = "NUTS", laplace = FALSE,
+  control = NULL, ...)
 }
 \arguments{
 \item{obj}{A TMB model object.}
@@ -18,46 +20,95 @@ initialize multiple chains from dispersed points. A of NULL signifies
 to use the starting values present in the model (i.e., \code{obj$par})
 for all chains.}
 
-\item{thin}{The thinning rate to apply to samples.}
+\item{lower}{A vector of lower bounds for parameters. Allowed values are
+-Inf and numeric.}
 
-\item{control}{A list to control the sampler. Elements are
-\itemize{
-\item{"adapt_delta"}{The target acceptance rate.}
-\item{"metric"}{ The mass metric to use. Options are:
-"unit" for a unit diagonal matrix; "diag" to estimate a diagonal matrix
-  during warmup; a matrix to be used directly  (in untransformed space). For
-  instance from a previous run.}
-\item{"algorithm"}{ A string specifiying an algorithm. Currently supported
-  are "RWM" for the random walk Metropolis sampler and "NUTS" for the No-U-Turn sampler
-  These algorithms require different arguments; see their help files for
-  more information.}
-\item{"adapt_engaged"}{Whether adaptation of step size and metric is
-  turned on}
-}}
+\item{upper}{A vector of upper bounds for parameters. Allowed values are
+Inf and numeric.}
+
+\item{thin}{The thinning rate to apply to samples. Typically not used
+with NUTS.}
+
+\item{parallel}{A boolean for whether to use parallel cores. The package
+snowfall is used if TRUE.}
+
+\item{cores}{The number of cores to use for parallel execution.}
+
+\item{path}{The path to the TMB DLL. This is only required if using
+parallel, since each core needs to link to the DLL again.}
+
+\item{algorithm}{The algorithm to use. NUTS is the default and
+recommended one, but "RWM" for the random walk Metropolis sampler and
+"HMC" for the static HMC sampler are available. These last two are
+deprecated but may be of use in some situations. These algorithms
+require different arguments; see their help files for more
+information.}
+
+\item{laplace}{Whether to use the Laplace approximation if some
+parameters are delcared as random. Default is to turn off this
+functionality and integrate across all parameters with MCMC.}
+
+\item{control}{A list to control the sampler. See details for further
+use.}
 
 \item{...}{Further arguments to be passed to the algorithm. See help
 files for the samplers for further arguments.}
 }
 \value{
-A list containing the samples,  and properties of the sampler
+A list containing the samples, and properties of the sampler
   useful for diagnosing behavior and efficiency.
 }
 \description{
-[BETA VERSION] Draw samples from the posterior of a TMB model using a
-specified MCMC algorithm.
+Draw Bayesian posterior samples from a Template Model Builder (TMB)
+model using an MCMC algorithm. This function generates posterior samples
+from which inference can be made. Adaptation schemes are used so
+specification tuning parameters are not necessary, and parallel
+execution reduces overall run time.
 }
 \details{
-This function is a top-level wrapper designed specifically to
-  work with TMB models. There are several MCMC algorithms available for
-  use. The user is responsible for specifying the model properly
-  (priors, starting values, desired parameters fixed, etc.), as well as
-  assessing the convergence and validity of the resulting samples (e.g.,
-  through the \code{coda} package) before making inference.
+This function implements algorithm 6 of Hoffman and Gelman (2014),
+and loosely follows package \code{rstan}. The step size can be
+  adapated or specified manually. The metric (i.e., mass matrix) can be
+  unit diagonal, adapated diagonal (default and recommended), or a dense
+  matrix specified by the user. Further control of algorithms can be
+  specified with the \code{control} argument.  Elements are:
+\describe{
+\item{adapt_delta}{The target acceptance rate.}
+\item{metric}{The mass metric to use. Options are: "unit" for a unit diagonal
+  matrix; "diag" to estimate a diagonal matrix during warmup; a matrix
+  to be used directly (in untransformed space).}
+\item{adapt_engaged}{Whether adaptation of step size and metric is turned on.}
+\item{max_treedepth}{Maximum treedepth for the NUTS algorithm.}
+\item{stepsize}{The stepsize for the NUTS algorithm. If \code{NULL} it
+  will be adapted during warmup.}
+}
+}
+\section{Warning}{
+
+The user is responsible for specifying the model properly (priors,
+  starting values, desired parameters fixed, etc.), as well as assessing
+  the convergence and validity of the resulting samples (e.g., through
+  the \code{coda} package), or with function
+  \code{\link{launch_shinytmb}} before making inference. Specifically,
+  priors must be specified in the TMB template file for each
+  parameter. Unspecified priors will be impliticly uniform.
+}
+
+\examples{
+\dontrun{
+library(TMB)
+TMB::runExample("simple")
+init <- function() list(mu=u, beta=beta, logsdu=0, logsd0=0)
+fit1 <- sample_tmb(obj=obj, init=init, seeds=1:3)
+post <- extract_samples(fit1)
+apply(post, 2, median)
+}
+}
+\seealso{
+\code{\link{extract_samples}} to extract samples and
+  \code{\link{launch_shinytmb}} to explore the results graphically which
+  is a wrapper for the \code{\link[shinystan]{launch_shinystan}} function.
 }
 \author{
 Cole Monnahan
 }
-\seealso{
-\code{\link{extract_samples}}, \code{\link{launch_shinytmb}}
-}
-
