@@ -1,5 +1,5 @@
 
-#' [BETA VERSION] Draw MCMC samples from a model posterior using a
+#' [Deprecated] Draw MCMC samples from a model posterior using a
 #' Random Walk Metropolis (RWM) sampler.
 #'
 #' @param iter The number of samples to return.
@@ -27,7 +27,7 @@
 #' which proposals were accepted ('accepted'), and the total function calls
 #' ('n.calls'), which for this algorithm is \code{iter}
 #' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.nuts}}, \code{\link{run_mcmc.hmc}}
-run_mcmc.rwm <- function(iter, fn, init, alpha=1, chain=1,
+sample_tmb_rwm <- function(iter, fn, init, alpha=1, chain=1,
                          warmup=floor(iter/2), thin=1,
                          seed=NULL, control){
   if(!is.null(seed)) set.seed(seed)

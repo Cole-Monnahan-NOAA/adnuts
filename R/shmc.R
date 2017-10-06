@@ -1,5 +1,6 @@
-#' [BETA VERSION] Draw MCMC samples from a model posterior using a static
+#' Draw MCMC samples from a model posterior using a static
 #' HMC sampler.
+#'
 #' @details This function implements algorithm 5 of Hoffman and Gelman
 #'   (2014), which includes adaptive step sizes (\code{eps}) via an
 #'   algorithm called dual averaging.
@@ -20,10 +21,10 @@
 #' @param gr A function that returns a vector of gradients of the log of
 #'   the posterior density (same as \code{fn}).
 #' @param init A vector of initial parameter values.
-#' @param covar An optional covariance (mass) matrix which can be used to
+#' @param metric An optional covariance (mass) matrix which can be used to
 #'   improve the efficiency of sampling. The lower Cholesky decomposition
 #'   of this matrix is used to transform the parameter space. If the
-#'   posterior is approximately multivariate normal and \code{covar}
+#'   posterior is approximately multivariate normal and \code{metric}
 #'   approximates the covariance, then the transformed parameter space will
 #'   be close to multivariate standard normal. In this case the algorithm
 #'   will be more efficient, but there will be overhead in the matrix
@@ -41,17 +42,17 @@
 #' @return A list containing samples ('par') and algorithm details such as
 #'   step size adaptation and acceptance probabilities per iteration
 #'   ('sampler_params').
-run_mcmc.hmc <- function(iter, fn, gr, init, L, eps=NULL, covar=NULL,
+sample_tmb_hmc <- function(iter, fn, gr, init, L, eps=NULL, metric=NULL,
                          adapt_delta=0.8, warmup=floor(iter/2),
                          chain=1,thin=1){
   warning("NUTS should be prefered to sHMC except in rare, specific cases")
   ## If using covariance matrix and Cholesky decomposition, redefine
   ## these functions to include this transformation. The algorithm will
   ## work in the transformed space
-  if(!is.null(covar)){
+  if(!is.null(metric)){
     fn2 <- function(theta) fn(chd %*% theta)
     gr2 <- function(theta) as.vector( t( gr(chd %*% theta) ) %*% chd )
-    chd <- t(chol(covar))               # lower triangular Cholesky decomp.
+    chd <- t(chol(metric))               # lower triangular Cholesky decomp.
     chd.inv <- solve(chd)               # inverse
     theta.cur <- chd.inv %*% init
   } else {
@@ -141,8 +142,8 @@ run_mcmc.hmc <- function(iter, fn, gr, init, L, eps=NULL, covar=NULL,
     if(m==warmup) time.warmup <- difftime(Sys.time(), time.start, units='secs')
     .print.mcmc.progress(m, iter, warmup, chain)
   } ## end of MCMC loop
-  ## Back transform parameters if covar is used
-  if(!is.null(covar)) {
+  ## Back transform parameters if metric is used
+  if(!is.null(metric)) {
     theta.out <- t(apply(theta.out, 1, function(x) chd %*% x))
   }
   theta.out <- cbind(theta.out, lp)

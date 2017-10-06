@@ -155,15 +155,15 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
   if(!parallel){
     if(algorithm=="HMC"){
       mcmc.out <- lapply(1:chains, function(i)
-        run_mcmc.hmc(iter=iter, fn=fn, gr=gr, init=init[[i]],
+        sample_tmb_hmc(iter=iter, fn=fn, gr=gr, init=init[[i]],
                      covar=covar, chain=i, thin=thin, seed=seeds[i], ...))
     } else if(algorithm=="NUTS"){
       mcmc.out <- lapply(1:chains, function(i)
-        run_mcmc.nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
+        sample_tmb_nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
                       chain=i, thin=thin, seed=seeds[i], control=control, ...))
     } else if(algorithm=="RWM")
       mcmc.out <- lapply(1:chains, function(i)
-        run_mcmc.rwm(iter=iter, fn=fn, init=init[[i]],
+        sample_tmb_rwm(iter=iter, fn=fn, init=init[[i]],
                      thin=thin, seed=seeds[i], control=control, ...))
   } else {
     if(!require(snowfall)) stop("Package 'snowfall' is required")
