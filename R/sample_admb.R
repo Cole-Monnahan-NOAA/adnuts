@@ -1,4 +1,4 @@
-#' Bayesian inference of an ADMB model using the no-U-turn sampler.
+.update_control#' Bayesian inference of an ADMB model using the no-U-turn sampler.
 #'
 #' Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
 #' using an MCMC algorithm. This function generates posterior samples from
@@ -48,7 +48,7 @@ sample_admb <-
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
   ## Update control with defaults
-  control <- adnuts:::update_control(control)
+  control <- .update_control(control)
   if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM')))
     stop("Invalid algorithm specified")
@@ -125,7 +125,7 @@ sample_admb <-
   message(paste("... Merging post-warmup chains into main folder:", path))
   samples2 <- do.call(rbind, lapply(1:chains, function(i)
     samples[-(1:warmup), i, -dim(samples)[3]]))
-  write_psv(fn=model, samples=samples2, model.path=path)
+  .write_psv(fn=model, samples=samples2, model.path=path)
   ## These already exclude warmup
   unbounded <- do.call(rbind, lapply(mcmc.out, function(x) x$unbounded))
   oldwd <- getwd(); on.exit(setwd(oldwd))
@@ -161,7 +161,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   wd.old <- getwd(); on.exit(setwd(wd.old))
   setwd(path)
   ## Now contains all required NUTS arguments
-  control <- adnuts:::update_control(control)
+  control <- .update_control(control)
   eps <- control$stepsize
   metric <- control$metric
   stopifnot(iter >= 1)
@@ -195,7 +195,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
     cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
     if(!matrixcalc:::is.positive.definite(x=cor.user))
       stop("Invalid mass matrix, not positive definite")
-    write.admb.cov(metric, hbf=1)
+    .write.admb.cov(metric, hbf=1)
     warning("admodel.cov overwritten, revert admodel_original.cov if needed")
     if(adapt_mass){
       warning("Mass matrix adaptation not allowed with user-specified matrix")
@@ -230,7 +230,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   sampler_params<- as.matrix(read.csv("adaptation.csv"))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
   dimnames(unbounded) <- NULL
-  pars <- get_psv(model)
+  pars <- .get_psv(model)
   par.names <- names(pars)
   pars[,'log-posterior'] <- sampler_params[,'energy__']
   pars <- as.matrix(pars)
@@ -261,7 +261,7 @@ sample_admb_rwm <-
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(path)
     ## Now contains all required NUTS arguments
-    control <- update_control(control)
+    control <- .update_control(control)
     metric <- control$metric
     stopifnot(iter >= 1)
     stopifnot(warmup <= iter)
@@ -286,7 +286,7 @@ sample_admb_rwm <-
       cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
       if(!matrixcalc:::is.positive.definite(x=cor.user))
         stop("Invalid mass matrix, not positive definite")
-      write.admb.cov(metric)
+      .write.admb.cov(metric)
     } else if(is.null(metric)) {
       ## MLE one. Should not need to re-estimate model to rescale covar
     } else if(metric=='unit') {
@@ -307,7 +307,7 @@ sample_admb_rwm <-
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
     unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
     dimnames(unbounded) <- NULL
-    pars <- get_psv(model)
+    pars <- .get_psv(model)
     if(is.null(par.names))  par.names <- names(pars)
     lp <- as.vector(read.table('rwm_lp.txt', header=TRUE)[,1])
     pars[,'log-posterior'] <- lp

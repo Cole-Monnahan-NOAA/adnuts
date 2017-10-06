@@ -1,5 +1,5 @@
 ## Read in PSV file
-get_psv <- function(model){
+.get_psv <- function(model){
       if(!file.exists(paste0(model, '.psv'))){
       ## Sometimes ADMB will shorten the name of the psv file for some
       ## reason, so need to catch that here.
@@ -23,7 +23,7 @@ get_psv <- function(model){
 ## @param gr The current gr function
 ## @param y.cur The current parameter vector in unrotated (Y) space.
 ## @param M The new mass matrix
-rotate_space <- function(fn, gr, M,  y.cur){
+.rotate_space <- function(fn, gr, M,  y.cur){
   ## Rotation done using choleski decomposition
   ## First case is a dense mass matrix
   if(is.matrix(M)){
@@ -56,7 +56,7 @@ rotate_space <- function(fn, gr, M,  y.cur){
 ## @param control A list passed from \code{sample_tmb}.
 ## @return A list with default control elements updated by those supplied
 ##   in \code{control}
-update_control <- function(control){
+.update_control <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
                   adapt_mass=TRUE, max_treedepth=12)
   if(!is.null(control))
@@ -120,7 +120,7 @@ update_control <- function(control){
 ## @return An S4 object of class shinystan. Depending on the algorithm
 ##   used, this list will have slight differences.
 ## @export
-as.shinyadnuts <- function(fit){
+.as.shinyadnuts <- function(fit){
   if(fit$algorithm=="NUTS"){
     sso <- with(fit, shinystan::as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
              sampler_params=sampler_params, algorithm='NUTS', model_name=model))
@@ -141,7 +141,7 @@ as.shinyadnuts <- function(fit){
 ## @param fit A named list returned by \code{sample_tmb}.
 ## @export
 launch_shinytmb <- function(fit){
-  shinystan::launch_shinystan(as.shinyadnuts(fit))
+  shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
 
 ## Extract posterior samples from a TMB MCMC fit list.
@@ -194,7 +194,7 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
 ##   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
 ## @export
 launch_shinyadmb <- function(fit){
-  shinystan::launch_shinystan(as.shinyadnuts(fit))
+  shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
 
 ## Write matrix of samples to a binary .psv file.
@@ -204,7 +204,7 @@ launch_shinyadmb <- function(fit){
 ## @param fn Model name
 ## @param samples A matrix or data.frame of samples, each column is a
 ##   parameter, each row a sample.
-write_psv <- function(fn, samples, model.path=getwd()){
+.write_psv <- function(fn, samples, model.path=getwd()){
   samples <- as.matrix(samples)
   psv <- file.path(model.path, paste0(fn, '.psv'))
   con <- file(psv, 'wb')
@@ -217,7 +217,7 @@ write_psv <- function(fn, samples, model.path=getwd()){
 ##
 ## @param model.path Path to model (defaults to working directory)
 ## @export
-get.admb.cov <- function(model.path=getwd()){
+.get.admb.cov <- function(model.path=getwd()){
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(model.path)
     filename <- file("admodel.cov", "rb")
@@ -239,7 +239,7 @@ get.admb.cov <- function(model.path=getwd()){
 ## @param cov.unbounded The cov matrix in unbounded space.
 ## @param hbf The hybrid_bounded_flag value. Use hbf=1 for HMC.
 ## @param model.path Path to model.
-write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
+.write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
   temp <- file.exists(paste0(model.path, "/admodel.cov"))
   if(!temp) stop(paste0("Couldn't find file ",model.path, "/admodel.cov"))
   temp <- file.copy(from=paste0(model.path, "/admodel.cov"),
@@ -247,7 +247,7 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
   wd.old <- getwd()
   setwd(model.path)
   ## Read in the output files
-  results <- get.admb.cov()
+  results <- .get.admb.cov()
   if(is.null(hbf)) hbf=results$hybrid_bounded_flag
   scale <- results$scale
   num.pars <- results$num.pars

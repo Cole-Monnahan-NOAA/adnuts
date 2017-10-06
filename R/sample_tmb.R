@@ -84,7 +84,7 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
                        laplace=FALSE,
                        control=NULL, ...){
 
-  control <- update_control(control)
+  control <- .update_control(control)
   ## Argument checking.
   if(is.null(init)){
     if(chains>1) warning('Using same starting values for each chain -- strongly recommended to use dispersed inits')

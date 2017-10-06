@@ -47,7 +47,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                           chain, thin=1, seed=NULL, control=NULL){
   ## Now contains all required NUTS arguments
   if(!is.null(seed)) set.seed(seed)
-  control <- update_control(control)
+  control <- .update_control(control)
   eps <- control$stepsize
   init <- as.vector(unlist(init))
   npar <- length(init)
@@ -69,7 +69,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
 
   ## Using a mass matrix means redefining what fn and gr do and
   ## backtransforming the initial value.
-  rotation <- rotate_space(fn=fn, gr=gr, M=M, y.cur=init)
+  rotation <- .rotate_space(fn=fn, gr=gr, M=M, y.cur=init)
   fn2 <- rotation$fn2; gr2 <- rotation$gr2
   theta.cur <- rotation$x.cur
   chd <- rotation$chd
@@ -190,7 +190,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         ## variances
         M <- as.numeric(s1/(k-1)) # estimated variance
         ## Update density and gradient functions for new mass matrix
-        rotation <- rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
+        rotation <- .rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
         fn2 <- rotation$fn2; gr2 <- rotation$gr2; chd <- rotation$chd;
         theta.cur <- rotation$x.cur
         ## Reset the running variance calculation
@@ -234,17 +234,17 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
               warmup=warmup/thin, max_treedepth=max_td))
 }
 
-#' Draw a slice sample for given position and momentum variables
+## Draw a slice sample for given position and momentum variables
 .sample.u <- function(theta, r, fn)
   runif(n=1, min=0, max=exp(.calculate.H(theta=theta,r=r, fn=fn)))
-#' Calculate the log joint density (Hamiltonian) value for given position and
-#' momentum variables.
-#' @details This function currently assumes iid standard normal momentum
-#' variables.
+## Calculate the log joint density (Hamiltonian) value for given position and
+## momentum variables.
+## @details This function currently assumes iid standard normal momentum
+## variables.
 .calculate.H <- function(theta, r, fn) fn(theta)-(1/2)*sum(r^2)
-#' Test whether a "U-turn" has occured in a branch of the binary tree
-#' created by \ref\code{.buildtree} function. Returns TRUE if no U-turn,
-#' FALSE if one occurred
+## Test whether a "U-turn" has occured in a branch of the binary tree
+## created by \ref\code{.buildtree} function. Returns TRUE if no U-turn,
+## FALSE if one occurred
 .test.nuts <- function(theta.plus, theta.minus, r.plus, r.minus){
   theta.temp <- theta.plus-theta.minus
   res <- (crossprod(theta.temp,r.minus) >= 0) *
@@ -252,18 +252,18 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   return(res)
 }
 
-#' A recursive function that builds a leapfrog trajectory using a balanced
-#' binary tree.
-#'
-#' @references This is from the No-U-Turn sampler with dual averaging
-#' (algorithm 6) of Hoffman and Gelman (2014).
-#'
-#' @details The function repeatedly doubles (in a random direction) until
-#' either a U-turn occurs or the trajectory becomes unstable. This is the
-#' 'efficient' version that samples uniformly from the path without storing
-#' it. Thus the function returns a single proposed value and not the whole
-#' trajectory.
-#'
+## A recursive function that builds a leapfrog trajectory using a balanced
+## binary tree.
+##
+## @references This is from the No-U-Turn sampler with dual averaging
+## (algorithm 6) of Hoffman and Gelman (2014).
+##
+## @details The function repeatedly doubles (in a random direction) until
+## either a U-turn occurs or the trajectory becomes unstable. This is the
+## 'efficient' version that samples uniformly from the path without storing
+## it. Thus the function returns a single proposed value and not the whole
+## trajectory.
+##
 .buildtree <- function(theta, r, u, v, j, eps, H0, fn, gr,
                        delta.max=1000, info = environment() ){
   if(j==0){
@@ -342,26 +342,26 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   }
 }
 
-#' Estimate a reasonable starting value for epsilon (step size) for a given
-#' model, for use with Hamiltonian MCMC algorithms.
-                                        #
-#' This is Algorithm 4 from Hoffman and Gelman (2010) and is used in the
-#' dual-averaging algorithms for both HMC and NUTS to find a reasonable
-#' starting value.
-#' @title Estimate step size for Hamiltonian MCMC algorithms
-#' @param theta An initial parameter vector.
-#' @param fn A function returning the log-likelihood (not the negative of
-#' it) for a given parameter vector.
-#' @param gr A function returning the gradient of the log-likelihood of a
-#' model.
-#' @param eps A value for espilon to initiate the algorithm. Defaults to
-#' 1. If this is far too big the algorithm won't work well and an
-#' alternative value can be used.
-#' @return Returns the "reasonable" espilon invisible, while printing how
-#' many steps to reach it.
-#' @details The algorithm uses a while loop and will break after 50
-#' iterations.
-#'
+## Estimate a reasonable starting value for epsilon (step size) for a given
+## model, for use with Hamiltonian MCMC algorithms.
+##
+## This is Algorithm 4 from Hoffman and Gelman (2010) and is used in the
+## dual-averaging algorithms for both HMC and NUTS to find a reasonable
+## starting value.
+## @title Estimate step size for Hamiltonian MCMC algorithms
+## @param theta An initial parameter vector.
+## @param fn A function returning the log-likelihood (not the negative of
+## it) for a given parameter vector.
+## @param gr A function returning the gradient of the log-likelihood of a
+## model.
+## @param eps A value for espilon to initiate the algorithm. Defaults to
+## 1. If this is far too big the algorithm won't work well and an
+## alternative value can be used.
+## @return Returns the "reasonable" espilon invisible, while printing how
+## many steps to reach it.
+## @details The algorithm uses a while loop and will break after 50
+## iterations.
+##
 .find.epsilon <- function(theta,  fn, gr, eps=1, verbose=TRUE){
   r <- rnorm(n=length(theta), mean=0, sd=1)
   ## Do one leapfrog step

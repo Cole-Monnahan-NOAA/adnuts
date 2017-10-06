@@ -31,7 +31,7 @@ sample_tmb_rwm <- function(iter, fn, init, alpha=1, chain=1,
                          warmup=floor(iter/2), thin=1,
                          seed=NULL, control){
   if(!is.null(seed)) set.seed(seed)
-  control <- update_control(control)
+  control <- .update_control(control)
   lp <- accepted <- rep(0, length=iter)
   init <- as.vector(unlist(init))
   n.params <- length(init)
