@@ -37,6 +37,7 @@
 #' @param algorithm Which algorithm to use, either "NUTS" or "RWM".
 #' @inheritParams sample_tmb
 #' @inheritSection sample_tmb Warning
+#' @export
 #'
 sample_admb <-
   function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
@@ -259,7 +260,6 @@ sample_admb_nuts <- function(path, model, iter=2000,
 #' user, instead prefer \code{\link{sample_admb}}
 #' @inheritParams sample_admb_nuts
 #' @seealso \code{\link{sample_admb}}
-#' @export
 sample_admb_rwm <-
   function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL,  chain=1, seed=NULL, control=NULL,

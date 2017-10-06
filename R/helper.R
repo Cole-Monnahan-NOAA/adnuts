@@ -160,7 +160,7 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
   x <- fit$samples
   if(!is.array(x)) stop("fit$samples is not an array -- valid TMB output?")
   ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
-  #' Drop LP
+  ## Drop LP
   if(inc_lp){
   y <- do.call(rbind, lapply(1:dim(x)[2], function(i) x[ind, i,]))
   } else {
