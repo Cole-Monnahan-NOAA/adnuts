@@ -141,8 +141,8 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
     }
     init <- lapply(init, function(x) .transform.inv(x=unlist(x), a=lower, b=upper, cases=cases))
   } else {
-    fn <- function(x) -fn0(x)
-    gr <- function(x) -as.vector(gr0(x))
+    fn <- function(y) -fn0(y)
+    gr <- function(y) -as.vector(gr0(y))
   }
 
   ## Make parameter names unique if vectors exist

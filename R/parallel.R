@@ -90,8 +90,8 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
     ## sample_tmb.
     ## init <- .transform.inv(x=unlist(init), a=lower, b=upper, cases=cases)
   } else {
-    fn <- function(x) -fn0(x)
-    gr <- function(x) -as.vector(gr0(x))
+    fn <- function(y) -fn0(y)
+    gr <- function(y) -as.vector(gr0(y))
   }
   if(algorithm=="NUTS")
     fit <- sample_tmb_nuts(chain=parallel_number, fn=fn, gr=gr,
