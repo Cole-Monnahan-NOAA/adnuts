@@ -5,9 +5,9 @@
 \title{Bayesian inference of a TMB model using the no-U-turn sampler.}
 \usage{
 sample_tmb(obj, iter = 2000, init, chains = 3, seeds = NULL,
-  lower = NULL, upper = NULL, thin = 1, parallel = FALSE,
-  cores = NULL, path = NULL, algorithm = "NUTS", laplace = FALSE,
-  control = NULL, ...)
+  warmup = floor(iter/2), lower = NULL, upper = NULL, thin = 1,
+  parallel = FALSE, cores = NULL, path = NULL, algorithm = "NUTS",
+  laplace = FALSE, control = NULL, ...)
 }
 \arguments{
 \item{obj}{A TMB model object.}
@@ -19,6 +19,12 @@ one for each chain or a function. It is strongly recommended to
 initialize multiple chains from dispersed points. A of NULL signifies
 to use the starting values present in the model (i.e., \code{obj$par})
 for all chains.}
+
+\item{chains}{The number of chains to run.}
+
+\item{seeds}{A vector of seeds, one for each chain.}
+
+\item{warmup}{The number of warmup iterations.}
 
 \item{lower}{A vector of lower bounds for parameters. Allowed values are
 -Inf and numeric.}

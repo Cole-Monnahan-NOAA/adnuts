@@ -14,5 +14,5 @@ A high level wrapper to launch shinystan for a TMB fit.
 }
 \details{
 This function simply calls
-  \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+  \code{launch_shinystan(as.shinystan.tmb(fit))}.
 }

@@ -24,6 +24,12 @@ initialize multiple chains from dispersed points. A of NULL signifies
 to use the starting values present in the model (i.e., \code{obj$par})
 for all chains.}
 
+\item{chains}{The number of chains to run.}
+
+\item{warmup}{The number of warmup iterations.}
+
+\item{seeds}{A vector of seeds, one for each chain.}
+
 \item{thin}{The thinning rate to apply to samples. Typically not used
 with NUTS.}
 

@@ -6,38 +6,37 @@
 Random Walk Metropolis (RWM) sampler.}
 \usage{
 sample_tmb_rwm(iter, fn, init, alpha = 1, chain = 1,
-  warmup = floor(iter/2), thin = 1, seed = NULL, control)
+  warmup = floor(iter/2), thin = 1, seed = NULL, control = NULL)
 }
 \arguments{
-\item{iter}{The number of samples to return.}
+\item{iter}{The number of samples to draw.}
 
 \item{fn}{A function that returns the log of the posterior density.}
 
-\item{init}{A vector of initial parameter values.}
+\item{init}{A list of lists containing the initial parameter vectors,
+one for each chain or a function. It is strongly recommended to
+initialize multiple chains from dispersed points. A of NULL signifies
+to use the starting values present in the model (i.e., \code{obj$par})
+for all chains.}
 
 \item{alpha}{The amount to scale the proposal, i.e,
 Xnew=Xcur+alpha*Xproposed where Xproposed is generated from a mean-zero
 multivariate normal. Varying \code{alpha} varies the acceptance rate.}
 
-\item{diagnostic}{Whether to return a list of diagnostic metrics about
-the chain. Useful for assessing efficiency and tuning chain.}
+\item{chain}{The chain number, for printing only.}
 
-\item{covar}{An optional covariance matrix which can be used to improve
-the efficiency of sampling. The lower Cholesky decomposition of this
-matrix is used to transform the parameter space. If the posterior is
-approximately multivariate normal and \code{covar} approximates the
-covariance, then the transformed parameter space will be close to
-multivariate standard normal. In this case the algorithm will be more
-efficient, but there will be overhead in the matrix calculations which
-need to be done at each step. The default of NULL specifies to not do
-this transformation.}
+\item{warmup}{The number of warmup iterations.}
+
+\item{thin}{The thinning rate to apply to samples. Typically not used
+with NUTS.}
+
+\item{seed}{The random seed to use.}
+
+\item{control}{A list to control the sampler. See details for further
+use.}
 }
 \value{
-If \code{diagnostic} is FALSE (default), returns a matrix of
-\code{iter} samples from the posterior. Otherwise returns a list
-containing samples ('par'), proposed samples ('par.proposed'), vector of
-which proposals were accepted ('accepted'), and the total function calls
-('n.calls'), which for this algorithm is \code{iter}
+A list containing samples and other metadata.
 }
 \description{
 [Deprecated] Draw MCMC samples from a model posterior using a
@@ -48,5 +47,5 @@ This algorithm does not yet contain adaptation of \code{alpha}
 so some trial and error may be required for efficient sampling.
 }
 \seealso{
-\code{\link{run_mcmc}}, \code{\link{run_mcmc.nuts}}, \code{\link{run_mcmc.hmc}}
+\code{\link{sample_tmb}}
 }

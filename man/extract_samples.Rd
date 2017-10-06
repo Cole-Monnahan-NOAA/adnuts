@@ -20,7 +20,6 @@ column). For diagnostics it should be included.}
 An invisible data.frame containing samples (rows) of each
   parameter (columns). If multiple chains exist they will be rbinded
   together.
-Drop LP
 }
 \description{
 Extract posterior samples from a TMB MCMC fit list.

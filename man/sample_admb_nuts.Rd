@@ -8,10 +8,45 @@ sample_admb_nuts(path, model, iter = 2000, init = NULL, chain = 1,
   thin = 1, warmup = NULL, seed = NULL, duration = NULL,
   control = NULL, verbose = TRUE, extra.args = NULL)
 }
+\arguments{
+\item{path}{Path to model executable. Defaults to working
+directory. Often best to have model files in a separate subdirectory,
+particularly for parallel.}
+
+\item{model}{Name of model (i.e., model.tpl)}
+
+\item{iter}{The number of samples to draw.}
+
+\item{init}{A list of lists containing the initial parameter vectors,
+one for each chain or a function. It is strongly recommended to
+initialize multiple chains from dispersed points. A of NULL signifies
+to use the starting values present in the model (i.e., \code{obj$par})
+for all chains.}
+
+\item{chain}{Chain number, for printing purposes only.}
+
+\item{thin}{The thinning rate to apply to samples. Typically not used
+with NUTS.}
+
+\item{warmup}{The number of warmup iterations.}
+
+\item{seed}{Random seed to use.}
+
+\item{duration}{The number of minutes after which the model will quit
+running.}
+
+\item{control}{A list to control the sampler. See details for further
+use.}
+
+\item{verbose}{Boolean for whether to print ADMB output to console.}
+
+\item{extra.args}{Character string of extra command line argument to
+pass to ADMB.}
+}
 \description{
 A low level function to run a single chain. Unlikely to be used by a
 user, instead prefer \code{\link{sample_admb}}
 }
 \seealso{
-sample_admb
+\code{\link{sample_admb}}
 }

@@ -16,7 +16,8 @@ RoxygenNote: 6.0.1
 ByteCompile: true
 Imports:
   snowfall (>= 1.84.6.1),
-  rstan (>= 2.16.2),
   shinystan (>= 2.3.0),
   R2admb (>= 0.7.15),
-  matrixcalc (>= 1.0.3)
+  matrixcalc (>= 1.0.3),
+  TMB (>= 1.7.11),
+  stats
