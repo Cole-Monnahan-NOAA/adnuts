@@ -8,7 +8,7 @@
 ## @details This function calculates the size of the next window for
 ##   adapation. If the next window size would be too long then this is
 ##   extended to the end of that window.
-compute_next_window <- function(i, anw, warmup, w1, aws, w3){
+.compute_next_window <- function(i, anw, warmup, w1, aws, w3){
   ##  if(anw == warmup-w3) stop("Something bad")
   aws <- aws
   anw <- i+aws
@@ -33,7 +33,7 @@ compute_next_window <- function(i, anw, warmup, w1, aws, w3){
 ## @return Bool whether in slow phase
 ## @details During the slow phase the mass matrix is updated in a series of
 ##   expanding windows. See Stan manual on adaptation.
-slow_phase <- function(i, warmup, w1, w3){
+.slow_phase <- function(i, warmup, w1, w3){
   ## After w1, before start of w3
   x1 <- i>= w1 # after initial fast window
   x2 <- i<= (warmup-w3) # but before last fast window
