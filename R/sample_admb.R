@@ -1,4 +1,4 @@
-.update_control#' Bayesian inference of an ADMB model using the no-U-turn sampler.
+#' Bayesian inference of an ADMB model using the no-U-turn sampler.
 #'
 #' Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
 #' using an MCMC algorithm. This function generates posterior samples from
@@ -79,15 +79,15 @@ sample_admb <-
     }
     ## Parallel execution
   } else {
-    sfInit(parallel=TRUE, cpus=cores)
-    sfExportAll()
-    mcmc.out <- sfLapply(1:chains, function(i)
+    snowfall::sfInit(parallel=TRUE, cpus=cores)
+    snowfall::sfExportAll()
+    on.exit(snowfall::sfStop())
+    mcmc.out <- snowfall::sfLapply(1:chains, function(i)
       sample_admb_parallel(parallel_number=i, path=path, model=model,
                            duration=duration,
                            algorithm=algorithm,
                            iter=iter, init=init[[i]], warmup=warmup,
                            seed=seeds[i], thin=thin, control=control, ...))
-    sfStop()
   }
     warmup <- mcmc.out[[1]]$warmup
     mle <- .read_mle_fit(model=model, path=path)
@@ -192,7 +192,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   } else if(is.matrix(metric)){
     ## User defined one will be writen to admodel.cov
     cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
-    if(!matrixcalc:::is.positive.definite(x=cor.user))
+    if(!matrixcalc::is.positive.definite(x=cor.user))
       stop("Invalid mass matrix, not positive definite")
     .write.admb.cov(metric, hbf=1)
     warning("admodel.cov overwritten, revert admodel_original.cov if needed")
@@ -283,7 +283,7 @@ sample_admb_rwm <-
     if(is.matrix(metric)){
       ## User defined one will be writen to admodel.cov
       cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
-      if(!matrixcalc:::is.positive.definite(x=cor.user))
+      if(!matrixcalc::is.positive.definite(x=cor.user))
         stop("Invalid mass matrix, not positive definite")
       .write.admb.cov(metric)
     } else if(is.null(metric)) {
