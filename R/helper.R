@@ -1,9 +1,9 @@
-#' Update algorithm for mass matrix.
-#'
-#' @param fn The current fn function.
-#' @param gr The current gr function
-#' @param y.cur The current parameter vector in unrotated (Y) space.
-#' @param M The new mass matrix
+## Update algorithm for mass matrix.
+##
+## @param fn The current fn function.
+## @param gr The current gr function
+## @param y.cur The current parameter vector in unrotated (Y) space.
+## @param M The new mass matrix
 rotate_space <- function(fn, gr, M,  y.cur){
   ## Rotation done using choleski decomposition
   ## First case is a dense mass matrix
@@ -32,11 +32,11 @@ rotate_space <- function(fn, gr, M,  y.cur){
   return(list(gr2=gr2, fn2=fn2, x.cur=x.cur, chd=chd))
 }
 
-#' Update the control list.
-#'
-#' @param control A list passed from \code{sample_tmb}.
-#' @return A list with default control elements updated by those supplied
-#'   in \code{control}
+## Update the control list.
+##
+## @param control A list passed from \code{sample_tmb}.
+## @return A list with default control elements updated by those supplied
+##   in \code{control}
 update_control <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
                   adapt_mass=TRUE, max_treedepth=12)
@@ -49,16 +49,16 @@ update_control <- function(control){
   return(default)
 }
 
-#' Print MCMC progress to console.
-#'
-#' @param iteration The iteration of the MCMC chain.
-#' @param iter The total iterations.
-#' @param warmup The number of warmup iterations.
-#' @param chain The chain being run (bookkeeping only).
-#' @return Nothing. Prints to message to console.
-#'
-#' @details This function was modeled after the functionality provided by
-#' the R package rstan.
+## Print MCMC progress to console.
+##
+## @param iteration The iteration of the MCMC chain.
+## @param iter The total iterations.
+## @param warmup The number of warmup iterations.
+## @param chain The chain being run (bookkeeping only).
+## @return Nothing. Prints to message to console.
+##
+## @details This function was modeled after the functionality provided by
+## the R package rstan.
 .print.mcmc.progress <- function(iteration, iter, warmup, chain){
   i <- iteration
   refresh <- max(10, floor(iter/10))
@@ -71,13 +71,13 @@ update_control <- function(control){
   }
 }
 
-#' Print MCMC timing to console
-#' @param time.warmup Time of warmup in seconds.
-#' @param time.total Time of total in seconds.
-#' @return Nothing. Prints message to console.
-#'
-#' @details This function was modeled after the functionality provided by
-#'   the R package \code{rstan}.
+## Print MCMC timing to console
+## @param time.warmup Time of warmup in seconds.
+## @param time.total Time of total in seconds.
+## @return Nothing. Prints message to console.
+##
+## @details This function was modeled after the functionality provided by
+##   the R package \code{rstan}.
 .print.mcmc.timing <- function(time.warmup, time.total){
   x <- ' Elapsed Time: '
   message(paste0(x, sprintf("%.1f", time.warmup), ' seconds (Warmup)'))
@@ -85,22 +85,22 @@ update_control <- function(control){
   message(paste0(x, sprintf("%.1f", time.total), ' seconds (Total)'))
 }
 
-#' Convert adnuts fit (named list) into a \code{shinystan} object.
-#'
-#' @details The shinystan packages provides several conversion functions
-#'   for objects of different types, such as stanfit classes (Stan ouput)
-#'   and simple arrays. For the latter, option NUTS information, such as
-#'   \code{sampler_params} can be passed. This function essentially extends
-#'   the functionality of \code{as.shinystan} to work specifically with
-#'   fits from adnuts (TMB or ADMB). The user can thus explore their model
-#'   with \code{launch_shinystan(as.shinystan.tmb(fit))} in the same way
-#'   that Stan models are examined.
-#' @param fit Output list from \code{sample_tmb} or
-#'   \code{sample_admb}.
-#' @seealso launch_shinytmb, launch_shinyadmb
-#' @return An S4 object of class shinystan. Depending on the algorithm
-#'   used, this list will have slight differences.
-#' @export
+## Convert adnuts fit (named list) into a \code{shinystan} object.
+##
+## @details The shinystan packages provides several conversion functions
+##   for objects of different types, such as stanfit classes (Stan ouput)
+##   and simple arrays. For the latter, option NUTS information, such as
+##   \code{sampler_params} can be passed. This function essentially extends
+##   the functionality of \code{as.shinystan} to work specifically with
+##   fits from adnuts (TMB or ADMB). The user can thus explore their model
+##   with \code{launch_shinystan(as.shinystan.tmb(fit))} in the same way
+##   that Stan models are examined.
+## @param fit Output list from \code{sample_tmb} or
+##   \code{sample_admb}.
+## @seealso launch_shinytmb, launch_shinyadmb
+## @return An S4 object of class shinystan. Depending on the algorithm
+##   used, this list will have slight differences.
+## @export
 as.shinyadnuts <- function(fit){
   if(fit$algorithm=="NUTS"){
     sso <- with(fit, shinystan::as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
@@ -115,28 +115,28 @@ as.shinyadnuts <- function(fit){
   return(invisible(sso))
 }
 
-#' A high level wrapper to launch shinystan for a TMB fit.
-#'
-#' @details This function simply calls
-#'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
-#' @param fit A named list returned by \code{sample_tmb}.
-#' @export
+## A high level wrapper to launch shinystan for a TMB fit.
+##
+## @details This function simply calls
+##   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+## @param fit A named list returned by \code{sample_tmb}.
+## @export
 launch_shinytmb <- function(fit){
   shinystan::launch_shinystan(as.shinyadnuts(fit))
 }
 
-#' Extract posterior samples from a TMB MCMC fit list.
-#'
-#' @param fit A list returned by \code{sample_tmb} or \code{sample_admb}.
-#' @param inc_warmup Whether to extract the warmup samples or not
-#'   (default). Warmup samples should never be used for inference, but may
-#'   be useful for diagnostics.
-#' @param inc_lp Whether to drop the column of log posterior density (last
-#'   column). For diagnostics it should be included.
-#' @return An invisible data.frame containing samples (rows) of each
-#'   parameter (columns). If multiple chains exist they will be rbinded
-#'   together.
-#' @export
+## Extract posterior samples from a TMB MCMC fit list.
+##
+## @param fit A list returned by \code{sample_tmb} or \code{sample_admb}.
+## @param inc_warmup Whether to extract the warmup samples or not
+##   (default). Warmup samples should never be used for inference, but may
+##   be useful for diagnostics.
+## @param inc_lp Whether to drop the column of log posterior density (last
+##   column). For diagnostics it should be included.
+## @return An invisible data.frame containing samples (rows) of each
+##   parameter (columns). If multiple chains exist they will be rbinded
+##   together.
+## @export
 extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
   x <- fit$samples
   if(!is.array(x)) stop("fit$samples is not an array -- valid TMB output?")
@@ -150,16 +150,16 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
   return(invisible(as.data.frame(y)))
 }
 
-#' Extract sampler parameters from a fit
-#'
-#' @param fit A list returned by \code{sample_admb} or \code{sample_tmb}.
-#' @param inc_warmup Whether to extract the warmup samples or not
-#'   (default). Warmup samples should never be used for inference, but may
-#'   be useful for diagnostics.
-#' @return An invisible data.frame containing samples (rows) of each
-#'   parameter (columns). If multiple chains exist they will be rbinded
-#'   together.
-#' @export
+## Extract sampler parameters from a fit
+##
+## @param fit A list returned by \code{sample_admb} or \code{sample_tmb}.
+## @param inc_warmup Whether to extract the warmup samples or not
+##   (default). Warmup samples should never be used for inference, but may
+##   be useful for diagnostics.
+## @return An invisible data.frame containing samples (rows) of each
+##   parameter (columns). If multiple chains exist they will be rbinded
+##   together.
+## @export
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params
   if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid output?")
@@ -169,22 +169,22 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
 }
 
 
-#' A high level wrapper to launch shinystan for a ADMB fit.
-#'
-#' @details This function simply calls
-#'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
-#' @export
+## A high level wrapper to launch shinystan for a ADMB fit.
+##
+## @details This function simply calls
+##   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+## @export
 launch_shinyadmb <- function(fit){
   shinystan::launch_shinystan(as.shinyadnuts(fit))
 }
 
-#' Write matrix of samples to a binary .psv file.
-#'
-#' @details Useful to combine multiple MCMC runs together into a single
-#' .psv file which can then be executed with '-mceval'.
-#' @param fn Model name
-#' @param samples A matrix or data.frame of samples, each column is a
-#'   parameter, each row a sample.
+## Write matrix of samples to a binary .psv file.
+##
+## @details Useful to combine multiple MCMC runs together into a single
+## .psv file which can then be executed with '-mceval'.
+## @param fn Model name
+## @param samples A matrix or data.frame of samples, each column is a
+##   parameter, each row a sample.
 write_psv <- function(fn, samples, model.path=getwd()){
   samples <- as.matrix(samples)
   psv <- file.path(model.path, paste0(fn, '.psv'))
@@ -194,10 +194,10 @@ write_psv <- function(fn, samples, model.path=getwd()){
   close(con)
 }
 
-#' Read in the ADMB covariance file.
-#'
-#' @param model.path Path to model (defaults to working directory)
-#' @export
+## Read in the ADMB covariance file.
+##
+## @param model.path Path to model (defaults to working directory)
+## @export
 get.admb.cov <- function(model.path=getwd()){
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(model.path)
@@ -215,11 +215,11 @@ get.admb.cov <- function(model.path=getwd()){
     return(result)
 }
 
-#' Write a covariance matrix to admodel.cov.
-#'
-#' @param cov.unbounded The cov matrix in unbounded space.
-#' @param hbf The hybrid_bounded_flag value. Use hbf=1 for HMC.
-#' @param model.path Path to model.
+## Write a covariance matrix to admodel.cov.
+##
+## @param cov.unbounded The cov matrix in unbounded space.
+## @param hbf The hybrid_bounded_flag value. Use hbf=1 for HMC.
+## @param model.path Path to model.
 write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
   temp <- file.exists(paste0(model.path, "/admodel.cov"))
   if(!temp) stop(paste0("Couldn't find file ",model.path, "/admodel.cov"))
@@ -246,33 +246,33 @@ write.admb.cov <- function(cov.unbounded, model.path=getwd(), hbf=NULL){
 }
 
 
-#' Plot pairs for MCMC output from an ADMB model.
-#'
-#' This function is useful for checking covergence and posterior
-#' properties.
-#'
-#' @param posterior Dataframe containing the MCMC output, as read in using
-#'   function \code{extract_samples}
-#' @param mle A list as read in by \code{read_mle_fit}. It
-#'   uses the parameter estimates and covariance and correlation matrices
-#'   as estimated asymptotically.
-#' @param diag What type of plot to include on the diagonal, options are
-#'   'acf' which plots the autocorrelation function \code{acf}, 'hist'
-#'   shows marginal posterior histograms, and 'trace' the trace plot.
-#' @param pars A vector of parameter names or integers representing which
-#'   parameters to subset. Useful if the model has a larger number of
-#'   parameters and you just want to show a few key ones.
-#' @param acf.ylim If using the acf function on the diagonal, specify the y
-#'   limit. The default is c(-1,1).
-#' @param ymult A vector of length ncol(posterior) specifying how much room
-#'   to give when using the hist option for the diagonal. For use if the
-#'   label is blocking part of the plot. The default is 1.3 for all
-#'   parameters.
-#' @param limits A list containing the ranges for each parameter to use in
-#'   plotting.
-#' @return Produces a plot, and returns nothing.
-#' @author Cole Monnahan
-#' @export
+## Plot pairs for MCMC output from an ADMB model.
+##
+## This function is useful for checking covergence and posterior
+## properties.
+##
+## @param posterior Dataframe containing the MCMC output, as read in using
+##   function \code{extract_samples}
+## @param mle A list as read in by \code{read_mle_fit}. It
+##   uses the parameter estimates and covariance and correlation matrices
+##   as estimated asymptotically.
+## @param diag What type of plot to include on the diagonal, options are
+##   'acf' which plots the autocorrelation function \code{acf}, 'hist'
+##   shows marginal posterior histograms, and 'trace' the trace plot.
+## @param pars A vector of parameter names or integers representing which
+##   parameters to subset. Useful if the model has a larger number of
+##   parameters and you just want to show a few key ones.
+## @param acf.ylim If using the acf function on the diagonal, specify the y
+##   limit. The default is c(-1,1).
+## @param ymult A vector of length ncol(posterior) specifying how much room
+##   to give when using the hist option for the diagonal. For use if the
+##   label is blocking part of the plot. The default is 1.3 for all
+##   parameters.
+## @param limits A list containing the ranges for each parameter to use in
+##   plotting.
+## @return Produces a plot, and returns nothing.
+## @author Cole Monnahan
+## @export
 pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
@@ -451,14 +451,14 @@ pairs_admb <- function(posterior, mle, divergences=NULL, chains=NULL,
   }
 }
 
-#' Read maximum likelihood fit for ADMB model
-#'
-#' @param model Model name
-#' @return A list containing, MLE estimates, standard errors, covariance
-#'   and correlation matrices, and other output from ADMB.
-#' @details This is based loosely off read.admbFit from r4ss.
-#'
-#' @export
+## Read maximum likelihood fit for ADMB model
+##
+## @param model Model name
+## @return A list containing, MLE estimates, standard errors, covariance
+##   and correlation matrices, and other output from ADMB.
+## @details This is based loosely off read.admbFit from r4ss.
+##
+## @export
 read_mle_fit <- function(model, path=getwd()){
   oldwd <- getwd(); on.exit(setwd(oldwd))
   setwd(path)
