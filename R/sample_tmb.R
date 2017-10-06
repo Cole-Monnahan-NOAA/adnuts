@@ -1,16 +1,39 @@
 ## Copyright (C) 2015 Cole Monnahan
 ## License: GPL-2
 
-#' [BETA VERSION] Draw samples from the posterior of a TMB model using a
-#' specified MCMC algorithm.
+#' Bayesian inference of a TMB model using the no-U-turn sampler.
 #'
-#' @details This function is a top-level wrapper designed specifically to
-#'   work with TMB models. There are several MCMC algorithms available for
-#'   use. The user is responsible for specifying the model properly
-#'   (priors, starting values, desired parameters fixed, etc.), as well as
-#'   assessing the convergence and validity of the resulting samples (e.g.,
-#'   through the \code{coda} package) before making inference.
-#' @title MCMC sampling of TMB models
+#' Draw Bayesian posterior samples from a Template Model Builder (TMB)
+#' model using an MCMC algorithm. This function generates posterior samples
+#' from which inference can be made. Adaptation schemes are used so
+#' specification tuning parameters are not necessary, and parallel
+#' execution reduces overall run time.
+#'
+#' @details This function implements algorithm 6 of Hoffman and Gelman (2014),
+#' and loosely follows package \code{rstan}. The step size can be
+#'   adapated or specified manually. The metric (i.e., mass matrix) can be
+#'   unit diagonal, adapated diagonal (default and recommended), or a dense
+#'   matrix specified by the user. Further control of algorithms can be
+#'   specified with the \code{control} argument.  Elements are:
+#' \describe{
+#' \item{adapt_delta}{The target acceptance rate.}
+#' \item{metric}{The mass metric to use. Options are: "unit" for a unit diagonal
+#'   matrix; "diag" to estimate a diagonal matrix during warmup; a matrix
+#'   to be used directly (in untransformed space).}
+#' \item{adapt_engaged}{Whether adaptation of step size and metric is turned on.}
+#' \item{max_treedepth}{Maximum treedepth for the NUTS algorithm.}
+#' \item{stepsize}{The stepsize for the NUTS algorithm. If \code{NULL} it
+#'   will be adapted during warmup.}
+#' }
+#'
+#' @section Warning:
+#' The user is responsible for specifying the model properly (priors,
+#'   starting values, desired parameters fixed, etc.), as well as assessing
+#'   the convergence and validity of the resulting samples (e.g., through
+#'   the \code{coda} package), or with function
+#'   \code{\link{launch_shinytmb}} before making inference. Specifically,
+#'   priors must be specified in the TMB template file for each
+#'   parameter. Unspecified priors will be impliticly uniform.
 #' @author Cole Monnahan
 #' @param obj A TMB model object.
 #' @param iter The number of samples to draw.
@@ -21,8 +44,10 @@
 #'   for all chains.
 #' @param thin The thinning rate to apply to samples. Typically not used
 #'   with NUTS.
-#' @param lower A vector of lower bounds for parameters. The default
-#' @param upper
+#' @param lower A vector of lower bounds for parameters. Allowed values are
+#'   -Inf and numeric.
+#' @param upper A vector of upper bounds for parameters. Allowed values are
+#'   Inf and numeric.
 #' @param algorithm The algorithm to use. NUTS is the default and
 #'   recommended one, but "RWM" for the random walk Metropolis sampler and
 #'   "HMC" for the static HMC sampler are available. These last two are
@@ -37,19 +62,24 @@
 #' @param laplace Whether to use the Laplace approximation if some
 #'   parameters are delcared as random. Default is to turn off this
 #'   functionality and integrate across all parameters with MCMC.
-#' @param control A list to control the sampler. Elements are \itemize{
-#'   \item{"adapt_delta"}{The target acceptance rate.}  \item{"metric"}{
-#'   The mass metric to use. Options are: "unit" for a unit diagonal
-#'   matrix; "diag" to estimate a diagonal matrix during warmup; a matrix
-#'   to be used directly (in untransformed space). For instance from a
-#'   previous run.}  \item{"adapt_engaged"}{Whether adaptation of step size
-#'   and metric is turned on} \item{"max_treedepth"}{Maximum treedepth for
-#'   the NUTS algorithm} \item{"stepsize"}{The stepsize for the NUTS algorithm}}
+#' @param control A list to control the sampler. See details for further
+#'   use.
 #' @param ... Further arguments to be passed to the algorithm. See help
 #'   files for the samplers for further arguments.
 #' @return A list containing the samples, and properties of the sampler
 #'   useful for diagnosing behavior and efficiency.
-#' @seealso \code{\link{extract_samples}}, \code{\link{launch_shinytmb}}
+#' @seealso \code{\link{extract_samples}} to extract samples and
+#'   \code{\link{launch_shinytmb}} to explore the results graphically which
+#'   is a wrapper for the \code{\link[shinystan]{launch_shinystan}} function.
+#' @examples
+#' \dontrun{
+#' library(TMB)
+#' TMB::runExample("simple")
+#' init <- function() list(mu=u, beta=beta, logsdu=0, logsd0=0)
+#' fit1 <- sample_tmb(obj=obj, init=init, seeds=1:3)
+#' post <- extract_samples(fit1)
+#' apply(post, 2, median)
+#' }
 #' @export
 sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
