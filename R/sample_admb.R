@@ -90,7 +90,7 @@ sample_admb <-
     sfStop()
   }
     warmup <- mcmc.out[[1]]$warmup
-    mle <- read_mle_fit(model=model, path=path)
+    mle <- .read_mle_fit(model=model, path=path)
     if(is.null(mle)){
       par.names <- dimnames(mcmc.out[[1]]$samples)[[2]]
       par.names <- par.names[-length(par.names)]
