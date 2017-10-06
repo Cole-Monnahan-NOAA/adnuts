@@ -47,12 +47,12 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
   ## Each node starts in a random work directory. Rebuild TMB model obj so
   ## can link it in each session.
   setwd(path)
-  dyn.load(dynlib(obj$env$DLL))
+  dyn.load(TMB::dynlib(obj$env$DLL))
   ## Use 'shape' attribute to obtain full length of 'map'ped parameters.
   map.index <- which(names(obj$env$parameters) %in% names(obj$env$map))
   new.par <- obj$env$parameters
   new.par[map.index] <- lapply(obj$env$parameters[map.index], function(x) attr(x, "shape"))
-  obj <- MakeADFun(data=obj$env$data, parameters=new.par, random=obj$env$random,
+  obj <- TMB::MakeADFun(data=obj$env$data, parameters=new.par, random=obj$env$random,
                    map=obj$env$map, DLL=obj$env$DLL, silent=TRUE)
   obj$env$beSilent()
 
@@ -94,10 +94,10 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
     gr <- function(x) -as.vector(gr0(x))
   }
   if(algorithm=="NUTS")
-    fit <- run_mcmc.nuts(chain=parallel_number, fn=fn, gr=gr,
+    fit <- sample_tmb_nuts(chain=parallel_number, fn=fn, gr=gr,
                          init=init, seed=seed, ...)
   if(algorithm=="RWM")
-    fit <- run_mcmc.rwm(chain=parallel_number, fn=fn, init=init,
+    fit <- sample_tmb_rwm(chain=parallel_number, fn=fn, init=init,
                         seed=seed, ...)
   return(fit)
 }

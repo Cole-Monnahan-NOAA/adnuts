@@ -4,7 +4,7 @@
 #' @details This function implements algorithm 5 of Hoffman and Gelman
 #'   (2014), which includes adaptive step sizes (\code{eps}) via an
 #'   algorithm called dual averaging.
-#' @param iter The number of samples to return.
+#' @inheritParams sample_tmb_nuts
 #' @param L The number of leapfrog steps to take. The NUTS algorithm does
 #'   not require this as an input. If \code{L=1} this function will perform
 #'   Langevin sampling. In some contexts \code{L} can roughly be thought of
@@ -13,39 +13,22 @@
 #'   throughout the entire chain. A \code{NULL} value will initiate
 #'   sampler_params of \code{eps} using the dual averaging algorithm during
 #'   the first \code{warmup} steps.
-#' @param warmup How many iterations to use for a warmup, in which the step
-#'   size will be adapted. The default is \code{warmup=iter/2}.
-#' @param adapt_delta The target acceptance rate if using apative
-#'   \code{eps}. Defaults to 0.8.
-#' @param fn A function that returns the log of the posterior density.
-#' @param gr A function that returns a vector of gradients of the log of
-#'   the posterior density (same as \code{fn}).
-#' @param init A vector of initial parameter values.
-#' @param metric An optional covariance (mass) matrix which can be used to
-#'   improve the efficiency of sampling. The lower Cholesky decomposition
-#'   of this matrix is used to transform the parameter space. If the
-#'   posterior is approximately multivariate normal and \code{metric}
-#'   approximates the covariance, then the transformed parameter space will
-#'   be close to multivariate standard normal. In this case the algorithm
-#'   will be more efficient, but there will be overhead in the matrix
-#'   calculations which need to be done at each step. The default of NULL
-#'   specifies to not do this transformation and use a unit diagonal
-#'   matrix.
-#' @param chain The MCMC chain to run. Only used for bookkeeping at the
-#'   moment.
 #' @references \itemize{ \item{Neal, R. M. (2011). MCMC using Hamiltonian
 #'   dynamics. Handbook of Markov Chain Monte Carlo.}  \item{Hoffman and
 #'   Gelman (2014). The No-U-Turn sampler: Adaptively setting path lengths
 #'   in Hamiltonian Monte Carlo. J. Mach. Learn. Res.  15:1593-1623.}  }
-#' @seealso \code{run_mcmc}, \code{run_mcmc.nuts},
-#'   \code{run_mcmc.rwm}
+#' @seealso \code{\link{sample_tmb}}
 #' @return A list containing samples ('par') and algorithm details such as
 #'   step size adaptation and acceptance probabilities per iteration
 #'   ('sampler_params').
-sample_tmb_hmc <- function(iter, fn, gr, init, L, eps=NULL, metric=NULL,
-                         adapt_delta=0.8, warmup=floor(iter/2),
-                         chain=1,thin=1){
+sample_tmb_hmc <- function(iter, fn, gr, init, L, eps,
+                          warmup=floor(iter/2), seed=NULL,
+                         chain=1,thin=1, control=NULL){
   warning("NUTS should be prefered to sHMC except in rare, specific cases")
+  if(!is.null(seed)) set.seed(seed)
+  control <- .update_control(control)
+  metric <- control$metric
+  adapt_delta <- control$adapt_delta
   ## If using covariance matrix and Cholesky decomposition, redefine
   ## these functions to include this transformation. The algorithm will
   ## work in the transformed space

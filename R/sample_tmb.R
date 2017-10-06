@@ -39,6 +39,9 @@
 #'   initialize multiple chains from dispersed points. A of NULL signifies
 #'   to use the starting values present in the model (i.e., \code{obj$par})
 #'   for all chains.
+#' @param chains The number of chains to run.
+#' @param warmup The number of warmup iterations.
+#' @param seeds A vector of seeds, one for each chain.
 #' @param thin The thinning rate to apply to samples. Typically not used
 #'   with NUTS.
 #' @param lower A vector of lower bounds for parameters. Allowed values are
@@ -68,6 +71,7 @@
 #' @seealso \code{\link{extract_samples}} to extract samples and
 #'   \code{\link{launch_shinytmb}} to explore the results graphically which
 #'   is a wrapper for the \code{\link[shinystan]{launch_shinystan}} function.
+#' @export
 #' @examples
 #' \dontrun{
 #' library(TMB)
@@ -78,11 +82,11 @@
 #' apply(post, 2, median)
 #' }
 #'
-sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
+sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
+                       warmup=floor(iter/2), lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
                        cores=NULL, path=NULL, algorithm="NUTS",
-                       laplace=FALSE,
-                       control=NULL, ...){
+                       laplace=FALSE, control=NULL, ...){
 
   control <- .update_control(control)
   ## Argument checking.
@@ -152,27 +156,27 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL, lower=NULL,
   if(!parallel){
     if(algorithm=="HMC"){
       mcmc.out <- lapply(1:chains, function(i)
-        sample_tmb_hmc(iter=iter, fn=fn, gr=gr, init=init[[i]],
-                     covar=covar, chain=i, thin=thin, seed=seeds[i], ...))
+        sample_tmb_hmc(iter=iter, fn=fn, gr=gr, init=init[[i]], warmup=warmup,
+                      chain=i, thin=thin, seed=seeds[i], control=control, ...))
     } else if(algorithm=="NUTS"){
       mcmc.out <- lapply(1:chains, function(i)
-        sample_tmb_nuts(iter=iter, fn=fn, gr=gr, init=init[[i]],
+        sample_tmb_nuts(iter=iter, fn=fn, gr=gr, init=init[[i]], warmup=warmup,
                       chain=i, thin=thin, seed=seeds[i], control=control, ...))
     } else if(algorithm=="RWM")
       mcmc.out <- lapply(1:chains, function(i)
-        sample_tmb_rwm(iter=iter, fn=fn, init=init[[i]],
-                     thin=thin, seed=seeds[i], control=control, ...))
+        sample_tmb_rwm(iter=iter, fn=fn, init=init[[i]], warmup=warmup,
+                       chain=i, thin=thin, seed=seeds[i], control=control, ...))
   } else {
     if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
     snowfall::sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
-    snowfall::sfLibrary(TMB)
+    snowfall::sfLibrary("TMB")
     snowfall::sfExportAll()
     on.exit(snowfall::sfStop())
     message("Starting parallel chains... ")
     ##mcmc.out <- lapply(1:chains, function(i)
     mcmc.out <- snowfall::sfLapply(1:chains, function(i)
       sample_tmb_parallel(parallel_number=i, iter=iter, obj=obj, path=path,
-                          init=init[[i]], algorithm=algorithm,
+                          init=init[[i]], algorithm=algorithm, warmup=warmup,
                           lower=lower, upper=upper, seed=seeds[i],
                           laplace=laplace,
                           control=control, ...))

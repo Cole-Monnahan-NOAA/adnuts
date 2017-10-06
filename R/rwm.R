@@ -2,34 +2,17 @@
 #' [Deprecated] Draw MCMC samples from a model posterior using a
 #' Random Walk Metropolis (RWM) sampler.
 #'
-#' @param iter The number of samples to return.
-#' @param fn A function that returns the log of the posterior density.
-#' @param init A vector of initial parameter values.
-#' @param diagnostic Whether to return a list of diagnostic metrics about
-#' the chain. Useful for assessing efficiency and tuning chain.
 #' @details This algorithm does not yet contain adaptation of \code{alpha}
 #' so some trial and error may be required for efficient sampling.
-#' @param covar An optional covariance matrix which can be used to improve
-#' the efficiency of sampling. The lower Cholesky decomposition of this
-#' matrix is used to transform the parameter space. If the posterior is
-#' approximately multivariate normal and \code{covar} approximates the
-#' covariance, then the transformed parameter space will be close to
-#' multivariate standard normal. In this case the algorithm will be more
-#' efficient, but there will be overhead in the matrix calculations which
-#' need to be done at each step. The default of NULL specifies to not do
-#' this transformation.
 #' @param alpha The amount to scale the proposal, i.e,
 #' Xnew=Xcur+alpha*Xproposed where Xproposed is generated from a mean-zero
 #' multivariate normal. Varying \code{alpha} varies the acceptance rate.
-#' @return If \code{diagnostic} is FALSE (default), returns a matrix of
-#' \code{iter} samples from the posterior. Otherwise returns a list
-#' containing samples ('par'), proposed samples ('par.proposed'), vector of
-#' which proposals were accepted ('accepted'), and the total function calls
-#' ('n.calls'), which for this algorithm is \code{iter}
-#' @seealso \code{\link{run_mcmc}}, \code{\link{run_mcmc.nuts}}, \code{\link{run_mcmc.hmc}}
+#' @return A list containing samples and other metadata.
+#' @inheritParams sample_tmb_nuts
+#' @seealso \code{\link{sample_tmb}}
 sample_tmb_rwm <- function(iter, fn, init, alpha=1, chain=1,
                          warmup=floor(iter/2), thin=1,
-                         seed=NULL, control){
+                         seed=NULL, control=NULL){
   if(!is.null(seed)) set.seed(seed)
   control <- .update_control(control)
   lp <- accepted <- rep(0, length=iter)

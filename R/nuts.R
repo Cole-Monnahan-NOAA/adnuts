@@ -6,45 +6,19 @@
 #'   algorithm called dual averaging. In theory neither the step length nor
 #'   step size needs to be input by the user to obtain efficient sampling
 #'   from the posterior.
-#' @param iter The number of samples to return.
-#' @param eps The length of the leapfrog steps. If a numeric value is
-#'   passed, it will be used throughout the entire chain. A \code{NULL}
-#'   value will initiate adaptation of \code{eps} using the dual averaging
-#'   algorithm during the first \code{warmup} steps.
-#' @param warmup An optional argument for how many iterations to adapt
-#'   \code{eps} in the dual averaging algorithm. A value of \code{NULL}
-#'   results in a default of \code{warmup=iter/2}.
-#' @param adapt_delta The target acceptance rate for the dual averaging
-#'   algorithm. Defaults to 80\%. NUTS does not include an accept/reject
-#'   Metropolis step, so this rate can be understood as the
-#'   "average acceptance probability that HMC would give to the position-momentum states explored during the final doubling iteration."
 #' @param fn A function that returns the log of the posterior density.
 #' @param gr A function that returns a vector of gradients of the log of
 #'   the posterior density (same as \code{fn}).
-#' @param covar An optional covariance matrix which can be used to improve
-#'   the efficiency of sampling. The lower Cholesky decomposition of this
-#'   matrix is used to transform the parameter space. If the posterior is
-#'   approximately multivariate normal and \code{covar} approximates the
-#'   covariance, then the transformed parameter space will be close to
-#'   multivariate standard normal. In this case the algorithm will be more
-#'   efficient, but there will be overhead in the matrix calculations which
-#'   need to be done at each step. The default of NULL specifies to not do
-#'   this transformation.
-#' @param init A vector of initial parameter values.
-#' @param max_treedepth Integer representing the maximum times the path
-#'   length should double within an MCMC iteration. Default of 4, so 16
-#'   steps. If a U-turn has not occured before this many steps the
-#'   algorithm will stop and return a sample from the given tree.
+#' @param chain The chain number, for printing only.
+#' @param seed The random seed to use.
 #' @references \itemize{ \item{Neal, R. M. (2011). MCMC using Hamiltonian
 #'   dynamics. Handbook of Markov Chain Monte Carlo.}  \item{Hoffman and
 #'   Gelman (2014). The No-U-Turn sampler: Adaptively setting path lengths
 #'   in Hamiltonian Monte Carlo. J. Mach. Learn. Res.  15:1593-1623.}  }
-#' @return A list containing samples ('par') and algorithm details such as
-#'   step size adaptation and acceptance probabilities per iteration
-#'   ('sampler_params').
-#' @seealso \code{sample_tmb} and \code{run_mcmc.rwm}
-run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
-                          chain, thin=1, seed=NULL, control=NULL){
+#' @inheritParams sample_tmb
+#' @seealso \code{sample_tmb}
+sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
+                          chain=1, thin=1, seed=NULL, control=NULL){
   ## Now contains all required NUTS arguments
   if(!is.null(seed)) set.seed(seed)
   control <- .update_control(control)
@@ -178,7 +152,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     ## Do the adaptation of mass matrix. The algorithm is working in X
     ## space but I need to calculate the mass matrix in Y space. So need to
     ## do this coversion in the calcs below.
-    if(adapt_mass & slow_phase(m, warmup, w1, w3)){
+    if(adapt_mass & .slow_phase(m, warmup, w1, w3)){
       ## If in slow phase, update running estimate of variances
       ## The Welford running variance calculation, see
       ## https://www.johndcook.com/blog/standard_deviation/
@@ -197,7 +171,7 @@ run_mcmc.nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         k <- 1; m1 <- theta.out[m,]; s1 <- rep(0, len=npar)
         ## Calculate the next end window. If this overlaps into the final fast
         ## period, it will be stretched to that point (warmup-w3)
-        anw <- compute_next_window(m, anw, warmup, w1, aws, w3)
+        anw <- .compute_next_window(m, anw, warmup, w1, aws, w3)
       } else {
         k <- k+1; m0 <- m1; s0 <- s1
         ## Update M and S

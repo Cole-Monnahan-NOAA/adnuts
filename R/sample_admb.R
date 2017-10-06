@@ -151,7 +151,13 @@ sample_admb <-
 #'
 #' A low level function to run a single chain. Unlikely to be used by a
 #' user, instead prefer \code{\link{sample_admb}}
-#' @seealso sample_admb
+#' @inheritParams sample_admb
+#' @param seed Random seed to use.
+#' @param chain Chain number, for printing purposes only.
+#' @param extra.args Character string of extra command line argument to
+#' pass to ADMB.
+#' @param verbose Boolean for whether to print ADMB output to console.
+#' @seealso \code{\link{sample_admb}}
 sample_admb_nuts <- function(path, model, iter=2000,
                              init=NULL, chain=1,
                              thin=1, warmup=NULL,
@@ -251,12 +257,13 @@ sample_admb_nuts <- function(path, model, iter=2000,
 #'
 #' A low level function to run a single chain. Unlikely to be used by a
 #' user, instead prefer \code{\link{sample_admb}}
-#' @seealso sample_admb
+#' @inheritParams sample_admb_nuts
+#' @seealso \code{\link{sample_admb}}
+#' @export
 sample_admb_rwm <-
   function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
-           init=NULL,  chain=1, seed=NULL, control=NULL, par.names=NULL,
-           verbose=TRUE, extra.args=NULL, duration=NULL,
-           mceval=TRUE){
+           init=NULL,  chain=1, seed=NULL, control=NULL,
+           verbose=TRUE, extra.args=NULL, duration=NULL){
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(path)
     ## Now contains all required NUTS arguments

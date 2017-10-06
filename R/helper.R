@@ -137,8 +137,9 @@
 #' A high level wrapper to launch shinystan for a TMB fit.
 #'
 #' @details This function simply calls
-#'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+#'   \code{launch_shinystan(as.shinystan.tmb(fit))}.
 #' @param fit A named list returned by \code{sample_tmb}.
+#' @export
 launch_shinytmb <- function(fit){
   shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
@@ -154,6 +155,7 @@ launch_shinytmb <- function(fit){
 #' @return An invisible data.frame containing samples (rows) of each
 #'   parameter (columns). If multiple chains exist they will be rbinded
 #'   together.
+#' @export
 extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
   x <- fit$samples
   if(!is.array(x)) stop("fit$samples is not an array -- valid TMB output?")
@@ -176,6 +178,7 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
 #' @return An invisible data.frame containing samples (rows) of each
 #'   parameter (columns). If multiple chains exist they will be rbinded
 #'   together.
+#' @export
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params
   if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid output?")
@@ -188,7 +191,9 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
 #' A high level wrapper to launch shinystan for a ADMB fit.
 #'
 #' @details This function simply calls
-#'   \code{launch_shinystan(as.shinystan.tmb(tmb.fit))}.
+#'   \code{launch_shinystan(as.shinystan.admb(fit))}.
+#' @param fit A named list returned by \code{sample_admb}.
+#' @export
 launch_shinyadmb <- function(fit){
   shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
