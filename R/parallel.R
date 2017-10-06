@@ -1,29 +1,28 @@
 
-#' Combine multiple fits as returned from \code{sample_tmb} or
-#' \code{sample_admb} run as a single chain.
-#'
-#' @param fits A list of fits, each having a single chain
-#' @return A merged fit across chains.
-combine_fits <- function(fits){
-  z <- list()
-  test <- lapply(fits, function(x) x$samples)
-  samples <- array(NA, dim=c(nrow(test[[1]]), length(test), ncol(test[[1]])))
-  dimnames(samples) <- dimnames(fits[[1]]$samples)
-  for(i in 1:length(test)) samples[,i,] <- test[[i]]
-  z$samples <- samples
-  sp <- sapply(fits, function(x) x$sampler_params)
-  z$sampler_params <- sp
-  z$time.warmup <- unlist(lapply(fits, function(x) x$time.warmup))
-  z$time.total <- unlist(lapply(fits, function(x) x$time.total))
-  z$algorithm <- fits[[1]]$algorithm
-  z$warmup <- fits[[1]]$warmup
-  z$model <- fits[[1]]$model
-  z$max_treedepth <- fits[[1]]$max_treedepth
-  return(z)
-}
+## #' Combine multiple fits as returned from \code{sample_tmb} or
+## #' \code{sample_admb} run as a single chain.
+## #'
+## #' @param fits A list of fits, each having a single chain
+## #' @return A merged fit across chains.
+## combine_fits <- function(fits){
+##   z <- list()
+##   test <- lapply(fits, function(x) x$samples)
+##   samples <- array(NA, dim=c(nrow(test[[1]]), length(test), ncol(test[[1]])))
+##   dimnames(samples) <- dimnames(fits[[1]]$samples)
+##   for(i in 1:length(test)) samples[,i,] <- test[[i]]
+##   z$samples <- samples
+##   sp <- sapply(fits, function(x) x$sampler_params)
+##   z$sampler_params <- sp
+##   z$time.warmup <- unlist(lapply(fits, function(x) x$time.warmup))
+##   z$time.total <- unlist(lapply(fits, function(x) x$time.total))
+##   z$algorithm <- fits[[1]]$algorithm
+##   z$warmup <- fits[[1]]$warmup
+##   z$model <- fits[[1]]$model
+##   z$max_treedepth <- fits[[1]]$max_treedepth
+##   return(z)
+## }
 
-#' A wrapper for running ADMB models in parallel
-#' @export
+## A wrapper for running ADMB models in parallel
 sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
   olddir <- getwd()
   on.exit(setwd(olddir))
@@ -42,7 +41,7 @@ sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
   return(fit)
 }
 
-#' A wrapper for running TMB models in parallel
+## A wrapper for running TMB models in parallel
 sample_tmb_parallel <-  function(parallel_number, obj, init, path,
                                  algorithm, lower, upper, seed, laplace, ...){
   ## Each node starts in a random work directory. Rebuild TMB model obj so
