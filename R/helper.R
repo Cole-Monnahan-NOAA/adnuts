@@ -96,7 +96,7 @@
 ## @return Nothing. Prints message to console.
 ##
 ## @details This function was modeled after the functionality provided by
-##   the R package \code{rstan}.
+##   the R package \pkg{rstan}.
 .print.mcmc.timing <- function(time.warmup, time.total){
   x <- ' Elapsed Time: '
   message(paste0(x, sprintf("%.1f", time.warmup), ' seconds (Warmup)'))
@@ -119,7 +119,6 @@
 ## @seealso launch_shinytmb, launch_shinyadmb
 ## @return An S4 object of class shinystan. Depending on the algorithm
 ##   used, this list will have slight differences.
-## @export
 .as.shinyadnuts <- function(fit){
   if(fit$algorithm=="NUTS"){
     sso <- with(fit, shinystan::as.shinystan(samples, warmup=warmup, max_treedepth=max_treedepth,
@@ -134,31 +133,51 @@
   return(invisible(sso))
 }
 
-#' A high level wrapper to launch shinystan for a TMB fit.
+#' Launch shinystan for a TMB fit.
 #'
-#' @details This function simply calls
-#'   \code{launch_shinystan(as.shinystan.tmb(fit))}.
 #' @param fit A named list returned by \code{sample_tmb}.
+#' @seealso \code{launch_shinyadmb}
 #' @export
 launch_shinytmb <- function(fit){
   shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
 
-#' Extract posterior samples from a TMB MCMC fit list.
+#' Launch shinystan for an ADMB fit.
+#'
+#' @param fit A named list returned by \code{sample_admb}.
+#' @seealso \code{launch_shinytmb}
+#' @export
+launch_shinyadmb <- function(fit){
+  shinystan::launch_shinystan(.as.shinyadnuts(fit))
+}
+
+
+#' Extract posterior samples from a model fit.
+#'
+#' A helper function to extract posterior samples across multiple chains
+#' into a single data.frame.
+#'
+#' @details This function is loosely based on the \pkg{rstan} function
+#'   \code{extract}. Merging samples across chains should only be used for
+#'   inference after appropriate diagnostic checks. Do not calculate
+#'   diagnostics like Rhat or effective sample size after using this
+#'   function, instead, use \code{\link[rstan]{monitor}}. Likewise, warmup
+#'   samples are not valid and should never be used for inference, but may
+#'   be useful in some cases for diagnosing issues.
 #'
 #' @param fit A list returned by \code{sample_tmb} or \code{sample_admb}.
 #' @param inc_warmup Whether to extract the warmup samples or not
 #'   (default). Warmup samples should never be used for inference, but may
 #'   be useful for diagnostics.
-#' @param inc_lp Whether to drop the column of log posterior density (last
-#'   column). For diagnostics it should be included.
+#' @param inc_lp Whether to include a column for the log posterior density
+#'   (last column). For diagnostics it can be useful.
 #' @return An invisible data.frame containing samples (rows) of each
 #'   parameter (columns). If multiple chains exist they will be rbinded
-#'   together.
+#'   together, maintaining order within each chain.
 #' @export
 extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
   x <- fit$samples
-  if(!is.array(x)) stop("fit$samples is not an array -- valid TMB output?")
+  if(!is.array(x)) stop("fit$samples is not an array -- valid fit object?")
   ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
   ## Drop LP
   if(inc_lp){
@@ -169,7 +188,17 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
   return(invisible(as.data.frame(y)))
 }
 
-#' Extract sampler parameters from a fit
+#' Extract sampler parameters from a fit.
+#'
+#' Extract information about NUTS trajectories, such as acceptance ratio
+#' and treedpeth, from a fitted object.
+#'
+#' @details Each trajectory (iteration) in NUTS has associated information
+#'   about the trajectory: stepsize, acceptance ratio, treedpeth, and number of
+#'   leapfrog steps. This function extracts these into a data.frame, which
+#'   may be useful for diagnosing issues in certain cases. In general, the
+#'   user should not need to examine them, or preferably should via
+#'   \code{\link{launch_shinytmb}} or \code{\link{launch_shinyadmb}}.
 #'
 #' @param fit A list returned by \code{sample_admb} or \code{sample_tmb}.
 #' @param inc_warmup Whether to extract the warmup samples or not
@@ -178,24 +207,14 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
 #' @return An invisible data.frame containing samples (rows) of each
 #'   parameter (columns). If multiple chains exist they will be rbinded
 #'   together.
+#' @seealso \code{\link{launch_shinytmb}} and \code{\link{launch_shinyadmb}}.
 #' @export
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params
-  if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid output?")
+  if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid fit object?")
   ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
   y <- do.call(rbind, lapply(1:length(x), function(i) x[[i]][ind,]))
   return(invisible(as.data.frame(y)))
-}
-
-
-#' A high level wrapper to launch shinystan for a ADMB fit.
-#'
-#' @details This function simply calls
-#'   \code{launch_shinystan(as.shinystan.admb(fit))}.
-#' @param fit A named list returned by \code{sample_admb}.
-#' @export
-launch_shinyadmb <- function(fit){
-  shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
 
 ## Write matrix of samples to a binary .psv file.
