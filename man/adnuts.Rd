@@ -41,24 +41,10 @@ simply provides a convenient set of wrappers to more easiy execute,
 diagnose, and make inference on a model.
 }
 \references{
-Hoffman, M.D., Gelman, A., 2014. The no-U-turn sampler: adaptively
-  setting path lengths in Hamiltonian Monte Carlo.  J Mach Learn
-  Res. 15:1593-1623.
-
-Monnahan, C.C., Thorson, J.T., Branch, T.A., 2017. Faster estimation of
-  Bayesian models in ecology using Hamiltonian Monte Carlo.  Methods in
-  Ecology and Evolution. 8:339-348.
-
 Carpenter, B., Gelman, A., Hoffman, M.D., Lee, D., Goodrich, B.,
   Betancourt, M., Riddell, A., Guo, J.Q., Li, P., Riddell, A.,
   2017. Stan: A Probabilistic Programming Language.  J Stat
   Softw. 76:1-29.
-
-Stan Development Team, 2016. Stan modeling language users guide and
-  reference manual, version 2.11.0.
-
-Stan Development Team, 2016. RStan: The R interface to Stan. R package
-version 2.14.1. http://mc-stan.org.
 
 Fournier, D.A., Skaug, H.J., Ancheta, J., Ianelli, J., Magnusson, A.,
   Maunder, M.N., Nielsen, A., Sibert, J., 2012. AD Model Builder: using
@@ -66,10 +52,24 @@ Fournier, D.A., Skaug, H.J., Ancheta, J., Ianelli, J., Magnusson, A.,
   parameterized complex nonlinear models.  Optim Method
   Softw. 27:233-249.
 
+Hoffman, M.D., Gelman, A., 2014. The no-U-turn sampler: adaptively
+  setting path lengths in Hamiltonian Monte Carlo.  J Mach Learn
+  Res. 15:1593-1623.
+
 Kristensen, K., Nielsen, A., Berg, C.W., Skaug, H., Bell, B.M.,
   2016. TMB: Automatic differentiation and Laplace approximation.  J
   Stat Softw. 70:21.
 
 Kristensen, K., 2017. TMB: General random effect model builder tool
   inspired by ADMB. R package version 1.7.11.
+
+Monnahan, C.C., Thorson, J.T., Branch, T.A., 2017. Faster estimation of
+  Bayesian models in ecology using Hamiltonian Monte Carlo.  Methods in
+  Ecology and Evolution. 8:339-348.
+
+Stan Development Team, 2016. Stan modeling language users guide and
+  reference manual, version 2.11.0.
+
+Stan Development Team, 2016. RStan: The R interface to Stan. R package
+version 2.14.1. http://mc-stan.org.
 }

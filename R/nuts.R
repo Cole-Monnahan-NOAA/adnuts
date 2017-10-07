@@ -1,20 +1,24 @@
-#' [BETA VERSION] Draw MCMC samples from a model posterior using the
-#' No-U-Turn (NUTS) sampler with dual averaging.
+#' Draw MCMC samples from a model posterior using the No-U-Turn (NUTS)
+#' sampler with dual averaging.
 #'
-#' @details This function implements algorithm 6 of Hoffman and Gelman
+#' @details
+#' This function implements algorithm 6 of Hoffman and Gelman
 #'   (2014), which includes adaptive step sizes (\code{eps}) via an
-#'   algorithm called dual averaging. In theory neither the step length nor
-#'   step size needs to be input by the user to obtain efficient sampling
-#'   from the posterior.
+#'   algorithm called dual averaging. It also includes an adaptation scheme
+#'   to tune a diagonal mass matrix (metric) during warmup.
+#'
+#' These \code{fn} and \code{gr} functions must have Jacobians already
+#'   applied if there are transformations used.
+#'
 #' @param fn A function that returns the log of the posterior density.
 #' @param gr A function that returns a vector of gradients of the log of
 #'   the posterior density (same as \code{fn}).
 #' @param chain The chain number, for printing only.
 #' @param seed The random seed to use.
-#' @references \itemize{ \item{Neal, R. M. (2011). MCMC using Hamiltonian
-#'   dynamics. Handbook of Markov Chain Monte Carlo.}  \item{Hoffman and
-#'   Gelman (2014). The No-U-Turn sampler: Adaptively setting path lengths
-#'   in Hamiltonian Monte Carlo. J. Mach. Learn. Res.  15:1593-1623.}  }
+#' @references
+#' Hoffman and Gelman (2014). The No-U-Turn sampler: Adaptively setting
+#'   path lengths in Hamiltonian Monte Carlo. J. Mach. Learn. Res.
+#'   15:1593-1623.
 #' @inheritParams sample_tmb
 #' @seealso \code{sample_tmb}
 sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
@@ -36,7 +40,7 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     warning("Mass matrix adaptation not allowed if warmup < 100")
     adapt_mass <- FALSE
   }
-  ## Mass matrix adapatation algorithm arguments
+  ## Mass matrix adapatation algorithm arguments. Same as Stan defaults.
   w1 <- 75; w2 <- 50; w3 <- 25
   aws <- w2 # adapt window size
   anw <- w1+w2 # adapt next window

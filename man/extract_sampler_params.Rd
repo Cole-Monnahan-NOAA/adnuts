@@ -2,7 +2,7 @@
 % Please edit documentation in R/helper.R
 \name{extract_sampler_params}
 \alias{extract_sampler_params}
-\title{Extract sampler parameters from a fit}
+\title{Extract sampler parameters from a fit.}
 \usage{
 extract_sampler_params(fit, inc_warmup = FALSE)
 }
@@ -19,5 +19,17 @@ An invisible data.frame containing samples (rows) of each
   together.
 }
 \description{
-Extract sampler parameters from a fit
+Extract information about NUTS trajectories, such as acceptance ratio
+and treedpeth, from a fitted object.
+}
+\details{
+Each trajectory (iteration) in NUTS has associated information
+  about the trajectory: stepsize, acceptance ratio, treedpeth, and number of
+  leapfrog steps. This function extracts these into a data.frame, which
+  may be useful for diagnosing issues in certain cases. In general, the
+  user should not need to examine them, or preferably should via
+  \code{\link{launch_shinytmb}} or \code{\link{launch_shinyadmb}}.
+}
+\seealso{
+\code{\link{launch_shinytmb}} and \code{\link{launch_shinyadmb}}.
 }

@@ -1,5 +1,4 @@
-#' Draw MCMC samples from a model posterior using a static
-#' HMC sampler.
+#' Draw MCMC samples from a model posterior using a static HMC sampler.
 #'
 #' @details This function implements algorithm 5 of Hoffman and Gelman
 #'   (2014), which includes adaptive step sizes (\code{eps}) via an
@@ -21,9 +20,14 @@
 #' @return A list containing samples ('par') and algorithm details such as
 #'   step size adaptation and acceptance probabilities per iteration
 #'   ('sampler_params').
-sample_tmb_hmc <- function(iter, fn, gr, init, L, eps,
-                          warmup=floor(iter/2), seed=NULL,
-                         chain=1,thin=1, control=NULL){
+#' @references
+#' Hoffman and Gelman (2014). The No-U-Turn sampler: Adaptively setting
+#'   path lengths in Hamiltonian Monte Carlo. J. Mach. Learn. Res.
+#'   15:1593-1623.
+#' @seealso \code{\link{sample_tmb}}
+sample_tmb_hmc <-
+  function(iter, fn, gr, init, L, eps, warmup=floor(iter/2), seed=NULL,
+           chain=1,thin=1, control=NULL){
   warning("NUTS should be prefered to sHMC except in rare, specific cases")
   if(!is.null(seed)) set.seed(seed)
   control <- .update_control(control)

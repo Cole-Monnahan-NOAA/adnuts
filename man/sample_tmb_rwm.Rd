@@ -46,6 +46,11 @@ Random Walk Metropolis (RWM) sampler.
 This algorithm does not yet contain adaptation of \code{alpha}
 so some trial and error may be required for efficient sampling.
 }
+\references{
+Metropolis, N., Rosenbluth, A.W., Rosenbluth, M.N., Teller, A.H.,
+  Teller, E., 1953. Equation of state calculations by fast computing
+  machines.  J Chem Phys. 21:1087-1092.
+}
 \seealso{
 \code{\link{sample_tmb}}
 }

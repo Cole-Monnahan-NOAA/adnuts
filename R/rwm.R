@@ -10,6 +10,10 @@
 #' @return A list containing samples and other metadata.
 #' @inheritParams sample_tmb_nuts
 #' @seealso \code{\link{sample_tmb}}
+#' @references
+#' Metropolis, N., Rosenbluth, A.W., Rosenbluth, M.N., Teller, A.H.,
+#'   Teller, E., 1953. Equation of state calculations by fast computing
+#'   machines.  J Chem Phys. 21:1087-1092.
 sample_tmb_rwm <- function(iter, fn, init, alpha=1, chain=1,
                          warmup=floor(iter/2), thin=1,
                          seed=NULL, control=NULL){

@@ -2,8 +2,8 @@
 % Please edit documentation in R/nuts.R
 \name{sample_tmb_nuts}
 \alias{sample_tmb_nuts}
-\title{[BETA VERSION] Draw MCMC samples from a model posterior using the
-No-U-Turn (NUTS) sampler with dual averaging.}
+\title{Draw MCMC samples from a model posterior using the No-U-Turn (NUTS)
+sampler with dual averaging.}
 \usage{
 sample_tmb_nuts(iter, fn, gr, init, warmup = floor(iter/2), chain = 1,
   thin = 1, seed = NULL, control = NULL)
@@ -35,21 +35,22 @@ with NUTS.}
 use.}
 }
 \description{
-[BETA VERSION] Draw MCMC samples from a model posterior using the
-No-U-Turn (NUTS) sampler with dual averaging.
+Draw MCMC samples from a model posterior using the No-U-Turn (NUTS)
+sampler with dual averaging.
 }
 \details{
 This function implements algorithm 6 of Hoffman and Gelman
   (2014), which includes adaptive step sizes (\code{eps}) via an
-  algorithm called dual averaging. In theory neither the step length nor
-  step size needs to be input by the user to obtain efficient sampling
-  from the posterior.
+  algorithm called dual averaging. It also includes an adaptation scheme
+  to tune a diagonal mass matrix (metric) during warmup.
+
+These \code{fn} and \code{gr} functions must have Jacobians already
+  applied if there are transformations used.
 }
 \references{
-\itemize{ \item{Neal, R. M. (2011). MCMC using Hamiltonian
-  dynamics. Handbook of Markov Chain Monte Carlo.}  \item{Hoffman and
-  Gelman (2014). The No-U-Turn sampler: Adaptively setting path lengths
-  in Hamiltonian Monte Carlo. J. Mach. Learn. Res.  15:1593-1623.}  }
+Hoffman and Gelman (2014). The No-U-Turn sampler: Adaptively setting
+  path lengths in Hamiltonian Monte Carlo. J. Mach. Learn. Res.
+  15:1593-1623.
 }
 \seealso{
 \code{sample_tmb}

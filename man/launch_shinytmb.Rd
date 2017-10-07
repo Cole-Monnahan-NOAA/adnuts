@@ -2,7 +2,7 @@
 % Please edit documentation in R/helper.R
 \name{launch_shinytmb}
 \alias{launch_shinytmb}
-\title{A high level wrapper to launch shinystan for a TMB fit.}
+\title{Launch shinystan for a TMB fit.}
 \usage{
 launch_shinytmb(fit)
 }
@@ -10,9 +10,8 @@ launch_shinytmb(fit)
 \item{fit}{A named list returned by \code{sample_tmb}.}
 }
 \description{
-A high level wrapper to launch shinystan for a TMB fit.
+Launch shinystan for a TMB fit.
 }
-\details{
-This function simply calls
-  \code{launch_shinystan(as.shinystan.tmb(fit))}.
+\seealso{
+\code{launch_shinyadmb}
 }
