@@ -2,8 +2,7 @@
 % Please edit documentation in R/shmc.R
 \name{sample_tmb_hmc}
 \alias{sample_tmb_hmc}
-\title{Draw MCMC samples from a model posterior using a static
-HMC sampler.}
+\title{Draw MCMC samples from a model posterior using a static HMC sampler.}
 \usage{
 sample_tmb_hmc(iter, fn, gr, init, L, eps, warmup = floor(iter/2),
   seed = NULL, chain = 1, thin = 1, control = NULL)
@@ -50,8 +49,7 @@ A list containing samples ('par') and algorithm details such as
   ('sampler_params').
 }
 \description{
-Draw MCMC samples from a model posterior using a static
-HMC sampler.
+Draw MCMC samples from a model posterior using a static HMC sampler.
 }
 \details{
 This function implements algorithm 5 of Hoffman and Gelman
@@ -63,7 +61,13 @@ This function implements algorithm 5 of Hoffman and Gelman
   dynamics. Handbook of Markov Chain Monte Carlo.}  \item{Hoffman and
   Gelman (2014). The No-U-Turn sampler: Adaptively setting path lengths
   in Hamiltonian Monte Carlo. J. Mach. Learn. Res.  15:1593-1623.}  }
+
+Hoffman and Gelman (2014). The No-U-Turn sampler: Adaptively setting
+  path lengths in Hamiltonian Monte Carlo. J. Mach. Learn. Res.
+  15:1593-1623.
 }
 \seealso{
+\code{\link{sample_tmb}}
+
 \code{\link{sample_tmb}}
 }

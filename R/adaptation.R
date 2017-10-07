@@ -1,3 +1,7 @@
+## These fucntions were modeled after those in Stan at:
+## https://github.com/stan-dev/stan/blob/967f5717edc8a101c8712838d47e6d393ac4a3db/src/stan/mcmc/windowed_adaptation.hpp
+
+## Helper functions for mass matrix adapatation.
 
 ## Compute the next window size
 ##
