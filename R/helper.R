@@ -212,8 +212,15 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params
   if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid fit object?")
-  ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
-  y <- do.call(rbind, lapply(1:length(x), function(i) x[[i]][ind,]))
+  if(inc_warmup){
+    ind <- 1:dim(x[[1]])[1]
+    its <- 1:length(ind)
+  } else{
+    ind <- -(1:fit$warmup)
+    its <- (1:length(ind)) + fit$warmup
+  }
+  y <- do.call(rbind, lapply(1:length(x), function(i)
+    cbind(chain=i, iteration=its, x[[i]][ind,])))
   return(invisible(as.data.frame(y)))
 }
 
