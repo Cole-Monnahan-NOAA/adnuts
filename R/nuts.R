@@ -204,11 +204,12 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   ## Process the output for returning
   theta.out <- cbind(theta.out, lp)
   theta.out <- theta.out[seq(1, nrow(theta.out), by=thin),]
+  warm <- warmup/thin
   sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
-  ndiv <- sum(sampler_params[-(1:warmup),5])
+  ndiv <- sum(sampler_params[-(1:warm),5])
   if(ndiv>0)
     message(paste0("There were ", ndiv, " divergent transitions after warmup"))
-  msg <- paste0("Final acceptance ratio=", sprintf("%.2f", mean(sampler_params[-(1:warmup),1])))
+  msg <- paste0("Final acceptance ratio=", sprintf("%.2f", mean(sampler_params[-(1:warm),1])))
   if(useDA) msg <- paste0(msg,", and target=", adapt_delta)
   message(msg)
   if(useDA) message(paste0("Final step size=", round(eps, 3),
@@ -217,7 +218,7 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   .print.mcmc.timing(time.warmup=time.warmup, time.total=time.total)
   return(list(par=theta.out, sampler_params=sampler_params,
               time.total=time.total, time.warmup=time.warmup,
-              warmup=warmup/thin, max_treedepth=max_td))
+              warmup=warm, max_treedepth=max_td))
 }
 
 ## Draw a slice sample for given position and momentum variables
