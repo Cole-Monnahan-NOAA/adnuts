@@ -523,6 +523,11 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
   xx <- readLines(file)
   ## Total parameter including sdreport variables
   totPar <- length(xx)-2
+  if(totPar < nopar) {
+    warning(paste("File", f,
+                  "did not match the .cor file.. maybe hessian failed? MLE object not available"))
+    return(NULL)
+  }
   ## Log of the determinant of the hessian
   logDetHess <- as.numeric(strsplit(xx[1], '=')[[1]][2])
   sublin <- lapply(strsplit(xx[1:totPar+2], ' '),function(x)x[x!=''])
@@ -531,7 +536,6 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
     x <- names.all[names.all==n]
     if(length(x)==1) return(list(x))
     list(paste0(x, '[',1:length(x),']'))})))
-
   est <- as.numeric(unlist(lapply(sublin,function(x)x[3])))
   std <- as.numeric(unlist(lapply(sublin,function(x)x[4])))
   ## The correlation in the bounded space.
