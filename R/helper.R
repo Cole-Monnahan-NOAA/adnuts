@@ -519,8 +519,13 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
   ## The .cor file contains parameter (and derived quantity) names,
   ## estimates, and se's. This is more convenient to read in than the .par
   ## file.
-  file <- paste(model,'.cor', sep='')
-  xx <- readLines(file)
+  f <- paste(model,'.cor', sep='')
+  if(!file.exists(f)){
+    warning(paste("File", f,
+                  "not found so could not read in MLE quantities or parameter names"))
+    return(NULL)
+  }
+  xx <- readLines(f)
   ## Total parameter including sdreport variables
   totPar <- length(xx)-2
   if(totPar < nopar) {
