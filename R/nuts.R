@@ -179,11 +179,11 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         k <- 1; m1 <- theta.out[m,]; s1 <- rep(0, len=npar)
         ## Calculate the next end window. If this overlaps into the final fast
         ## period, it will be stretched to that point (warmup-w3)
-        temp <- .compute_next_window(m, anw, warmup, w1, aws, w3)
-        anw <- temp$anw; aws <- temp$aws
-        ## print(paste0(m, ": new range(M) is: ",
-        ##             round(min(M),5), round(max(M),5), ", pars",
-        ##             which.min(M), which.max(M), ", eps=", eps))
+        anw <- .compute_next_window(m, anw, warmup, w1, aws, w3)
+        aws <- 2*aws
+        print(paste(m, ": new range(M) is:",
+                    round(min(M),5), round(max(M),5), ", pars",
+                    which.min(M), which.max(M), ", eps=", eps))
       } else {
         k <- k+1; m0 <- m1; s0 <- s1
         ## Update M and S
