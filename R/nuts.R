@@ -181,6 +181,7 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         ## period, it will be stretched to that point (warmup-w3)
         anw <- .compute_next_window(m, anw, warmup, w1, aws, w3)
         aws <- 2*aws
+        if(!is.null(control$verbose))
         print(paste(m, ": new range(M) is:",
                     round(min(M),5), round(max(M),5), ", pars",
                     which.min(M), which.max(M), ", eps=", eps))
