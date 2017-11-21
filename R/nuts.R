@@ -180,8 +180,8 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         k <- 1; m1 <- theta.out[m,]; s1 <- rep(0, len=npar)
         ## Calculate the next end window. If this overlaps into the final fast
         ## period, it will be stretched to that point (warmup-w3)
-        anw <- .compute_next_window(m, anw, warmup, w1, aws, w3)
         aws <- 2*aws
+        anw <- .compute_next_window(m, anw, warmup, w1, aws, w3)
         if(!is.null(control$verbose))
         print(paste(m, ": new range(M) is:",
                     round(min(M),5), round(max(M),5), ", pars",
