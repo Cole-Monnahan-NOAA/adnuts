@@ -182,6 +182,9 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         ## period, it will be stretched to that point (warmup-w3)
         aws <- 2*aws
         anw <- .compute_next_window(m, anw, warmup, w1, aws, w3)
+        ## Find new reasonable eps since it can change dramatically when M
+        ## updates
+        eps <- .find.epsilon(theta=theta.cur, fn=fn2, gr=gr2, eps=.1, verbose=FALSE)
         if(!is.null(control$verbose))
         print(paste(m, ": new range(M) is:",
                     round(min(M),5), round(max(M),5), ", pars",
