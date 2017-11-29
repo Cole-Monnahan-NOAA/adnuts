@@ -23,6 +23,7 @@ fit1 <- sample_tmb(obj=obj, init=init, seeds=seeds)
 path <- system.file("examples", package = "TMB")
 ## This line is only needed b/c of how TMB::runexample works above.
 compile(file.path(path,'simple.cpp'))
+library(snowfall)
 fit2 <- sample_tmb(obj=obj, seeds=seeds, init=init,
                    parallel=TRUE, cores=3, path=path)
 
