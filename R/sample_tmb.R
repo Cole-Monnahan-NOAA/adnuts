@@ -169,7 +169,7 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
   } else {
     if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
     snowfall::sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
-    snowfall::sfLibrary("TMB")
+    ## snowfall::sfLibrary("TMB")
     snowfall::sfExportAll()
     on.exit(snowfall::sfStop())
     message("Starting parallel chains... ")

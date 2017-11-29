@@ -8,17 +8,18 @@
 ## @param i MCMC iteration number
 ## @param warmup Number of warmup iterations
 ## @param w1 The first adapation window (usually 75)
+## @param aws The last adapt window size
 ## @param w3 The last adaptation window (usually 50)
+## @return The next adaptation window (anw)
 ## @details This function calculates the size of the next window for
 ##   adapation. If the next window size would be too long then this is
 ##   extended to the end of that window.
 .compute_next_window <- function(i, anw, warmup, w1, aws, w3){
-  ##  if(anw == warmup-w3) stop("Something bad")
-  aws <- aws
   anw <- i+aws
   if(anw== (warmup-w3) ) return(anw)
   ## Check that the next anw is not too long. This will be the anw for the
-  ## next time this is computed.
+  ## next time this is computed. If the next one is too long, extend this
+  ## one to the very end.
   nwb <- anw+2*aws
   if(nwb >= warmup-w3){
     ## if(i != warmup-w3)

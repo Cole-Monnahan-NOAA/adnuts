@@ -36,14 +36,14 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
   adapt_mass <- control$adapt_mass
-  if(warmup < 100 & adapt_mass){
-    warning("Mass matrix adaptation not allowed if warmup < 100")
-    adapt_mass <- FALSE
-  }
   ## Mass matrix adapatation algorithm arguments. Same as Stan defaults.
-  w1 <- 75; w2 <- 50; w3 <- 25
+  w1 <- control$w1; w2 <- control$w2; w3 <- control$w3
   aws <- w2 # adapt window size
   anw <- w1+w2 # adapt next window
+  if(warmup < (w1+w2+w3) & adapt_mass){
+    warning("Too few warmup iterations to do mass matrix adaptation.. disabled")
+    adapt_mass <- FALSE
+  }
 
   ## Using a mass matrix means redefining what fn and gr do and
   ## backtransforming the initial value.
@@ -84,8 +84,9 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     r.cur <- r.plus <- r.minus <-  rnorm(npar,0,1)
     H0 <- .calculate.H(theta=theta.cur, r=r.cur, fn=fn2)
 
-    ## Draw a slice variable u
-    u <- .sample.u(theta=theta.cur, r=r.cur, fn=fn2)
+    ## Draw a slice variable u in log space
+    logu <-
+      log(runif(1)) + .calculate.H(theta=theta.cur,r=r.cur, fn=fn2)
     j <- 0; n <- 1; s <- 1; divergent <- 0
     ## Track steps and divergences; updated inside .buildtree
     info <- as.environment(list(n.calls=0, divergent=0))
@@ -93,14 +94,14 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       v <- sample(x=c(1,-1), size=1)
       if(v==1){
         ## move in right direction
-        res <- .buildtree(theta=theta.plus, r=r.plus, u=u, v=v,
+        res <- .buildtree(theta=theta.plus, r=r.plus, logu=logu, v=v,
                           j=j, eps=eps, H0=H0,
                           fn=fn2, gr=gr2, info=info)
         theta.plus <- res$theta.plus
         r.plus <- res$r.plus
       } else {
         ## move in left direction
-        res <- .buildtree(theta=theta.minus, r=r.minus, u=u, v=v,
+        res <- .buildtree(theta=theta.minus, r=r.minus, logu=logu, v=v,
                           j=j, eps=eps, H0=H0,
                           fn=fn2, gr=gr2, info=info)
         theta.minus <- res$theta.minus
@@ -168,6 +169,10 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         ## variances
         M <- as.numeric(s1/(k-1)) # estimated variance
         ## Update density and gradient functions for new mass matrix
+        if(any(!is.finite(M))){
+          warning("Non-finite estimates in mass matrix adaptation -- reverting to unit")
+          M <- rep(1, length(M))
+        }
         rotation <- .rotate_space(fn=fn, gr=gr, M=M,  y.cur=theta.out[m,])
         fn2 <- rotation$fn2; gr2 <- rotation$gr2; chd <- rotation$chd;
         theta.cur <- rotation$x.cur
@@ -175,7 +180,15 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
         k <- 1; m1 <- theta.out[m,]; s1 <- rep(0, len=npar)
         ## Calculate the next end window. If this overlaps into the final fast
         ## period, it will be stretched to that point (warmup-w3)
+        aws <- 2*aws
         anw <- .compute_next_window(m, anw, warmup, w1, aws, w3)
+        ## Find new reasonable eps since it can change dramatically when M
+        ## updates
+        eps <- .find.epsilon(theta=theta.cur, fn=fn2, gr=gr2, eps=.1, verbose=FALSE)
+        if(!is.null(control$verbose))
+        print(paste(m, ": new range(M) is:",
+                    round(min(M),5), round(max(M),5), ", pars",
+                    which.min(M), which.max(M), ", eps=", eps))
       } else {
         k <- k+1; m0 <- m1; s0 <- s1
         ## Update M and S
@@ -196,11 +209,12 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   ## Process the output for returning
   theta.out <- cbind(theta.out, lp)
   theta.out <- theta.out[seq(1, nrow(theta.out), by=thin),]
+  warm <- warmup/thin
   sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
-  ndiv <- sum(sampler_params[-(1:warmup),5])
+  ndiv <- sum(sampler_params[-(1:warm),5])
   if(ndiv>0)
     message(paste0("There were ", ndiv, " divergent transitions after warmup"))
-  msg <- paste0("Final acceptance ratio=", sprintf("%.2f", mean(sampler_params[-(1:warmup),1])))
+  msg <- paste0("Final acceptance ratio=", sprintf("%.2f", mean(sampler_params[-(1:warm),1])))
   if(useDA) msg <- paste0(msg,", and target=", adapt_delta)
   message(msg)
   if(useDA) message(paste0("Final step size=", round(eps, 3),
@@ -209,12 +223,9 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   .print.mcmc.timing(time.warmup=time.warmup, time.total=time.total)
   return(list(par=theta.out, sampler_params=sampler_params,
               time.total=time.total, time.warmup=time.warmup,
-              warmup=warmup/thin, max_treedepth=max_td))
+              warmup=warm, max_treedepth=max_td))
 }
 
-## Draw a slice sample for given position and momentum variables
-.sample.u <- function(theta, r, fn)
-  runif(n=1, min=0, max=exp(.calculate.H(theta=theta,r=r, fn=fn)))
 ## Calculate the log joint density (Hamiltonian) value for given position and
 ## momentum variables.
 ## @details This function currently assumes iid standard normal momentum
@@ -242,7 +253,7 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
 ## it. Thus the function returns a single proposed value and not the whole
 ## trajectory.
 ##
-.buildtree <- function(theta, r, u, v, j, eps, H0, fn, gr,
+.buildtree <- function(theta, r, logu, v, j, eps, H0, fn, gr,
                        delta.max=1000, info = environment() ){
   if(j==0){
     ## ## Useful code for debugging. Returns entire path to global env.
@@ -255,8 +266,8 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     ## verify valid trajectory. Divergences occur if H is NaN, or drifts
     ## too from from true H.
     H <- .calculate.H(theta=theta, r=r, fn=fn)
-    n <- log(u) <= H
-    s <- log(u) < delta.max + H
+    n <- logu <= H
+    s <- logu < delta.max + H
     if(!is.finite(H) | s == 0){
      info$divergent <- 1; s <- 0
     }
@@ -270,7 +281,7 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                 r.plus=r, s=s, n=n, alpha=alpha, nalpha=1))
   } else {
     ## recursion - build left and right subtrees
-    xx <- .buildtree(theta=theta, r=r, u=u, v=v, j=j-1, eps=eps,
+    xx <- .buildtree(theta=theta, r=r, logu=logu, v=v, j=j-1, eps=eps,
                        H0=H0, fn=fn, gr=gr, info=info)
     theta.minus <- xx$theta.minus
     theta.plus <- xx$theta.plus
@@ -285,13 +296,13 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     ## If it didn't fail, update the above quantities
     if(s==1){
       if(v== -1){
-        yy <- .buildtree(theta=theta.minus, r=r.minus, u=u, v=v,
+        yy <- .buildtree(theta=theta.minus, r=r.minus, logu=logu, v=v,
                          j=j-1, eps=eps, H0=H0,
                          fn=fn, gr=gr, info=info)
         theta.minus <- yy$theta.minus
         r.minus <- yy$r.minus
       } else {
-        yy <- .buildtree(theta=theta.plus, r=r.plus, u=u, v=v,
+        yy <- .buildtree(theta=theta.plus, r=r.plus, logu=logu, v=v,
                          j=j-1, eps=eps, H0=H0,
                          fn=fn, gr=gr, info=info)
         theta.plus <- yy$theta.plus
@@ -310,6 +321,7 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
       ## check for valid proposal
       b <- .test.nuts(theta.plus=theta.plus,
                       theta.minus=theta.minus, r.plus=r.plus,
+
                       r.minus=r.minus)
       s <- yy$s*b
     }

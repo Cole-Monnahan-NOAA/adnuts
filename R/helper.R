@@ -58,7 +58,7 @@
 ##   in \code{control}
 .update_control <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
-                  adapt_mass=TRUE, max_treedepth=12)
+                  adapt_mass=TRUE, max_treedepth=12, w1=75, w2=50, w3=25)
   if(!is.null(control))
     for(i in names(control))  default[[i]] <- control[[i]]
   if(is.matrix(default$metric) & default$adapt_mass){
@@ -212,8 +212,15 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params
   if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid fit object?")
-  ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
-  y <- do.call(rbind, lapply(1:length(x), function(i) x[[i]][ind,]))
+  if(inc_warmup){
+    ind <- 1:dim(x[[1]])[1]
+    its <- 1:length(ind)
+  } else{
+    ind <- -(1:fit$warmup)
+    its <- (1:length(ind)) + fit$warmup
+  }
+  y <- do.call(rbind, lapply(1:length(x), function(i)
+    cbind(chain=i, iteration=its, x[[i]][ind,])))
   return(invisible(as.data.frame(y)))
 }
 
@@ -512,10 +519,20 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
   ## The .cor file contains parameter (and derived quantity) names,
   ## estimates, and se's. This is more convenient to read in than the .par
   ## file.
-  file <- paste(model,'.cor', sep='')
-  xx <- readLines(file)
+  f <- paste(model,'.cor', sep='')
+  if(!file.exists(f)){
+    warning(paste("File", f,
+                  "not found so could not read in MLE quantities or parameter names"))
+    return(NULL)
+  }
+  xx <- readLines(f)
   ## Total parameter including sdreport variables
   totPar <- length(xx)-2
+  if(totPar < nopar) {
+    warning(paste("File", f,
+                  "did not match the .cor file.. maybe hessian failed? MLE object not available"))
+    return(NULL)
+  }
   ## Log of the determinant of the hessian
   logDetHess <- as.numeric(strsplit(xx[1], '=')[[1]][2])
   sublin <- lapply(strsplit(xx[1:totPar+2], ' '),function(x)x[x!=''])
@@ -524,7 +541,6 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
     x <- names.all[names.all==n]
     if(length(x)==1) return(list(x))
     list(paste0(x, '[',1:length(x),']'))})))
-
   est <- as.numeric(unlist(lapply(sublin,function(x)x[3])))
   std <- as.numeric(unlist(lapply(sublin,function(x)x[4])))
   ## The correlation in the bounded space.
