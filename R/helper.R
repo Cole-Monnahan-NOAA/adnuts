@@ -171,22 +171,30 @@ launch_shinyadmb <- function(fit){
 #'   be useful for diagnostics.
 #' @param inc_lp Whether to include a column for the log posterior density
 #'   (last column). For diagnostics it can be useful.
-#' @return An invisible data.frame containing samples (rows) of each
-#'   parameter (columns). If multiple chains exist they will be rbinded
-#'   together, maintaining order within each chain.
+#' @param as.list Whether to return the samples as a list (one element per
+#'   chain). This could then be converted to a CODA mcmc object.
+#' @return If as.list is FALSE, an invisible data.frame containing samples
+#'   (rows) of each parameter (columns). If multiple chains exist they will
+#'   be rbinded together, maintaining order within each chain. If as.list
+#'   is TRUE, samples are returned as a list of matrices.
 #' @export
-extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE){
+extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
   x <- fit$samples
   if(!is.array(x)) stop("fit$samples is not an array -- valid fit object?")
   ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
   ## Drop LP
   if(inc_lp){
-  y <- do.call(rbind, lapply(1:dim(x)[2], function(i) x[ind, i,]))
+    y <-  lapply(1:dim(x)[2], function(i) x[ind, i,])
   } else {
-  y <- do.call(rbind, lapply(1:dim(x)[2], function(i) x[ind, i, -dim(x)[3]]))
+    y <-  lapply(1:dim(x)[2], function(i) x[ind, i, -dim(x)[3]])
   }
-  return(invisible(as.data.frame(y)))
+  if(as.list){
+    return(invisible(y))
+  } else {
+    return(invisible(as.data.frame(do.call(rbind, y))))
+  }
 }
+
 
 #' Extract sampler parameters from a fit.
 #'
