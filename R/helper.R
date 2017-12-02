@@ -61,13 +61,14 @@
                   adapt_mass=TRUE, max_treedepth=12, w1=75, w2=50, w3=25)
   if(is.matrix(control$metric) & !is.null(control$adapt_mass)){
     if(control$adapt_mass==TRUE){
-    warning("Mass matrix adaptation disabled if metrix is a matrix")
-    control$adapt_mass <- FALSE
+      warning("Mass matrix adaptation disabled if metric is a matrix")
     }
+    control$adapt_mass <- FALSE
   }
   new <- default
   if(!is.null(control))
     for(i in names(control))  new[[i]] <- control[[i]]
+  if(is.matrix(new$metric)) new$adapt_mass <- FALSE
   return(new)
 }
 
