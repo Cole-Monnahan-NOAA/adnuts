@@ -277,11 +277,11 @@ sample_admb_rwm <-
     if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
     ## Build the command to run the model
-    cmd <- paste(model,"-nox -nohess -mcmc ",iter)
+    cmd <- paste(model,"-nox -noest -nohess -rwm -mcmc",iter)
     cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
     if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
     if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
-    cmd <- paste(cmd, "-nosdmcmc -mcsave", thin)
+    cmd <- paste(cmd, "-mcsave", thin)
 
     ## Three options for metric. NULL (default) is to use the MLE estimates
     ## in admodel.cov.  If a matrix is passed, this is written to file and
@@ -314,7 +314,7 @@ sample_admb_rwm <-
     unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
     dimnames(unbounded) <- NULL
     pars <- .get_psv(model)
-    if(is.null(par.names))  par.names <- names(pars)
+    par.names <- names(pars)
     lp <- as.vector(read.table('rwm_lp.txt', header=TRUE)[,1])
     pars[,'log-posterior'] <- lp
     pars <- as.matrix(pars)
