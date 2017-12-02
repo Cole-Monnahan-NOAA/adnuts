@@ -59,13 +59,16 @@
 .update_control <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
                   adapt_mass=TRUE, max_treedepth=12, w1=75, w2=50, w3=25)
-  if(!is.null(control))
-    for(i in names(control))  default[[i]] <- control[[i]]
-  if(is.matrix(default$metric) & default$adapt_mass){
+  if(is.matrix(control$metric) & !is.null(control$adapt_mass)){
+    if(control$adapt_mass==TRUE){
     warning("Mass matrix adaptation disabled if metrix is a matrix")
-    default$adapt_mass <- FALSE
+    control$adapt_mass <- FALSE
+    }
   }
-  return(default)
+  new <- default
+  if(!is.null(control))
+    for(i in names(control))  new[[i]] <- control[[i]]
+  return(new)
 }
 
 ## Print MCMC progress to console.
