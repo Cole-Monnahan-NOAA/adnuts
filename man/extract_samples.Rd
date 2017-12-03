@@ -4,7 +4,7 @@
 \alias{extract_samples}
 \title{Extract posterior samples from a model fit.}
 \usage{
-extract_samples(fit, inc_warmup = FALSE, inc_lp = FALSE)
+extract_samples(fit, inc_warmup = FALSE, inc_lp = FALSE, as.list = FALSE)
 }
 \arguments{
 \item{fit}{A list returned by \code{sample_tmb} or \code{sample_admb}.}
@@ -15,11 +15,15 @@ be useful for diagnostics.}
 
 \item{inc_lp}{Whether to include a column for the log posterior density
 (last column). For diagnostics it can be useful.}
+
+\item{as.list}{Whether to return the samples as a list (one element per
+chain). This could then be converted to a CODA mcmc object.}
 }
 \value{
-An invisible data.frame containing samples (rows) of each
-  parameter (columns). If multiple chains exist they will be rbinded
-  together, maintaining order within each chain.
+If as.list is FALSE, an invisible data.frame containing samples
+  (rows) of each parameter (columns). If multiple chains exist they will
+  be rbinded together, maintaining order within each chain. If as.list
+  is TRUE, samples are returned as a list of matrices.
 }
 \description{
 A helper function to extract posterior samples across multiple chains
