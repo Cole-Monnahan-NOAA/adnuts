@@ -1,0 +1,23 @@
+---
+title: "No-U-turn sampling for ADMB and TMB models"
+author: "Cole C. Monnahan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{No-U-turn sampling for ADMB and TMB models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+'adnuts' main purpose is to provide a wrapper for performning Bayesian analyses using the NUTS algorithm for ADMB models. The ADMB model itself contains the algorithm code, but this package provides the user a convenient environment to run and diagnose Markov chains, and make inference. In addition, NUTS capabilities are provided for any posterior whose log-density and log-density gradient can be written as R functions. This includes TMB models but also other special cases. 
+
+Key features of the packages:
+
+- Run no-U-turn sampler or random walk Metropolis MCMC chains from within R
+- Parallel execution and automatic merging of chains to ease the workflow
+- Diagnostic checking using functionality provided by `Rstan` and `shinystan`
+- Mass matrix adaptation is available, or a dense matrix can be passed
+
+## Vignette Info
+
+## Examples
