@@ -17,6 +17,7 @@
 #' @param limits A list containing the ranges for each parameter to use in
 #'   plotting.
 #' @return Produces a plot, and returns nothing.
+#' @export
 #' @author Cole Monnahan
 pairs_admb <- function(fit,
                        diag=c("trace","acf","hist"),
