@@ -9,15 +9,161 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-'adnuts' main purpose is to provide a wrapper for performning Bayesian analyses using the NUTS algorithm for ADMB models. The ADMB model itself contains the algorithm code, but this package provides the user a convenient environment to run and diagnose Markov chains, and make inference. In addition, NUTS capabilities are provided for any posterior whose log-density and log-density gradient can be written as R functions. This includes TMB models but also other special cases. 
+## Summary
+
+`adnuts` main purpose is to provide a wrapper for performning Bayesian
+analyses using the NUTS algorithm for ADMB models. The ADMB model itself
+contains the algorithm code, but this package provides the user a
+convenient environment to run and diagnose Markov chains, and make
+inference. In addition, NUTS capabilities are provided for any posterior
+whose log-density and log-density gradient can be written as R
+functions. This includes TMB models but also other special cases.
 
 Key features of the packages:
 
 - Run no-U-turn sampler or random walk Metropolis MCMC chains from within R
-- Parallel execution and automatic merging of chains to ease the workflow
-- Diagnostic checking using functionality provided by `Rstan` and `shinystan`
-- Mass matrix adaptation is available, or a dense matrix can be passed
+  using the `sample_admb` and `sample_tmb` functions.
+- Adaptation of the NUTS stepsize is automatically done during the warmup phase.
+- The mass matrix options are: diagonal adaptation during warmup or an
+  arbitrary dense matrix can be passed from R.
+- Parallel execution and automatic merging of chains ease workflow.
+- Easy diagnostic checking using functionality provided by packages `Rstan`
+  and `shinystan`.
 
-## Vignette Info
+Additional features for ADMB users:
+
+- The MLE covariance matrix can be used (i.e., ADMB file
+  admodel.cov). Likewise, the model can be initialized from the '.par' file
+  (although not recommended).
+- A 'duration' argument to stop the chains running after a specified period
+  of time (e.g., 2 hours), returning whatever samples were generated in
+  that period.
+- When running multiple chains, whether in parallel or serial, samples are
+  merged and written to the '.psv' file. Thus, executing the model in the
+  '-mceval' phase uses all chains. `sample_admb` includes an 'mceval'
+  argument dictating whether to run in this phase when the sampling is
+  finished.
+- A modified pairs plot designed to help facilitate comparison between MLE
+  estimates and covariances, and the posterior samples.
+
+## The no-U-turn sampler implementation
+
+# Adapative trajectory lengths
+# Adapative step size
+# Mass matrix
+
+## Sampling for ADMB models
+### Setting up the model
+
+In general very little is needed to prepare an ADMB model for use with
+`adnuts`. As with any model, the user must build the template file to
+return a negative log likelihood value for given data and parameters. The
+user is responsible for ensuring the a valid and reasonable model is
+specified. Typical model building practices such as building complexity
+slowly and validating with simulated data are strongly encouraged.
+
+### mceval phase and posterior outputs
+
+No special output files are required to run the model with `adnuts`. In
+addition, the user can still use the `mceval_phase` flag to run specific
+code on saved samples. ADMB saves posterior draws to a .psv file. When
+executing the model with `-mceval` it will loop through those samples and
+execute the procedure section with flag `mceval_phase()` evaluating
+to 1. This behavior is unchanged with `adnuts`, but is complicated when
+running multiple chains because there will be multiple .psv files. Thus,
+`sample_admb` combines chains in R and writes a single .psv file containing
+samples from all chains (after warmup and thinned samples are
+discarded). This also works in parallel (see below).
+
+Previously, ADMB required an estimated covariance function to use the
+random walk Metropolis (RWM) algorithm. Thus, for models without a valid
+mode or a Hessian that could not be inverted could not use MCMC
+methods. With `adnuts` neither an MLE nor covariance estimate is needed
+because NUTS adapts these tuning parameters automatically (see
+below). However, if a mode exists I recommend estimating the model normally
+before running MCMC.
+
+`sample_admb` is strongly recommended for running the MCMC (NUTS or
+RWM). However, it is a convenience function that runs the chains from the
+command line. The list returned by `sample_admb` contains an element `cmd`
+which shows the user the exact command used to call the ADMB model.
+
+The ADMB model is an executable file that contains the code necessary for
+NUTS and RWM. When run, it generates many output files. As such, I
+recommend putting the model into a subdirectory below the directory
+containing the R script (passed as the `path` argument). This is required
+for parallel execution but is recommended in general.
+
+### Bounds & Priors
+
+Parameter priors must be specified manually in the ADMB template file. For
+instance, a standard normal prior on parameter `B` would be subtracted from
+the objective as `f+=dnorm(B,0.0,1.0)`. Note that statistical functions in
+ADMB, such as `dnorm`, return the negative log density and thus must be
+added to the objective function.
+
+Parameter transformations are limited to box constraints within the ADMB
+template (e.g., `init_bounded_number`). When used, this puts an implicit
+uniform prior on the parameter.
+
+However, variance parameters are common and require bounds of (0, Inf). To
+implement such a bound in ADMB, specify the model parameter as the log of
+the variance, and then in the template exponentiate it and use
+throughout. Because of this parameter transformation, the Jacbobian
+adjustment is needed. This can be accomplished by subtracting the parameter
+in log space from the negative log-likelihood. For instance, use parameter
+`log_sd` in the template, then let `sigma=exp(log_sd)`, and update the
+objective function: `f-=log_sd;`.
+
+### Parallel sampling
+
+Parallel sampling is done by brute force using the `snowfall`
+package. `n.cores` chains will be run by making temporary copies of the
+directory `path` (which contain the model executable, data inputs, and any
+other required files). Then a separate R session calls `sample_admb` and
+when done the results are merged together and the temporary folders
+deleted. If errors occur, these temporary folders may need to be deleted
+manually.
+
+### Plotting results
+
+The list returned by `sample_admb` can be plugged directly into the
+ShinyStan interactive tool environment by calling the wrapper function
+`launch_shinyadmb`. See ShinyStan documentation for more information on
+this. It is designed to provide NUTS specific diagnostics, but also serves
+as a more general tool for MCMC diagnostics and thus is beneficial for RWM
+chains as well. If desired, the output samples can be converted into `mcmc`
+objects for use with the CODA R package.  For instance, CODA traceplots can
+be accessed like this:
+
+```` R
+post <- extract_samples(fit, as.list=TRUE)
+postlist <- mcmc.list(lapply(post, mcmc))
+coda::traceplot(postlist)
+````
+Most ADMB models have well defined modes and estimated covariance matrices
+used to quantify uncertainty. The `pairs_admb` function can be used to plot
+pairwise posterior draws vs the MLE estimate and confidence ellipses. Major
+discrepancies between the two are cause for concern. As such, this can be a
+good diagnostic tool for both frequentist and Bayesian inference. In
+particular, it often is informative to plot the slowest 10 mixing
+parameters.
+
+
+````
+mon <- as.data.frame(rstan::monitor(fit$samples, print=FALSE))
+mon$pars <- row.names(mon)
+mon <- mon[order(mon$n_eff, decreasing=FALSE),]
+slow <- mon$par[1:6]
+post <- extract_samples(fit1, inc_lp=TRUE)
+chain <- rep(1:dim(fit1$samples)[2], each=dim(fit1$samples)[1]-fit1$warmup)
+pairs_admb(post, mle=mle, pars=slow, diag='trace', chains=chain)
+````
+
+## Sampling for TMB models
+### Setting up the model
+### Bounds & Priors
+### sample_tmb
+### Parallel sampling
 
 ## Examples
