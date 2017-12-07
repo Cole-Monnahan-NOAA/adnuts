@@ -4,7 +4,9 @@ An R package for NUTS sampling using TMB and ADMB
 This package is still in development, but is fairly stable. I will be
 submiting to CRAN hopefully in Ocotober, 2017. For now, install using:
 
-````devtools::install_github("colemonnahan/adnuts", ref="master")````
+````devtools::install_github('colemonnahan/adnuts', build_vignettes=TRUE)````
+
+The package contains a user guide: `vignette('adnuts')`. This will help get you started.
 
 This code comes with no garuantees and will change over the next few
 months.
