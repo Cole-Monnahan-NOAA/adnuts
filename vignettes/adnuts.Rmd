@@ -2,7 +2,10 @@
 title: "No-U-turn sampling for ADMB and TMB models"
 author: "Cole C. Monnahan"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+bibliography: refs.bib
+output: 
+  rmarkdown::html_vignette: 
+  toc: true 
 vignette: >
   %\VignetteIndexEntry{No-U-turn sampling for ADMB and TMB models}
   %\VignetteEngine{knitr::rmarkdown}
@@ -12,12 +15,14 @@ vignette: >
 ## Summary
 
 `adnuts` main purpose is to provide a wrapper for performning Bayesian
-analyses using the NUTS algorithm for ADMB models. The ADMB model itself
-contains the algorithm code, but this package provides the user a
-convenient environment to run and diagnose Markov chains, and make
-inference. In addition, NUTS capabilities are provided for any posterior
-whose log-density and log-density gradient can be written as R
-functions. This includes TMB models but also other special cases.
+analyses using the no-U-turn (NUTS) algorithm [@hoffman2014] for ADMB
+models [@fournier2012]. The ADMB model itself contains the algorithm code,
+but this package provides the user a convenient environment to run and
+diagnose Markov chains, and make inference. In addition, NUTS capabilities
+are provided for any posterior whose log-density and log-density gradient
+can be written as R functions. This includes TMB models [@kristensen2016]
+but also other special cases. This package aims to give ADMB and TMB models
+similar functionality to Stan [@carpenter2017; @stan2017].
 
 Key features of the packages:
 
@@ -278,15 +283,17 @@ sp <- extract_sampler_params(fit)
 ## The no-U-turn sampler implementation
 
 ### Brief review of Hamiltonian Monte Carlo
+
 Hamiltonian Monte Carlo is a powerful family of MCMC algorithms that use
 gradients to propose efficient transitions. We review the basics here but
-refer to interested readers to [cite Neal 2011]. Instead of randomly generating a
-proposed point, to be rejected/accepted, HMC generates *trajectories* from
-which a point is chosen to be rejected/accepted. These trajectories use
-gradient information and an analogy of a ball rolling on a surface is often
-used. These trajectories are efficient when they can transition to nearly
-anywhere on the posterior (stark contrast with random walk
-algorithms). However, to do this they need to be well-tuned. Generally
+refer to interested readers to
+[@neal2011; @betancourt2017intro; @monnahan2017]. Instead of randomly
+generating a proposed point, to be rejected/accepted, HMC generates
+*trajectories* from which a point is chosen to be rejected/accepted. These
+trajectories use gradient information and an analogy of a ball rolling on a
+surface is often used. These trajectories are efficient when they can
+transition to nearly anywhere on the posterior (stark contrast with random
+walk algorithms). However, to do this they need to be well-tuned. Generally
 there are three aspects of the algorithms that need to be tuned.
 
  1. The step size. How big of steps between points on a single
@@ -303,33 +310,34 @@ there are three aspects of the algorithms that need to be tuned.
     a marginal variance of 1, and another a marginal variance of 1000).
 
 The no-U-turn sampler is a powerful sampler because it automated the tuning
-of the first two of these aspects [cite hoffman]. During warmup it tunes
+of the first two of these aspects [@hoffman2014]. During warmup it tunes
 the step size to a target acceptance rate (default of 0.8) which has been
-shown to be optimal [cite Betancourt]. Most importantly, though, is that it
+shown to be optimal [@betancourt2014]. Most importantly, though, is that it
 uses a recursive tree building algorithm to continue doubling the
-trajectory until a "u-turn" occurs, meaning going any further would be
+trajectory until a "U-turn" occurs, meaning going any further would be
 wasteful computationally. Thus, trajectory lengths are automatically
 optimal.
 
 The original algorithm was implemented into the Bayesian statistical
-software Stan [cite]. In addition to the automation of NUTS, Stan provides
-a scheme for adapting the step size during the warmup phase. Estimated
-diagonal mass matrices correct for global differences in scale, but not
-correlations. A dense matrix can also be adapted, and corrects for global
-correlations, but comes at a higher computation cost. Typically a diagonal
-matrix is best and thus is default in both Stan and `adnuts`.
+software Stan [@carpenter2017; @stan2017]. In addition to the automation of
+NUTS, Stan provides a scheme for adapting the step size during the warmup
+phase. Estimated diagonal mass matrices correct for global differences in
+scale, but not correlations. A dense matrix can also be adapted, and
+corrects for global correlations, but comes at a higher computation
+cost. Typically a diagonal matrix is best and thus is default in both Stan
+and `adnuts`.
 
 These three extensions lead to efficient HMC sampling with little to no
 user intervetion for a wide class of statistical models, including
-hierarchial ones.  Since publication, further developments have been made
-in HMC theoretical and practical research. For instance, Stan now includes
-an update called "exhaustive" HMC [cite Betancourt] that more efficiently
-samples from the points in a trajectory.
+hierarchial ones [@monnahan2017]. Since publication, further developments
+have been made in HMC theoretical and practical research. For instance,
+Stan now includes an update called "exhaustive" HMC [@betancourt2016] that
+more efficiently samples from the points in a trajectory.
 
 ### Algorithm implementation details
 
 For both ADMB and TMB models, `adnuts` uses the original algorithm
-presented in [cite Hoffman]. However it also uses a similar mass matrix
+presented in [@hoffman2014]. However it also uses a similar mass matrix
 adaptation scheme as used in Stan.
 
 The algorithm is initiated with a unit diagonal mass matrix. During
@@ -339,7 +347,7 @@ space) is calculated and used as the new mass matrix. The next update
 occurs after twice the iterations as the previous update. This process
 repeats until the last 25 samples of the warmup phase. During this phase
 the mass matrix is held constant and only the step size adapt. See the Stan
-manual [cite Stan] for more details. The step size is adapted during all
+manual [@stan2017] for more details. The step size is adapted during all
 warmup iterations. No information is returned about mass matrix adapation
 currently. 
 
@@ -373,7 +381,7 @@ when you get warnings about divergences, rerun the model with
 `control=list(adapt_delta=.9)` or higher, as necessary. If the divergences
 do not go away, investigate the cause and try to eliminate the extreme
 curvature from the model, for example with a reparameterization
-[cite Monnahan].
+[@stan2017; @monnahan2017].
 
 If there are extreme global correlations in your model, NUTS will be
 inefficient when using a diagonal mass matrix (the default). In this case,
@@ -408,4 +416,6 @@ between regions in the posterior more easily.
 
 
 ![Effects of mass matrix on trajectories](tree_trajectories.png)
+
+## References
 
