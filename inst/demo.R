@@ -1,7 +1,6 @@
 ### A very quick demonstration of no-U-turn sampling in ADMB and TMB.
 library(adnuts)
 
-
 ### ----------- ADMB example
 ## This is the packaged simple regression model
 path.simple <- system.file('examples', 'simple', package='adnuts')
@@ -22,44 +21,53 @@ setwd('..')
 init <-  lapply(1:3, function(i) rnorm(2))
 init <- NULL
 init <- function() rnorm(2)
-fit3 <- sample_admb(model='simple', init=init, path=path)
-fit3$cmd[1] # this is the command line arguments used
+fit <- sample_admb(model='simple', init=init, path=path)
+fit$cmd[1] # this is the command line arguments used
 ## Merged chains after discarding warmup phase
-post3 <- extract_samples(fit3)
-str(post3)
+post <- extract_samples(fit)
+str(post)
 ## A list with MLE stuff
-str(fit3$mle)
-pairs_admb(fit3) # modified pairs just for ADMB fits like this
+str(fit$mle)
+pairs_admb(fit) # modified pairs just for ADMB fits like this
 ## Can also use ShinyStan (make sure to exit it)
-launch_shinyadmb(fit3)
+## launch_shinyadmb(fit)
 
 ## Can also run in parallel, including executing the mceval phase
 ## afterward. Note that the .psv file only has post-warmup and thinned (if
 ## used) samples in it. Chains are rbind'ed together.
 library(snowfall)
+cores <- parallel::detectCores()-1
 fit <- sample_admb(model='simple', init=init, path=path,
-                   parallel=TRUE, cores=3, mceval=TRUE)
+                   parallel=TRUE, cores=cores, mceval=TRUE)
 
 ## If we want to use the MLE covariance as the metric set it using
 ## control. This *should* make for more efficient sampling in most cases.
 ## For technical reasons, must optimize the model with flag -hbf 1
 setwd(path); system('simple -hbf 1'); setwd('..')
 fit <- sample_admb(model='simple', init=init, path=path,
-                    parallel=TRUE, cores=3, control=list(metric='mle'))
+                    parallel=TRUE, cores=cores, control=list(metric='mle'))
 
 
 ## Can also use the RWM. Here we really want to use the MLE covariance.
 fit <- sample_admb(model='simple', init=init, path=path, algorithm='RWM',
                     iter=200000, thin=100, mceval=TRUE,
-                    parallel=TRUE, cores=3, control=list(metric='mle'))
+                    parallel=TRUE, cores=cores, control=list(metric='mle'))
 
 ## Can also specify a duration argument for capping the run time. Here we
 ## do 0.5 minutes. This period needs to be long enough to do the warmup or
 ## it'll throw an error.
-fit <- sample_admb(model='simple', init=init, path=path, algorithm='RWM',
+fit <- sample_admb(model='simple', init=init, path=path, algorithm='NUTS',
                     warmup=100, iter=20000000, thin=100, duration=.5,
-                    parallel=TRUE, cores=3)
+                    parallel=TRUE, cores=cores)
+str(extract_samples(fit))
 
+## Remove folder
+unlink(path, TRUE)
+### End of ADMB example
+
+
+
+### --------------------------------------------------
 ### TMB example: Note, this is large replaced by tmbstan. See that package
 ### for more info on using Stan with TMB models.
 
@@ -87,7 +95,7 @@ path <- system.file("examples", package = "TMB")
 compile(file.path(path,'simple.cpp'))
 library(snowfall)
 fit <- sample_tmb(obj=obj, seeds=seeds, init=init,
-                   parallel=TRUE, cores=3, path=path)
+                   parallel=TRUE, cores=cores, path=path)
 
 ## Extract samples like this
 post <- extract_samples(fit)
