@@ -169,7 +169,7 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
   } else {
     if(is.null(path))
       stop("path argument must be supplied to use parallel chains")
-    if(!require(snowfall)) stop("snowfall package not found")
+    if(!requireNamespace("snowfall", quietly=TRUE)) stop("snowfall package not found")
     stopifnot(is.character(path))
     if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
     snowfall::sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')

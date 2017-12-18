@@ -80,6 +80,7 @@ sample_admb <-
     }
     ## Parallel execution
   } else {
+    if(!requireNamespace("snowfall", quietly=TRUE)) stop("snowfall package not found")
     snowfall::sfInit(parallel=TRUE, cpus=cores)
     snowfall::sfExportAll()
     on.exit(snowfall::sfStop())

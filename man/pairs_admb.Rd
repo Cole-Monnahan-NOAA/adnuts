@@ -24,12 +24,18 @@ to give when using the hist option for the diagonal. For use if the
 label is blocking part of the plot. The default is 1.3 for all
 parameters.}
 
+\item{axis.col}{Color of axes}
+
 \item{pars}{A vector of parameter names or integers representing which
 parameters to subset. Useful if the model has a larger number of
 parameters and you just want to show a few key ones.}
 
+\item{label.cex}{Control size of labels}
+
 \item{limits}{A list containing the ranges for each parameter to use in
 plotting.}
+
+\item{...}{Arguments to be passed to plot call in lower diagonal panels}
 }
 \value{
 Produces a plot, and returns nothing.

@@ -21,6 +21,7 @@ Suggests:
   matrixcalc (>= 1.0.3),
   TMB (>= 1.7.11),
   stats,
-    knitr,
-    rmarkdown
+  knitr,
+  rmarkdown
+Imports: ellipse, rstan
 VignetteBuilder: knitr

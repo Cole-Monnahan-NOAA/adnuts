@@ -14,6 +14,9 @@
 #'   to give when using the hist option for the diagonal. For use if the
 #'   label is blocking part of the plot. The default is 1.3 for all
 #'   parameters.
+#' @param label.cex Control size of labels
+#' @param axis.col Color of axes
+#' @param ... Arguments to be passed to plot call in lower diagonal panels
 #' @param limits A list containing the ranges for each parameter to use in
 #'   plotting.
 #' @return Produces a plot, and returns nothing.
@@ -149,11 +152,16 @@ pairs_admb <- function(fit,
           points(x=mle$est[p2], y=mle$est[p1],
                  pch=16, cex=.5, col=2)
           ## Get points of a bivariate normal 95% confidence contour
-          ellipse.temp <- ellipse::ellipse(x=mle$cor[p2, p1],
-                                           scale=mle$se[c(p2, p1)],
-                                           centre= mle$est[c(p2, p1)], npoints=1000,
-                                           level=.95)
-          lines(ellipse.temp , lwd=.5, lty=1, col="red")
+          if(!requireNamespace("ellipse", quietly=TRUE)){
+            warning("ellipse package needs to be installed to show ellipses")
+          }
+          else {
+            ellipse.temp <- ellipse(x=mle$cor[p2, p1],
+                                    scale=mle$se[c(p2, p1)],
+                                    centre= mle$est[c(p2, p1)], npoints=1000,
+                                    level=.95)
+            lines(ellipse.temp , lwd=.5, lty=1, col="red")
+          }
         }
         par(xaxs="i", yaxs="i")
         temp.box()

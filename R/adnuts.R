@@ -69,6 +69,10 @@
 #'
 #' @docType package
 #' @name adnuts
-#' @importFrom stats rnorm runif cov
+#' @importFrom stats rnorm runif cov acf cor
 #' @importFrom utils read.csv read.table write.table
+#' @importFrom grDevices gray rgb
+#' @importFrom graphics axis box hist legend lines mtext par plot points
+#' @importFrom ellipse ellipse
+#' @importFrom rstan monitor
 NULL

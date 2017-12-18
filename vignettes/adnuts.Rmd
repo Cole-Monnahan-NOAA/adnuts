@@ -3,9 +3,9 @@ title: "No-U-turn sampling for ADMB and TMB models"
 author: "Cole C. Monnahan"
 date: "`r Sys.Date()`"
 bibliography: refs.bib
-output: 
-  rmarkdown::html_vignette: 
-  toc: true 
+output:
+  rmarkdown::html_vignette:
+  toc: true
 vignette: >
   %\VignetteIndexEntry{No-U-turn sampling for ADMB and TMB models}
   %\VignetteEngine{knitr::rmarkdown}
@@ -174,6 +174,7 @@ manually.
 
 ```` {r, eval=TRUE, echo=FALSE}
 library(adnuts)
+## library(rstan)
 fit.admb <- readRDS('fit.admb.RDS')
 ````
 The `rstan` package provides an improved function for calculating effective
@@ -349,7 +350,7 @@ repeats until the last 25 samples of the warmup phase. During this phase
 the mass matrix is held constant and only the step size adapt. See the Stan
 manual [@stan2017] for more details. The step size is adapted during all
 warmup iterations. No information is returned about mass matrix adapation
-currently. 
+currently.
 
 Once the warmup phase is over, no adaptation is done. Because of the
 adaptation the warmup samples are not valid samples from the posterior and
@@ -368,7 +369,7 @@ trajectories (which can occur with poorly specified models). This is set to
 long enough that a U-turn would occur. However, in some cases a model may
 need to make longer trajectories to maintain efficient sampling. In this
 case you will get warnings about exeeding maximum tree depth. Rerun the
-model with `control=list(max_treedepth=14)` or higher, as needed. 
+model with `control=list(max_treedepth=14)` or higher, as needed.
 
 Recall that a single NUTS trajectory consists of a set of posterior
 samples, resulting from a numerical approximation to a path along the
@@ -412,7 +413,7 @@ the posterior. Thus to go from one end to the other is not very
 straight. When a diagonal matrix is used, the trajectories become
 noticeably straighter. Finally, with the dense matrix the trajectories are
 even better. This is the effect of the mass matrix: trajectories can move
-between regions in the posterior more easily. 
+between regions in the posterior more easily.
 
 
 ![Effects of mass matrix on trajectories](tree_trajectories.png)
