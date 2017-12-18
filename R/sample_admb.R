@@ -293,8 +293,10 @@ sample_admb_rwm <-
       if(!matrixcalc::is.positive.definite(x=cor.user))
         stop("Invalid mass matrix, not positive definite")
       .write.admb.cov(metric)
-    } else if(is.null(metric)) {
-      ## MLE one. Should not need to re-estimate model to rescale covar
+    } else if(is.null(metric)){
+      ## NULL means default of MLE
+    } else if(metric=='mle'){
+      ## also use mle (i.e., do nothing)
     } else if(metric=='unit') {
       ## Identity in unbounded space
       cmd <- paste(cmd, "-mcdiag")
