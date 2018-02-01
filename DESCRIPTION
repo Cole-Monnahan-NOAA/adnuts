@@ -1,10 +1,10 @@
 Package: adnuts
-Title: No-U-turn sampling for Template Model Builder and AD Model Builder
+Title: No-U-turn Sampling for 'Template Model Builder' and 'AD Model Builder'
 Version: 0.0.0.9000
 Authors@R: person("Cole", "Monnahan", email = "monnahc@uw.com", role = c("aut", "cre"))
-Description: This package provides Stan-like functionality for models built
-    using either ADMB or TMB, including piggybacking on rstan and shinystan tools
-    for diagnostics and inference.
+Description: Enables NUTS MCMC sampling and 'Stan'-like functionality for'ADMB' or 'TMB' models, 
+  including piggybacking on 'rstan' and 'shinystan' 
+  for diagnostics and inference.
 Depends:
     R (>= 3.3.0)
 URL: https://github.com/colemonnahan/adnuts
