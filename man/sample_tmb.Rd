@@ -51,7 +51,7 @@ require different arguments; see their help files for more
 information.}
 
 \item{laplace}{Whether to use the Laplace approximation if some
-parameters are delcared as random. Default is to turn off this
+parameters are declared as random. Default is to turn off this
 functionality and integrate across all parameters with MCMC.}
 
 \item{control}{A list to control the sampler. See details for further
@@ -74,8 +74,8 @@ execution reduces overall run time.
 \details{
 This function implements algorithm 6 of Hoffman and Gelman (2014),
 and loosely follows package \code{rstan}. The step size can be
-  adapated or specified manually. The metric (i.e., mass matrix) can be
-  unit diagonal, adapated diagonal (default and recommended), or a dense
+  adapted or specified manually. The metric (i.e., mass matrix) can be
+  unit diagonal, adapted diagonal (default and recommended), or a dense
   matrix specified by the user. Further control of algorithms can be
   specified with the \code{control} argument.  Elements are:
 \describe{
@@ -97,7 +97,7 @@ The user is responsible for specifying the model properly (priors,
   the \code{coda} package), or with function
   \code{\link{launch_shinytmb}} before making inference. Specifically,
   priors must be specified in the template file for each
-  parameter. Unspecified priors will be impliticly uniform.
+  parameter. Unspecified priors will be implicitly uniform.
 }
 
 \examples{

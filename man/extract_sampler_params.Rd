@@ -20,7 +20,7 @@ An invisible data.frame containing samples (rows) of each
 }
 \description{
 Extract information about NUTS trajectories, such as acceptance ratio
-and treedpeth, from a fitted object.
+and treedepth, from a fitted object.
 }
 \details{
 Each trajectory (iteration) in NUTS has associated information
