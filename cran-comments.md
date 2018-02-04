@@ -1,3 +1,10 @@
+## Resubmission
+This is a resubmission. In this version I have:
+
+* Fixed a title case bug in the package title.
+* Updated the package description to be more general and understandable to a wider audience. 
+
+
 ## Test environments
 * local Windows 10, R 3.4.3
 * ubuntu 14.04 (on travis-ci), R 3.4.2
