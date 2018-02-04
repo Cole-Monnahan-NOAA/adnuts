@@ -32,7 +32,7 @@ Key features of the packages:
 - The mass matrix options are: diagonal adaptation during warmup or an
   arbitrary dense matrix can be passed from R.
 - Parallel execution and automatic merging of chains ease workflow.
-- Easy diagnostic checking using functionality provided by packages `Rstan`
+- Easy diagnostic checking using functionality provided by packages `rstan`
   and `shinystan`.
 
 Additional features for ADMB users:
@@ -87,7 +87,7 @@ workflow for NUTS models (e.g.,
 [this guide](http://mc-stan.org/users/documentation/case-studies/rstan_workflow.html))
 
 `sample_admb` can also run RWM chains via the argument
-`algorithm=RWM`. Consult the ADMB documentation for more information on a
+`algorithm="RWM"`. Consult the ADMB documentation for more information on a
 workflow with these samplers.
 
 One important overlap with Stan the `control` arguments, which allows the
