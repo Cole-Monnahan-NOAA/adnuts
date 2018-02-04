@@ -206,7 +206,7 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
 #' and treedepth, from a fitted object.
 #'
 #' @details Each trajectory (iteration) in NUTS has associated information
-#'   about the trajectory: stepsize, acceptance ratio, treedpeth, and number of
+#'   about the trajectory: stepsize, acceptance ratio, treedepth, and number of
 #'   leapfrog steps. This function extracts these into a data.frame, which
 #'   may be useful for diagnosing issues in certain cases. In general, the
 #'   user should not need to examine them, or preferably should via
