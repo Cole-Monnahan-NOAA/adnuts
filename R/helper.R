@@ -203,7 +203,7 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
 #' Extract sampler parameters from a fit.
 #'
 #' Extract information about NUTS trajectories, such as acceptance ratio
-#' and treedpeth, from a fitted object.
+#' and treedepth, from a fitted object.
 #'
 #' @details Each trajectory (iteration) in NUTS has associated information
 #'   about the trajectory: stepsize, acceptance ratio, treedpeth, and number of

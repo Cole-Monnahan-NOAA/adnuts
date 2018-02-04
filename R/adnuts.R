@@ -9,7 +9,7 @@
 #' The software package Stan pioneered the use of no-U-turn (NUTS) sampling
 #' for Bayesian models (Hoffman and Gelman 2014, Carpenter et
 #' al. 2017). This algorithm provides fast, efficient sampling across a
-#' wide range of models, including hierarchial ones, and thus can be used
+#' wide range of models, including hierarchical ones, and thus can be used
 #' as a generic modeling tool (Monnahan et al. 2017). The functionality
 #' provided by \pkg{adnuts} is based loosely off Stan and \R package
 #' \pkg{rstan}
@@ -31,7 +31,7 @@
 #' The ADMB implementation is different in that the NUTS code is bundled
 #' into the ADMB source itself. Thus, when a user builds an ADMB model the
 #' NUTS code is incorporated into the model executable. Thus, \pkg{adnuts}
-#' simply provides a convenient set of wrappers to more easiy execute,
+#' simply provides a convenient set of wrappers to more easily execute,
 #' diagnose, and make inference on a model.
 #'
 #' @references

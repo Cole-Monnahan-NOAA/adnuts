@@ -3,13 +3,13 @@
 #' Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
 #' using an MCMC algorithm. This function generates posterior samples from
 #' which inference can be made. Adaptation schemes are used so
-#' specificying tuning parameters is not necessary, and parallel
+#' specifying tuning parameters is not necessary, and parallel
 #' execution reduces overall run time.
 #'
 #' @details This function implements algorithm 6 of Hoffman and Gelman (2014),
 #' and loosely follows package \code{rstan}. The step size can be
-#'   adapated or specified manually. The metric (i.e., mass matrix) can be
-#'   unit diagonal, adapated diagonal (default and recommended), or a dense
+#'   adapted or specified manually. The metric (i.e., mass matrix) can be
+#'   unit diagonal, adapted diagonal (default and recommended), or a dense
 #'   matrix specified by the user. Further control of algorithms can be
 #'   specified with the \code{control} argument.  Elements are:
 #' \describe{
