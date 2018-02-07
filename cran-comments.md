@@ -1,9 +1,10 @@
 ## Resubmission
 This is a resubmission. In this version I have:
 
-* Fixed a title case bug in the package title.
-* Updated the package description to be more general and understandable to a wider audience. 
-
+* Added URL to key paper cited in description.
+* Edited the description to be more concise.
+* Added new examples to important top level functions. In some cases this required providing a .RDS file which was the output of top level functions. This is due to the need to externally compile C++ models which can take >5s.
+* Converted existing examples which were "dontrun" to be run.
 
 ## Test environments
 * local Windows 10, R 3.4.3
