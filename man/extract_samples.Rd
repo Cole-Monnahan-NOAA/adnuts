@@ -38,3 +38,9 @@ This function is loosely based on the \pkg{rstan} function
   samples are not valid and should never be used for inference, but may
   be useful in some cases for diagnosing issues.
 }
+\examples{
+## A previously run fitted TMB model
+fit <- readRDS(system.file('examples', 'fit_tmb.RDS', package='adnuts'))
+post <- extract_samples(fit)
+tail(apply(post, 2, median))
+}

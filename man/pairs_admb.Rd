@@ -44,6 +44,11 @@ Produces a plot, and returns nothing.
 Plot pairwise parameter posteriors and optionally the MLE points and
 confidence ellipses.
 }
+\examples{
+fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
+pairs_admb(fit)
+
+}
 \author{
 Cole Monnahan
 }

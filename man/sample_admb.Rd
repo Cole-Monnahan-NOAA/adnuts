@@ -90,6 +90,29 @@ The user is responsible for specifying the model properly (priors,
   parameter. Unspecified priors will be implicitly uniform.
 }
 
+\examples{
+\dontrun{
+## This is the packaged simple regression model
+path.simple <- system.file('examples', 'simple', package='adnuts')
+## It is best to have your ADMB files in a separate folder and provide that
+## path, so make a copy of the model folder locally.
+path <- 'simple'
+dir.create(path)
+trash <- file.copy(from=list.files(path.simple, full.names=TRUE), to=path)
+## Compile and run model
+oldwd <- getwd()
+setwd(path)
+system('admb simple.tpl')
+system('simple')
+setwd('..')
+init <- function() rnorm(2)
+## Run NUTS with defaults
+fit <- sample_admb(model='simple', init=init, path=path)
+unlink(path, TRUE) # cleanup folder
+setwd(oldwd)
+}
+
+}
 \author{
 Cole Monnahan
 }
