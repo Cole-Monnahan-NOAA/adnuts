@@ -73,14 +73,18 @@
 #'   is a wrapper for the \code{\link[shinystan]{launch_shinystan}} function.
 #' @export
 #' @examples
-#' \dontrun{
-#' library(TMB)
-#' TMB::runExample("simple")
-#' init <- function() list(mu=u, beta=beta, logsdu=0, logsd0=0)
-#' fit1 <- sample_tmb(obj=obj, init=init, seeds=1:3)
-#' post <- extract_samples(fit1)
-#' apply(post, 2, median)
+#' ## Build a fake TMB object with objective & gradient functions and some
+#' ## other flags
+#'f <- function(x, order=0){
+#'   if(order != 1) # negative log density
+#'     -sum(dnorm(x=x, mean=0, sd=1, log=TRUE))
+#'   else x # gradient of negative log density
 #' }
+#' init <- function() rnorm(2)
+#' obj <- list(env=list(DLL='demo', last.par.best=c(x=init()), f=f,
+#'   beSilent=function() NULL))
+#' ## Run NUTS for this object
+#' fit <- sample_tmb(obj, iter=1000, chains=3, init=init)
 #'
 sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
                        warmup=floor(iter/2), lower=NULL,
