@@ -182,6 +182,11 @@ launch_shinyadmb <- function(fit){
 #'   be rbinded together, maintaining order within each chain. If as.list
 #'   is TRUE, samples are returned as a list of matrices.
 #' @export
+#' @examples
+#' ## A previously run fitted TMB model
+#' fit <- readRDS(system.file('examples', 'fit_tmb.RDS', package='adnuts'))
+#' post <- extract_samples(fit)
+#' tail(apply(post, 2, median))
 extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
   x <- fit$samples
   if(!is.array(x)) stop("fit$samples is not an array -- valid fit object?")
@@ -221,6 +226,20 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
 #'   together.
 #' @seealso \code{\link{launch_shinytmb}} and \code{\link{launch_shinyadmb}}.
 #' @export
+#' @examples
+#' fit <- readRDS(system.file('examples', 'fit_tmb.RDS', package='adnuts'))
+#' ## Examine how step size and treedepth changes as the mass matrix updates
+#' ## during warmup
+#' sp <- extract_sampler_params(fit, inc_warmup=TRUE)
+#' plot(0,0, type='n', xlim=c(0,1010), ylim=c(0,1), xlab='Iteration',
+#'      ylab='Step size (eps)')
+#' for(i in 1:3) lines(1:2000, sp[sp$chain==i,4], col=i)
+#' legend('topright', cex=.7, legend=paste("chain1", 1:3), lty=1, col=1:3)
+#' plot(0,0, type='n', xlim=c(0,2000), ylim=c(0,10), xlab='Iteration',
+#'      ylab='Treedepth')
+#' for(i in 1:3) lines(1:2000, sp[sp$chain==i,5], col=i)
+#' legend('topright', cex=.7, legend=paste("chain1", 1:3), lty=1, col=1:3)
+#'
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params
   if(!is.list(x)) stop("fit$sampler_parameters is not a list -- valid fit object?")

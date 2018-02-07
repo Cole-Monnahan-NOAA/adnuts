@@ -85,6 +85,16 @@
 #'   beSilent=function() NULL))
 #' ## Run NUTS for this object
 #' fit <- sample_tmb(obj, iter=1000, chains=3, init=init)
+#' ## Check basic diagnostics
+#' mon <- rstan::monitor(fit$samples, print=FALSE)
+#' Rhat <- mon[,"Rhat"]
+#' max(Rhat)
+#' ess <- mon[, 'n_eff']
+#' min(ess)
+#' ## Or do it interactively with ShinyStan
+#' \dontrun{
+#'   launch_shinytmb(fit)
+#'   }
 #'
 sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
                        warmup=floor(iter/2), lower=NULL,

@@ -22,6 +22,10 @@
 #' @return Produces a plot, and returns nothing.
 #' @export
 #' @author Cole Monnahan
+#' @examples
+#' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
+#' pairs_admb(fit)
+#'
 pairs_admb <- function(fit,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
