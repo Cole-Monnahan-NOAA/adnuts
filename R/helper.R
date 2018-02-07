@@ -231,7 +231,7 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
 #' ## Examine how step size and treedepth changes as the mass matrix updates
 #' ## during warmup
 #' sp <- extract_sampler_params(fit, inc_warmup=TRUE)
-#' plot(0,0, type='n', xlim=c(0,510), ylim=c(0,1), xlab='Iteration',
+#' plot(0,0, type='n', xlim=c(0,510), ylim=c(0,3), xlab='Iteration',
 #'      ylab='Step size (eps)')
 #' for(i in 1:3) lines(1:1000, sp[sp$chain==i,4], col=i)
 #' legend('topright', cex=.7, legend=paste("chain1", 1:3), lty=1, col=1:3)
