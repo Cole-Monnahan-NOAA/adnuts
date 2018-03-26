@@ -203,7 +203,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   adapt_mass <- control$adapt_mass
 
   ## Build the command to run the model
-  cmd <- paste(model,"-nox -noest -nohess -nuts -mcmc ",iter)
+  cmd <- paste(model,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
   cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
   if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
   if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
@@ -245,11 +245,8 @@ sample_admb_nuts <- function(path, model, iter=2000,
     cmd <- paste(cmd, "-mcpin init.pin")
     write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
   } else {
-    ## Use MLE values from the model.par file
-    f <- paste0(model, '.par')
-    if(!file.exists(f))
-      stop(paste("File", f, "doesn't exist, rerun model or specify inits manually"))
-    cmd <- paste(cmd, "-mcpin",f)
+    ## Use MLE values which are read in from the admodel.hes file
+    ## which is the default behavior
   }
   if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
 
@@ -299,7 +296,7 @@ sample_admb_rwm <-
     if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
     ## Build the command to run the model
-    cmd <- paste(model,"-nox -noest -nohess -rwm -mcmc",iter)
+    cmd <- paste(model,"-nox -maxfn 0 -phase 1000 -nohess -rwm -mcmc",iter)
     cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
     if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
     if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
