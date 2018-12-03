@@ -1,6 +1,10 @@
 # adnuts
 The aim of 'adnuts' is to provide advanced MCMC sampling for 'ADMB' and 'TMB' models. It  mimics 'Stan' in functionality and feel, specifically providing no-U-turn (NUTS) sampling with adaptive mass matrix and parallel execution.
 
+The R package 'tmbstan' (available on CRAN) has largely replaced the TMB capabilities since original development. As such, adnuts is primiarly used for ADMB models. See the following paper for an introduction to the package capabilities, and contrast with tmbstan:
+
+Monnahan CC, Kristensen K (2018) No-U-turn sampling for fast Bayesian inference in ADMB and TMB: Introducing the adnuts and tmbstan R packages. PLoS ONE 13(5): e0197954. https://doi.org/10.1371/journal.pone.0197954
+
 ## Usage
 The 'sample_admb' and 'sample_tmb' functions draw posterior samples using an MCMC algorithm (NUTS by default). The returned fitted object contains samples and other information. The function 'extract_samples' can be used to get posterior samples (post warmup and thinning) into a data frame for inference, while 'launch_shinyadmb' can be used for interactive diagnostics based on 'ShinyStan'. 
 
