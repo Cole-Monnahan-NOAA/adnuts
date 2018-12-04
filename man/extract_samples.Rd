@@ -4,7 +4,8 @@
 \alias{extract_samples}
 \title{Extract posterior samples from a model fit.}
 \usage{
-extract_samples(fit, inc_warmup = FALSE, inc_lp = FALSE, as.list = FALSE)
+extract_samples(fit, inc_warmup = FALSE, inc_lp = FALSE,
+  as.list = FALSE)
 }
 \arguments{
 \item{fit}{A list returned by \code{sample_tmb} or \code{sample_admb}.}

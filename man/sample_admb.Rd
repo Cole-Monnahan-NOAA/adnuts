@@ -4,10 +4,10 @@
 \alias{sample_admb}
 \title{Bayesian inference of an ADMB model using the no-U-turn sampler.}
 \usage{
-sample_admb(model, path = getwd(), iter = 2000, init = NULL, chains = 3,
-  warmup = NULL, seeds = NULL, thin = 1, mceval = FALSE,
-  duration = NULL, parallel = FALSE, cores = NULL, control = NULL,
-  algorithm = "NUTS", ...)
+sample_admb(model, path = getwd(), iter = 2000, init = NULL,
+  chains = 3, warmup = NULL, seeds = NULL, thin = 1,
+  mceval = FALSE, duration = NULL, parallel = FALSE, cores = NULL,
+  control = NULL, algorithm = "NUTS", ...)
 }
 \arguments{
 \item{model}{Name of model (i.e., model.tpl)}
