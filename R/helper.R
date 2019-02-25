@@ -1,3 +1,35 @@
+
+
+#' Check identifiability from model Hessian
+#'
+#' @param path Path to model folder, defaults to working directory
+#' @param model Model name without file extension
+#' @details Read in the admodel.hes file and check the eigenvalues to
+#'   determine which parameters are not identifiable and thus cause the
+#'   Hessian to be non-invertible. Use this to identify which parameters
+#'   are problematic.
+check_identifiable <- function(model, path=getwd()){
+  ## Check eigendecomposition
+  fit <- adnuts:::.read_mle_fit(model, path)
+  hes <- r4ss::getADMBHessian(file.path(path,'admodel.hes'),NULL)$hes
+  ev  <-  eigen(hes)
+  WhichBad <-  which( ev$values < sqrt(.Machine$double.eps) )
+  if(length(WhichBad)==0){
+    message( "All parameters are identifiable" )
+    return(NULL)
+  }
+  ## Check for parameters
+  RowMax  <-  apply(ev$vectors[, WhichBad], MARGIN=1, FUN=function(vec){max(abs(vec))} )
+  bad <- data.frame(ParNum=1:nrow(hes), Param=fit$par.names,
+                    MLE=fit$est[1:nrow(hes)],
+                    Param_check=ifelse(RowMax>0.1, "Bad","OK"))
+  row.names(bad) <- NULL
+  bad <- subset(bad, Param_check=='Bad')
+  print(bad)
+  return(invisible(bad))
+}
+
+
 ## Read in PSV file
 .get_psv <- function(model){
       if(!file.exists(paste0(model, '.psv'))){
