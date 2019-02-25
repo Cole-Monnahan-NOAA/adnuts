@@ -1,5 +1,21 @@
 
 
+#' Function to generate random initial values from a previous fit using
+#' adnuts
+#'
+#' @param fit An outputted list from \code{\link{sample_admb}} or
+#'   \code{\link{sample_tmb}}
+#' @param chains The number of chains for the subsequent run, which
+#'   determines the number to return.
+#' @return A list of lists which can be passed back into
+#'   \code{\link{sample_admb}}.
+#' @export
+get_inits <- function(fit, chains){
+  post <- extract_samples(fit)
+  ind <- sample(1:nrow(post), size=chains)
+  lapply(ind, function(i) as.numeric(post[i,]))
+}
+
 #' Check identifiability from model Hessian
 #'
 #' @param path Path to model folder, defaults to working directory
@@ -7,7 +23,10 @@
 #' @details Read in the admodel.hes file and check the eigenvalues to
 #'   determine which parameters are not identifiable and thus cause the
 #'   Hessian to be non-invertible. Use this to identify which parameters
-#'   are problematic.
+#'   are problematic. This function was converted from a version in the
+#'   \code{FishStatsUtils} package.
+#' @return Prints output of bad parameters and invisibly returns it.
+#' @export
 check_identifiable <- function(model, path=getwd()){
   ## Check eigendecomposition
   fit <- adnuts:::.read_mle_fit(model, path)
