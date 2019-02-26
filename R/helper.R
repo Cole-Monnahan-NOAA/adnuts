@@ -10,7 +10,7 @@
 #' @return A list of lists which can be passed back into
 #'   \code{\link{sample_admb}}.
 #' @export
-get_inits <- function(fit, chains){
+sample_inits <- function(fit, chains){
   post <- extract_samples(fit)
   ind <- sample(1:nrow(post), size=chains)
   lapply(ind, function(i) as.numeric(post[i,]))
