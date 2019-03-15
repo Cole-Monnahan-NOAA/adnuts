@@ -58,17 +58,17 @@ check_identifiable <- function(model, path=getwd()){
   WhichBad <-  which( ev$values < sqrt(.Machine$double.eps) )
   if(length(WhichBad)==0){
     message( "All parameters are identifiable" )
-    return(NULL)
+  } else {
+    ## Check for parameters
+    RowMax  <-  apply(ev$vectors[, WhichBad], MARGIN=1, FUN=function(vec){max(abs(vec))} )
+    bad <- data.frame(ParNum=1:nrow(hes), Param=fit$par.names,
+                      MLE=fit$est[1:nrow(hes)],
+                      Param_check=ifelse(RowMax>0.1, "Bad","OK"))
+    row.names(bad) <- NULL
+    bad <- bad[bad$Param_check=='Bad',]
+    print(bad)
+    return(invisible(bad))
   }
-  ## Check for parameters
-  RowMax  <-  apply(ev$vectors[, WhichBad], MARGIN=1, FUN=function(vec){max(abs(vec))} )
-  bad <- data.frame(ParNum=1:nrow(hes), Param=fit$par.names,
-                    MLE=fit$est[1:nrow(hes)],
-                    Param_check=ifelse(RowMax>0.1, "Bad","OK"))
-  row.names(bad) <- NULL
-  bad <- bad[bad$Param_check=='Bad',]
-  print(bad)
-  return(invisible(bad))
 }
 
 
