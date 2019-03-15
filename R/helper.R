@@ -16,6 +16,29 @@ sample_inits <- function(fit, chains){
   lapply(ind, function(i) as.numeric(post[i,]))
 }
 
+#' Read in admodel.hes file
+#' @param path Path to folder containing the admodel.hes file
+#'
+#' @return The Hessian matrix
+.getADMBHessian <- function(path){
+  ## This function reads in all of the information contained in the
+  ## admodel.hes file. Some of this is needed for relaxing the
+  ## covariance matrix, and others just need to be recorded and
+  ## rewritten to file so ADMB "sees" what it's expecting.
+  filename <- file.path(path, "admodel.hes")
+  if(!file.exists(filename))
+    stop(paste0("admodel.hes not found: ", filename))
+  f <- file(filename, "rb")
+  on.exit(close(f))
+  num.pars <- readBin(f, "integer", 1)
+  hes.vec <- readBin(f, "numeric", num.pars^2)
+  hes <- matrix(hes.vec, ncol=num.pars, nrow=num.pars)
+  hybrid_bounded_flag <- readBin(f, "integer", 1)
+  scale <- readBin(f, "numeric", num.pars)
+  return(hes)
+}
+
+
 #' Check identifiability from model Hessian
 #'
 #' @param path Path to model folder, defaults to working directory
@@ -29,8 +52,8 @@ sample_inits <- function(fit, chains){
 #' @export
 check_identifiable <- function(model, path=getwd()){
   ## Check eigendecomposition
-  fit <- adnuts:::.read_mle_fit(model, path)
-  hes <- r4ss::getADMBHessian(file.path(path,'admodel.hes'),NULL)$hes
+  fit <- .read_mle_fit(model, path)
+  hes <- .getADMBHessian(path)
   ev  <-  eigen(hes)
   WhichBad <-  which( ev$values < sqrt(.Machine$double.eps) )
   if(length(WhichBad)==0){
@@ -43,7 +66,7 @@ check_identifiable <- function(model, path=getwd()){
                     MLE=fit$est[1:nrow(hes)],
                     Param_check=ifelse(RowMax>0.1, "Bad","OK"))
   row.names(bad) <- NULL
-  bad <- subset(bad, Param_check=='Bad')
+  bad <- bad[bad$Param_check=='Bad',]
   print(bad)
   return(invisible(bad))
 }
