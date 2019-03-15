@@ -1,17 +1,12 @@
-language: r
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
+
+language: R
 sudo: false
-r: devel
 cache: packages
 
 
+# from https://discourse.mc-stan.org/t/building-rstanarm-like-packagee-on-travis-with-c-14/6054/10?
 before_install:
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update -q
-  - mkdir -p ~/.R/
-  - echo "CXX = `R CMD config CXX`" >> ~/.R/Makevars
-  - echo "CXXFLAGS = `R CMD config CXXFLAGS` -pedantic -g0 -flto -stdlib=libc++" >> ~/.R/Makevars
-  - echo "LDFLAGS += -flto -stdlib=libc++" >> ~/.R/Makevars
-  - export CLANG_EXTRA_ARG=""
-  - if [[ $CXX = "clang++" ]] ;  then export CLANG_EXTRA_ARG=" -Qunused-arguments -fcolor-diagnostics " ; fi
-  - sed -i.bak "s/ g++/ ${CXX}${CLANG_EXTRA_ARG}/" ~/.R/Makevars
-  - sed -i.bak "s/O[0-3]/O$CXX_OLEVEL/" ~/.R/Makevars
+  - mkdir -p ~/.R
+  - echo "CXX14FLAGS=-O3 -mtune=native -march=native -Wno-unused-variable -Wno-unused-function  -Wno-macro-redefined" >> ~/.R/Makevars
+  - echo "CXX14=g++ -std=c++1y -fPIC" >> ~/.R/Makevars
