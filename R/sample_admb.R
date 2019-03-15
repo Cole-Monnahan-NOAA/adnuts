@@ -220,6 +220,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
     cmd <- paste(cmd, '-adapt_mass')
   } else if(is.matrix(metric)){
     ## User defined one will be writen to admodel.cov
+    if(!require(matrixcalc)) stop("Package matrixcalc required to pass a matrix")
     cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
     if(!matrixcalc::is.positive.definite(x=cor.user))
       stop("Invalid mass matrix, not positive definite")
@@ -252,6 +253,8 @@ sample_admb_nuts <- function(path, model, iter=2000,
 
   ## Run it and get results
   time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
+  if(!file.exists('adaptation.csv'))
+    stop("NUTS output files missing. Check that ADMB version >= 12.0.")
   sampler_params<- as.matrix(read.csv("adaptation.csv"))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
   dimnames(unbounded) <- NULL
