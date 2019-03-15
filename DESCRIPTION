@@ -1,6 +1,6 @@
 Package: adnuts
 Title: No-U-Turn MCMC Sampling for 'ADMB' and 'TMB' Models
-Version: 1.0.9000
+Version: 1.0.1
 Authors@R: person("Cole", "Monnahan", email = "monnahc@uw.edu", role = c("aut", "cre"))
 Description: Bayesian inference using the no-U-turn (NUTS) algorithm by 
  Hoffman and Gelman (2014) <http://www.jmlr.org/papers/v15/hoffman14a.html>. 
