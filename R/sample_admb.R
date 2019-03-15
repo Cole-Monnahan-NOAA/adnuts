@@ -220,7 +220,8 @@ sample_admb_nuts <- function(path, model, iter=2000,
     cmd <- paste(cmd, '-adapt_mass')
   } else if(is.matrix(metric)){
     ## User defined one will be writen to admodel.cov
-    if(!require(matrixcalc)) stop("Package matrixcalc required to pass a matrix")
+    if(!requireNamespace("matrixcalc", quietly = TRUE))
+      stop("Package matrixcalc required to pass a matrix")
     cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
     if(!matrixcalc::is.positive.definite(x=cor.user))
       stop("Invalid mass matrix, not positive definite")
