@@ -13,3 +13,5 @@ A brief [demonstration file](https://github.com/colemonnahan/adnuts/blob/master/
 ## Installation
 
 The adnuts R package can be installed from CRAN: `install.packages('adnuts')`. To use the ADMB functionality you need to build your model with version 12.0 (released December 2017) or later, otherwise this functionality is not available.
+
+The development version of 'adnuts' can be installed with `devtools::install_github('colemonnahan/adnuts', ref='dev')`
