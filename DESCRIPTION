@@ -22,11 +22,10 @@ ByteCompile: true
 Suggests:
   snowfall (>= 1.84.6.1),
   shinystan (>= 2.5.0),
-  R2admb (>= 0.7.15),
   matrixcalc (>= 1.0.3),
   TMB (>= 1.7.15),
   stats,
   knitr,
   rmarkdown
-Imports: ellipse, rstan
+Imports: ellipse, rstan, R2admb
 VignetteBuilder: knitr
