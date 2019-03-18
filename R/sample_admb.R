@@ -68,6 +68,11 @@ sample_admb <-
   stopifnot(thin >=1); stopifnot(chains >= 1)
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
+  ## Catch path and model name errors early
+  stopifnot(is.character(path)); stopifnot(is.character(model))
+  if(!dir.exists(path)) stop(paste('Folder', path, 'does not exist. Check argument \'path\''))
+  ff <- file.path(path, paste0(model,'.exe'))
+  if(!file.exists(ff)) stop(paste('File', ff, 'not found. Check \'path\' and \'model\' arguments'))
   ## Update control with defaults
   control <- .update_control(control)
   if(is.null(warmup)) warmup <- floor(iter/2)
