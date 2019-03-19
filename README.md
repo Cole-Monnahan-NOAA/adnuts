@@ -29,7 +29,9 @@ provided to help get you started, and there is also a user guide:
 
 To use the ADMB functionality you need to build your model with version
 12.0 (released December 2017) or later, otherwise this functionality is not
-available.
+available. See [the ADMB installation
+instructions](http://www.admb-project.org/docs/install/) for more
+information.
 
 The adnuts R package version 1.0.1 can be installed from CRAN:
 `install.packages('adnuts')`.
