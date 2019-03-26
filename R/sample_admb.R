@@ -71,7 +71,11 @@ sample_admb <-
   ## Catch path and model name errors early
   stopifnot(is.character(path)); stopifnot(is.character(model))
   if(!dir.exists(path)) stop(paste('Folder', path, 'does not exist. Check argument \'path\''))
-  ff <- file.path(path, paste0(model,'.exe'))
+  if (.Platform$OS.type=="windows") {
+    ff <- file.path(path, paste(model,".exe",sep=""))
+  } else {
+    ff <- file.path(path, paste("./",model,sep=""))
+  }
   if(!file.exists(ff)) stop(paste('File', ff, 'not found. Check \'path\' and \'model\' arguments'))
   ## Update control with defaults
   control <- .update_control(control)
