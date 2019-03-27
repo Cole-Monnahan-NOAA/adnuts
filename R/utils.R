@@ -60,7 +60,11 @@ check_identifiable <- function(model, path=getwd()){
     message( "All parameters are identifiable" )
   } else {
     ## Check for parameters
-    RowMax  <-  apply(ev$vectors[, WhichBad], MARGIN=1, FUN=function(vec){max(abs(vec))} )
+    if(length(WhichBad==1)){
+      RowMax <- abs(ev$vectors[,WhichBad])
+    } else {
+      RowMax  <-  apply(ev$vectors[, WhichBad], MARGIN=1, FUN=function(vec){max(abs(vec))} )
+    }
     bad <- data.frame(ParNum=1:nrow(hes), Param=fit$par.names,
                       MLE=fit$est[1:nrow(hes)],
                       Param_check=ifelse(RowMax>0.1, "Bad","OK"))
