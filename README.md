@@ -13,6 +13,14 @@ Monnahan CC, Kristensen K (2018) No-U-turn sampling for fast Bayesian
 inference in ADMB and TMB: Introducing the adnuts and tmbstan R
 packages. PLoS ONE 13(5):e0197954. https://doi.org/10.1371/journal.pone.0197954
 
+'adnuts' was designed specifically for use in fisheries stock assessments,
+and interested authors are referred to:
+
+Monnahan, C.C., T.A. Branch, J.T. Thorson, I.J. Stewart, C.S. Szuwalksi (in
+press) Overcoming long Bayesian run times in integrated fisheries stock
+assessments. ICES Journal of Marine Science. http://dx.doi.org/10.1093/icesjms/fsz059
+
+
 ## Usage
 The 'sample_admb' function draws posterior samples from an ADMB model using
 an MCMC algorithm (NUTS by default). The returned fitted object contains
