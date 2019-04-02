@@ -2,6 +2,7 @@ This is a small patch release fixing bugs and adding minor new capabilities.
 
 ## Test environments
 * local Windows 10, R 3.5.3
+* local CentOS Linux 7.6.1810, R 3.4.3
 * ubuntu 14.04 (on travis-ci), R 3.5.2
 * macOS High Sierra 10.13.3, R 3.4.3
 * win-builder (devel and release)
