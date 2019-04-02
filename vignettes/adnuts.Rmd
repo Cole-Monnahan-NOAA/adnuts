@@ -56,6 +56,9 @@ intervention. However, in some cases you may need to modify the
 settings. See below for a brief description of NUTS and how you can modify
 its behavior and when needed.
 
+Guidance and performance specifically designed for fisheries stock
+assessment is given in [@monnahan2019].
+
 ## Sampling for ADMB models
 ### Setting up the model
 
