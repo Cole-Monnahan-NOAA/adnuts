@@ -14,7 +14,7 @@ vignette: >
 
 ## Summary
 
-`adnuts` main purpose is to provide a wrapper for performning Bayesian
+`adnuts` main purpose is to provide a wrapper for performing Bayesian
 analyses using the no-U-turn (NUTS) algorithm [@hoffman2014] for ADMB
 models [@fournier2012]. The ADMB model itself contains the algorithm code,
 but this package provides the user a convenient environment to run and
@@ -191,7 +191,7 @@ mon[1:4,'Rhat']
 ````
 
 Likewise both the model parameters and the NUTS sampler parameters can be
-extrated as a data frame. These functions have optional arguments for
+extracted as a data frame. These functions have optional arguments for
 whether to include the warmup samples and log posterior column (lp__)
 
 ````{r}
@@ -230,7 +230,7 @@ pairs_admb(fit.admb, pars=slow)
 ````
 
 Here we see a large mismatch between the ellipses and MCMC samples. Thus,
-even though ADMB found an MLE and succcessfully inverted the Hessian
+even though ADMB found an MLE and successfully inverted the Hessian
 matrix, its estimates are invalid. It is not surprise, as this is a complex
 hierarchical model without a true mode. NUTS works efficiently for this
 model because it does not use these MLE estimates. The standard RWM
@@ -249,7 +249,7 @@ same. You can turn this off with the `laplace` option.
 
 Box constraints can be passed directly to `sample_tmb` as vectors `lower`
 and `upper` the same as to the optimizer. Values of -Inf and Inf are
-allowed to create one-sided contraints, as with variance parameters. Note
+allowed to create one-sided constraints, as with variance parameters. Note
 that these parameter transformations are done in R and thus are relatively
 slow. Alternatively variance parameters can be added to the template in log
 space and a Jacobian adjustment added as in ADMB (see above).
@@ -310,7 +310,7 @@ there are three aspects of the algorithms that need to be tuned.
  3. The "mass matrix" used. This matrix tells the algorithm about the
     global shape of the posterior so that it can generate better
     trajectories. When large discrepancies between marginal variances
-    exist, the trajectores will be less efficient (e.g., one parameter has
+    exist, the trajectories will be less efficient (e.g., one parameter has
     a marginal variance of 1, and another a marginal variance of 1000).
 
 The no-U-turn sampler is a powerful sampler because it automated the tuning
@@ -332,8 +332,8 @@ cost. Typically a diagonal matrix is best and thus is default in both Stan
 and `adnuts`.
 
 These three extensions lead to efficient HMC sampling with little to no
-user intervetion for a wide class of statistical models, including
-hierarchial ones [@monnahan2017]. Since publication, further developments
+user intervention for a wide class of statistical models, including
+hierarchical ones [@monnahan2017]. Since publication, further developments
 have been made in HMC theoretical and practical research. For instance,
 Stan now includes an update called "exhaustive" HMC [@betancourt2016] that
 more efficiently samples from the points in a trajectory.
@@ -371,7 +371,7 @@ trajectories (which can occur with poorly specified models). This is set to
 12 (i.e., a length of $2^12=4096$ steps) by default, which typically is
 long enough that a U-turn would occur. However, in some cases a model may
 need to make longer trajectories to maintain efficient sampling. In this
-case you will get warnings about exeeding maximum tree depth. Rerun the
+case you will get warnings about exceeding maximum tree depth. Rerun the
 model with `control=list(max_treedepth=14)` or higher, as needed.
 
 Recall that a single NUTS trajectory consists of a set of posterior

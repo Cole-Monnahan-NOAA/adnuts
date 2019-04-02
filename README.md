@@ -5,7 +5,7 @@ functionality and feel, specifically providing no-U-turn (NUTS) sampling
 with adaptive mass matrix and parallel execution.
 
 The R package 'tmbstan' (available on CRAN) has largely replaced the TMB
-capabilities since original development. As such, adnuts is primiarly used
+capabilities since original development. As such, adnuts is primarily used
 for ADMB models. See the following paper for an introduction to the package
 capabilities, and contrast with tmbstan:
 
