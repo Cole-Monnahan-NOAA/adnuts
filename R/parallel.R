@@ -26,12 +26,13 @@
 sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
   olddir <- getwd()
   on.exit(setwd(olddir))
-  newdir <- paste0(file.path(getwd(),path),"_chain_",parallel_number)
+  newdir <- paste0(path,"_chain_",parallel_number)
   if(dir.exists(newdir)){
     unlink(newdir, TRUE)
     if(dir.exists(newdir)) stop(paste("Could not remove folder:", newdir))
   }
   dir.create(newdir)
+  if(!dir.exists(newdir)) stop(paste("Could not create parallel folder:", newdir))
   trash <- file.copy(from=list.files(path, full.names=TRUE), to=newdir)
   if(algorithm=="NUTS")
     fit <- sample_admb_nuts(path=newdir, chain=parallel_number, ...)
