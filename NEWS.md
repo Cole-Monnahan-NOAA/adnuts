@@ -2,7 +2,7 @@
 adnuts 1.0.1.9000  
 ------------------------------------------------------------------------
 
-
+* Fix bug in parallel path which failed when it was absolute. Now can be relative or absolute.
 
 ------------------------------------------------------------------------
 adnuts 1.0.1 (2019-03-15) 
