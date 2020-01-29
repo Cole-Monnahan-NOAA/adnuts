@@ -45,4 +45,4 @@ The adnuts R package version 1.0.1 can be installed from CRAN:
 `install.packages('adnuts')`.
 
 The development version of 'adnuts' can be installed with
-`devtools::install_github('colemonnahan/adnuts', ref='dev')`
+`devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='dev')`
