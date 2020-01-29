@@ -1,4 +1,35 @@
 
+#' Check that the  model is compiled with the right version
+#' of ADMB which is 12.0 or later
+#'
+#' @param model Model name without file extension
+#' @param path Path to model folder, defaults to working
+#'   directory. NULL value specifies working directory (default).
+#' @param min.version Minimum valid version (numeric). Defaults
+#'   to 12.0.
+#' @return Nothing, errors out if either model could not be run
+#'   or the version is incompatible. If compatible nothing
+#'   happens.
+#' @details Some functionality of packages \pkg{adnuts} is
+#'   imbedded in the ADMB source code so that when a model is
+#'   compiled it is contained in the model executable. If this
+#'   code does not exist adnuts will fail. The solution is to
+#'   update ADMB and recompile the model.
+.check_ADMB_version <- function(model, path=NULL, min.version=12){
+  if(!is.null(path)){
+    wd <- getwd()
+    on.exit(setwd(wd))
+    setwd(path)
+  }
+  ## Run the model to get the version info
+  test <- try(system(paste(model, '-version'), intern=TRUE), silent=TRUE)
+  if (inherits(test,"try-error"))
+    stop(paste0("Could not detect version of ", model, ". Check executable and path"))
+  v <- as.numeric(gsub('ADMB-', '', strsplit(test[3], ' ')[[1]][1]))
+  if(v < min.version)
+    stop(paste(model,"compiled with old version of ADMB. Version >12.0 required, found:\n", test[3],
+               "\nadnuts is incompatible with this version. Update ADMB and try again"))
+}
 
 #' Function to generate random initial values from a previous fit using
 #' adnuts

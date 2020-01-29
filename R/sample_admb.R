@@ -77,6 +77,7 @@ sample_admb <-
     ff <- file.path(path, paste("./",model,sep=""))
   }
   if(!file.exists(ff)) stop(paste('File', ff, 'not found. Check \'path\' and \'model\' arguments'))
+  .check_ADMB_version(model=model, path=path)
   ## Update control with defaults
   control <- .update_control(control)
   if(is.null(warmup)) warmup <- floor(iter/2)
