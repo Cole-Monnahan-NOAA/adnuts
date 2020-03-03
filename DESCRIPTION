@@ -17,15 +17,16 @@ BugReports: https://github.com/colemonnahan/adnuts/issues
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 ByteCompile: true
 Suggests:
-  snowfall (>= 1.84.6.1),
-  shinystan (>= 2.5.0),
-  matrixcalc (>= 1.0.3),
-  TMB (>= 1.7.15),
-  stats,
-  knitr,
-  rmarkdown
+    snowfall (>= 1.84.6.1),
+    shinystan (>= 2.5.0),
+    matrixcalc (>= 1.0.3),
+    TMB (>= 1.7.15),
+    stats,
+    knitr,
+    rmarkdown,
+    testthat (>= 2.1.0)
 Imports: ellipse, rstan, R2admb
 VignetteBuilder: knitr
