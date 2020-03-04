@@ -4,10 +4,20 @@
 \alias{sample_admb_rwm}
 \title{Run a single random walk Metropolis chain for an ADMB model}
 \usage{
-sample_admb_rwm(path, model, iter = 2000, thin = 1,
-  warmup = ceiling(iter/2), init = NULL, chain = 1, seed = NULL,
-  control = NULL, verbose = TRUE, extra.args = NULL,
-  duration = NULL)
+sample_admb_rwm(
+  path,
+  model,
+  iter = 2000,
+  thin = 1,
+  warmup = ceiling(iter/2),
+  init = NULL,
+  chain = 1,
+  seed = NULL,
+  control = NULL,
+  verbose = TRUE,
+  extra.args = NULL,
+  duration = NULL
+)
 }
 \arguments{
 \item{path}{Path to model executable. Defaults to working

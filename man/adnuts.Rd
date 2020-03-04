@@ -3,7 +3,6 @@
 \docType{package}
 \name{adnuts}
 \alias{adnuts}
-\alias{adnuts-package}
 \title{adnuts: No-U-turn sampling for Template Model Builder and AD Model Builder}
 \description{
 Draw Bayesian posterior samples from a TMB or ADMB model using the

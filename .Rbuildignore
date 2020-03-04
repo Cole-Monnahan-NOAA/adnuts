@@ -2,6 +2,3 @@
 ^\.Rproj\.user$
 ^\.travis\.yml$
 ^cran-comments\.md$
-tests\simple
-tests\admb_tests.R
-tests\priors

@@ -5,8 +5,17 @@
 \title{[Deprecated] Draw MCMC samples from a model posterior using a
 Random Walk Metropolis (RWM) sampler.}
 \usage{
-sample_tmb_rwm(iter, fn, init, alpha = 1, chain = 1,
-  warmup = floor(iter/2), thin = 1, seed = NULL, control = NULL)
+sample_tmb_rwm(
+  iter,
+  fn,
+  init,
+  alpha = 1,
+  chain = 1,
+  warmup = floor(iter/2),
+  thin = 1,
+  seed = NULL,
+  control = NULL
+)
 }
 \arguments{
 \item{iter}{The number of samples to draw.}

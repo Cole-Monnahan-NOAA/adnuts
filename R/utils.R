@@ -1,4 +1,38 @@
 
+#' Plot adaptation metrics for a fitted model.
+#'
+#' @param fit A fitted object returned by
+#' \code{\link{sample_admb}}.
+#' @param plot Whether to plot the results
+#' @return Prints and invisibly returns a ggplot object
+#'
+#' @details This utility function quickly plots outputs of NUTS
+#' chains.
+#' @examples
+#' \dontrun{
+#' fit <- readRDS(system.file('examples', 'fit_admb.RDS',
+#'   package='adnuts'))
+#' plot_sampler_params(fit)
+#' }
+plot_sampler_params <- function(fit, plot=TRUE){
+  if(!requireNamespace("ggplot2", quietly=TRUE))
+    stop("ggplot2 package not found")
+  sp <- adnuts::extract_sampler_params(fit, inc_warmup=TRUE)
+  sp.long <-
+    data.frame(iteration=sp$iteration, chain=factor(sp$chain),
+               value=c(sp$accept_stat__, log(sp$stepsize__),
+                       sp$n_leapfrog__, sp$divergent__, sp$energy__),
+               variable=rep(c('accept_stat', 'log_stepsize',
+                              'n_leapfrog', 'divergent',
+                              'energy'), each=nrow(sp)))
+  g <- ggplot2::ggplot(sp.long, ggplot2::aes(iteration, y=value, color=chain)) +
+    ggplot2::geom_point(alpha=.5) +
+    ggplot2::facet_wrap('variable', scales='free_y', ncol=1) + ggplot2::theme_bw()
+  if(plot) print(g)
+  return(invisible(g))
+}
+
+
 #' Check that the  model is compiled with the right version
 #' of ADMB which is 12.0 or later
 #'
@@ -297,8 +331,8 @@ launch_shinyadmb <- function(fit){
 #'   is TRUE, samples are returned as a list of matrices.
 #' @export
 #' @examples
-#' ## A previously run fitted TMB model
-#' fit <- readRDS(system.file('examples', 'fit_tmb.RDS', package='adnuts'))
+#' ## A previously run fitted ADMB model
+#' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
 #' post <- extract_samples(fit)
 #' tail(apply(post, 2, median))
 extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){

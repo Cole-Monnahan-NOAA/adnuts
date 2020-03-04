@@ -4,9 +4,20 @@
 \alias{sample_admb_nuts}
 \title{Run a single NUTS chain for an ADMB model}
 \usage{
-sample_admb_nuts(path, model, iter = 2000, init = NULL, chain = 1,
-  thin = 1, warmup = NULL, seed = NULL, duration = NULL,
-  control = NULL, verbose = TRUE, extra.args = NULL)
+sample_admb_nuts(
+  path,
+  model,
+  iter = 2000,
+  init = NULL,
+  chain = 1,
+  thin = 1,
+  warmup = NULL,
+  seed = NULL,
+  duration = NULL,
+  control = NULL,
+  verbose = TRUE,
+  extra.args = NULL
+)
 }
 \arguments{
 \item{path}{Path to model executable. Defaults to working

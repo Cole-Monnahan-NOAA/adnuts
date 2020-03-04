@@ -5,8 +5,17 @@
 \title{Draw MCMC samples from a model posterior using the No-U-Turn (NUTS)
 sampler with dual averaging.}
 \usage{
-sample_tmb_nuts(iter, fn, gr, init, warmup = floor(iter/2), chain = 1,
-  thin = 1, seed = NULL, control = NULL)
+sample_tmb_nuts(
+  iter,
+  fn,
+  gr,
+  init,
+  warmup = floor(iter/2),
+  chain = 1,
+  thin = 1,
+  seed = NULL,
+  control = NULL
+)
 }
 \arguments{
 \item{iter}{The number of samples to draw.}

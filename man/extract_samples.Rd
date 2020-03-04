@@ -4,8 +4,7 @@
 \alias{extract_samples}
 \title{Extract posterior samples from a model fit.}
 \usage{
-extract_samples(fit, inc_warmup = FALSE, inc_lp = FALSE,
-  as.list = FALSE)
+extract_samples(fit, inc_warmup = FALSE, inc_lp = FALSE, as.list = FALSE)
 }
 \arguments{
 \item{fit}{A list returned by \code{sample_tmb} or \code{sample_admb}.}
@@ -40,8 +39,8 @@ This function is loosely based on the \pkg{rstan} function
   be useful in some cases for diagnosing issues.
 }
 \examples{
-## A previously run fitted TMB model
-fit <- readRDS(system.file('examples', 'fit_tmb.RDS', package='adnuts'))
+## A previously run fitted ADMB model
+fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
 post <- extract_samples(fit)
 tail(apply(post, 2, median))
 }

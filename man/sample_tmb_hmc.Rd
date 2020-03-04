@@ -4,8 +4,19 @@
 \alias{sample_tmb_hmc}
 \title{Draw MCMC samples from a model posterior using a static HMC sampler.}
 \usage{
-sample_tmb_hmc(iter, fn, gr, init, L, eps, warmup = floor(iter/2),
-  seed = NULL, chain = 1, thin = 1, control = NULL)
+sample_tmb_hmc(
+  iter,
+  fn,
+  gr,
+  init,
+  L,
+  eps,
+  warmup = floor(iter/2),
+  seed = NULL,
+  chain = 1,
+  thin = 1,
+  control = NULL
+)
 }
 \arguments{
 \item{iter}{The number of samples to draw.}

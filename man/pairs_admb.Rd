@@ -5,9 +5,17 @@
 \title{Plot pairwise parameter posteriors and optionally the MLE points and
 confidence ellipses.}
 \usage{
-pairs_admb(fit, diag = c("trace", "acf", "hist"), acf.ylim = c(-1, 1),
-  ymult = NULL, axis.col = gray(0.5), pars = NULL, label.cex = 0.5,
-  limits = NULL, ...)
+pairs_admb(
+  fit,
+  diag = c("trace", "acf", "hist"),
+  acf.ylim = c(-1, 1),
+  ymult = NULL,
+  axis.col = gray(0.5),
+  pars = NULL,
+  label.cex = 0.5,
+  limits = NULL,
+  ...
+)
 }
 \arguments{
 \item{fit}{A list as returned by \code{sample_admb}.}

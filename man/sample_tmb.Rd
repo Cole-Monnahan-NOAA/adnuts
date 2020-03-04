@@ -4,10 +4,24 @@
 \alias{sample_tmb}
 \title{Bayesian inference of a TMB model using the no-U-turn sampler.}
 \usage{
-sample_tmb(obj, iter = 2000, init, chains = 3, seeds = NULL,
-  warmup = floor(iter/2), lower = NULL, upper = NULL, thin = 1,
-  parallel = FALSE, cores = NULL, path = NULL, algorithm = "NUTS",
-  laplace = FALSE, control = NULL, ...)
+sample_tmb(
+  obj,
+  iter = 2000,
+  init,
+  chains = 3,
+  seeds = NULL,
+  warmup = floor(iter/2),
+  lower = NULL,
+  upper = NULL,
+  thin = 1,
+  parallel = FALSE,
+  cores = NULL,
+  path = NULL,
+  algorithm = "NUTS",
+  laplace = FALSE,
+  control = NULL,
+  ...
+)
 }
 \arguments{
 \item{obj}{A TMB model object.}
