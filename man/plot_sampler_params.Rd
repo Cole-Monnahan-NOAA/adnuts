@@ -19,13 +19,11 @@ Prints and invisibly returns a ggplot object
 Plot adaptation metrics for a fitted model.
 }
 \details{
-This utility function quickly plots outputs of NUTS
+This utility function quickly plots the adaptation output of NUTS
 chains.
 }
 \examples{
-\dontrun{
 fit <- readRDS(system.file('examples', 'fit_admb.RDS',
   package='adnuts'))
 plot_sampler_params(fit)
-}
 }

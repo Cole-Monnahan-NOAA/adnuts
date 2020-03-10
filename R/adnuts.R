@@ -75,4 +75,5 @@
 #' @importFrom graphics axis box hist legend lines mtext par plot points
 #' @importFrom ellipse ellipse
 #' @importFrom rstan monitor
+#' @importFrom ggplot2 ggplot aes geom_point theme_bw facet_wrap
 NULL

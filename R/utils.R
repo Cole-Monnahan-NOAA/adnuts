@@ -6,14 +6,14 @@
 #' @param plot Whether to plot the results
 #' @return Prints and invisibly returns a ggplot object
 #'
-#' @details This utility function quickly plots outputs of NUTS
+#' @details This utility function quickly plots the adaptation output of NUTS
 #' chains.
+#' @importFrom rlang .data
+#' @export
 #' @examples
-#' \dontrun{
 #' fit <- readRDS(system.file('examples', 'fit_admb.RDS',
 #'   package='adnuts'))
 #' plot_sampler_params(fit)
-#' }
 plot_sampler_params <- function(fit, plot=TRUE){
   if(!requireNamespace("ggplot2", quietly=TRUE))
     stop("ggplot2 package not found")
@@ -25,7 +25,7 @@ plot_sampler_params <- function(fit, plot=TRUE){
                variable=rep(c('accept_stat', 'log_stepsize',
                               'n_leapfrog', 'divergent',
                               'energy'), each=nrow(sp)))
-  g <- ggplot2::ggplot(sp.long, ggplot2::aes(iteration, y=value, color=chain)) +
+  g <- ggplot2::ggplot(sp.long, ggplot2::aes(.data$iteration, y=.data$value, color=.data$chain)) +
     ggplot2::geom_point(alpha=.5) +
     ggplot2::facet_wrap('variable', scales='free_y', ncol=1) + ggplot2::theme_bw()
   if(plot) print(g)
@@ -375,18 +375,18 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
 #' @seealso \code{\link{launch_shinytmb}} and \code{\link{launch_shinyadmb}}.
 #' @export
 #' @examples
-#' fit <- readRDS(system.file('examples', 'fit_tmb.RDS', package='adnuts'))
+#' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
 #' ## Examine how step size and treedepth changes as the mass matrix updates
 #' ## during warmup
 #' sp <- extract_sampler_params(fit, inc_warmup=TRUE)
-#' plot(0,0, type='n', xlim=c(0,510), ylim=c(0,3), xlab='Iteration',
+#' plot(0,0, type='n', xlim=c(0,210), ylim=c(0,3), xlab='Iteration',
 #'      ylab='Step size (eps)')
-#' for(i in 1:3) lines(1:1000, sp[sp$chain==i,4], col=i)
-#' legend('topright', cex=.7, legend=paste("chain1", 1:3), lty=1, col=1:3)
-#' plot(0,0, type='n', xlim=c(0,1000), ylim=c(0,10), xlab='Iteration',
+#' for(i in 1:2) lines(1:400, sp[sp$chain==i,4], col=i)
+#' legend('topright', cex=.7, legend=paste("chain1", 1:2), lty=1, col=1:2)
+#' plot(0,0, type='n', xlim=c(0,400), ylim=c(0,10), xlab='Iteration',
 #'      ylab='Treedepth')
-#' for(i in 1:3) lines(1:1000, sp[sp$chain==i,5], col=i)
-#' legend('topright', cex=.7, legend=paste("chain1", 1:3), lty=1, col=1:3)
+#' for(i in 1:2) lines(1:400, sp[sp$chain==i,5], col=i)
+#' legend('topright', cex=.7, legend=paste("chain1", 1:2), lty=1, col=1:2)
 #'
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params
