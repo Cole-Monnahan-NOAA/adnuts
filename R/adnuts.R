@@ -69,10 +69,10 @@
 #'
 #' @docType package
 #' @name adnuts
-#' @importFrom stats rnorm runif cov acf cor
+#' @importFrom stats rnorm runif cov acf cor dnorm qnorm
 #' @importFrom utils read.csv read.table write.table
 #' @importFrom grDevices gray rgb
-#' @importFrom graphics axis box hist legend lines mtext par plot points
+#' @importFrom graphics axis box hist legend lines mtext par plot points text
 #' @importFrom ellipse ellipse
 #' @importFrom rstan monitor
 #' @importFrom ggplot2 ggplot aes geom_point theme_bw facet_wrap

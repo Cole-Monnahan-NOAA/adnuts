@@ -1,3 +1,74 @@
+#' Plot marginal distributions for a fitted model
+#'
+#' @param fit A fitted object returned by
+#' \code{\link{sample_admb}}.
+#' @param mon An object returned by rstan::monitor(fit)
+#' @export
+#'
+#' @details This function plots 4x4 grid cells of all parameters
+#'   in a model, comparing the marginal posterior histogram vs
+#'   the asympotitic normal (red lines) from the inverse
+#'   Hessian. Its intended use is to quickly gauge differences
+#'   between frequentist and Bayesian inference on the same
+#'   model.
+#'
+#' If argument \code{mon} is provided, the effective sample size
+#' (ESS) and R-hat estimates are printed in the top right
+#' corner. See
+#' \url{https://mc-stan.org/rstan/reference/Rhat.html} for more
+#' information. Generally Rhat>1.05 or ESS<100 (per chain)
+#' suggest inference may be unreliable.
+#'
+#' This function is customized to work with multipage PDFs,
+#' specifically:
+#' \code{pdf('marginals.pdf', onefile=TRUE, width=7,height=5)}
+#' @examples
+#' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
+#' mon <- rstan::monitor(fit$samples, warmup=fit$warmup, print=FALSE)
+#' plot_marginals(fit, mon)
+#'
+plot_marginals <- function(fit, mon=NULL){
+  par.old <- par()
+  on.exit(par(mfrow=par.old$mfrow, mar=par.old$mar,
+              mgp=par.old$mgp, oma=par.old$oma, tck=par.old$tck))
+  if(!is.list(fit) | is.null(fit$samples) )
+    stop("Argument 'fit' needs to be a list returned by sample_admb")
+  if(!is.null(mon) & class(mon)[1] != 'simsummary')
+    stop("Argument 'mon' needs to be an object returned by rstan::monitor")
+  if(is.null(fit$mle)) message("No MLE information found in fit$mle")
+  posterior <- extract_samples(fit)
+  stopifnot(ncol(posterior)>1)
+  par(mfrow=c(4,4), mar=c(1.5,0,.1,0), mgp=c(2,.4,0),
+      oma=c(.25,.25,.25,.25), tck=-.02)
+  for(ii in 1:ncol(posterior)){
+    par <- names(posterior)[ii]
+    if(!is.null(fit$mle)){
+      mle <- fit$mle$est[ii]
+      se <-  fit$mle$se[ii]
+      x1 <- seq(qnorm(.001, mle, se), qnorm(.999, mle, se), len=100)
+      y1 <- dnorm(x1, mle, se)
+    }
+    tmp <- hist(posterior[,ii], plot=FALSE, breaks=30)
+    x2 <- tmp$mids; y2 <- tmp$density
+    plot(0,0, type='n', xlim=range(c(x1,x2)), yaxs='i',
+         ylim=c(0, max(c(y1,y2))*1.3), axes=FALSE, ann=FALSE)
+    hist(posterior[,ii], breaks=30, add=TRUE, yaxs='i', freq=FALSE, col=gray(.8))
+    axis(1);  box(col=gray(.5));
+    if(!is.null(fit$mle)) lines(x1,y1, col='red', lwd=2)
+    if(!is.null(mon)){
+      ## add ESS and Rhat to top right
+      tmp <- par("usr"); xy <- c(.8,.9)
+      text.x <- tmp[1]+xy[1]*diff(tmp[1:2])
+      text.y <- tmp[3]+xy[2]*diff(tmp[3:4])
+      label <- paste0("ESS=", mon[ii, 'n_eff'], "\nRhat=",
+                      round(mon[ii,'Rhat'],3))
+      text(x=text.x, y=text.y, labels=label, cex=.9)
+    }
+    mtext(paste("",par), line=-1.8, adj=0)
+  }
+}
+
+
 
 #' Plot adaptation metrics for a fitted model.
 #'
