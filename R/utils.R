@@ -57,14 +57,13 @@ plot_marginals <- function(fit, mon=NULL){
     if(!is.null(fit$mle)) lines(x1,y1, col='red', lwd=2)
     if(!is.null(mon)){
       ## add ESS and Rhat to top right
-      tmp <- par("usr"); xy <- c(.8,.9)
+      tmp <- par("usr"); xy <- c(.85,.88)
       text.x <- tmp[1]+xy[1]*diff(tmp[1:2])
       text.y <- tmp[3]+xy[2]*diff(tmp[3:4])
-      label <- paste0("ESS=", mon[ii, 'n_eff'], "\nRhat=",
-                      round(mon[ii,'Rhat'],3))
-      text(x=text.x, y=text.y, labels=label, cex=.9)
+      label <- paste0('ESS=', mon[ii,'n_eff'], "\nRhat=", round(mon[ii,'Rhat'],3))
+      text(x=text.x, y=text.y, labels=label, cex=.8)
     }
-    mtext(paste("",par), line=-1.8, adj=0)
+    mtext(paste("",par), line=-1.6, adj=0, cex=.9)
   }
 }
 
