@@ -23,14 +23,6 @@
 #'   will be adapted during warmup.}
 #' }
 #'
-#' @section Warning:
-#' The user is responsible for specifying the model properly (priors,
-#'   starting values, desired parameters fixed, etc.), as well as assessing
-#'   the convergence and validity of the resulting samples (e.g., through
-#'   the \code{coda} package), or with function
-#'   \code{\link{launch_shinytmb}} before making inference. Specifically,
-#'   priors must be specified in the template file for each
-#'   parameter. Unspecified priors will be implicitly uniform.
 #' @author Cole Monnahan
 #' @param obj A TMB model object.
 #' @param iter The number of samples to draw.
@@ -54,16 +46,9 @@
 #'   deprecated but may be of use in some situations. These algorithms
 #'   require different arguments; see their help files for more
 #'   information.
-#' @param parallel A boolean for whether to use parallel cores. The package
-#'   snowfall is used if TRUE.
-#' @param cores The number of cores to use for parallel execution.
-#' @param path The path to the TMB DLL. This is only required if using
-#'   parallel, since each core needs to link to the DLL again.
 #' @param laplace Whether to use the Laplace approximation if some
 #'   parameters are declared as random. Default is to turn off this
 #'   functionality and integrate across all parameters with MCMC.
-#' @param control A list to control the sampler. See details for further
-#'   use.
 #' @param ... Further arguments to be passed to the algorithm. See help
 #'   files for the samplers for further arguments.
 #' @return A list containing the samples, and properties of the sampler
@@ -71,6 +56,8 @@
 #' @seealso \code{\link{extract_samples}} to extract samples and
 #'   \code{\link{launch_shinytmb}} to explore the results graphically which
 #'   is a wrapper for the \code{\link[shinystan]{launch_shinystan}} function.
+#' @inheritParams sample_admb
+#' @inheritSection sample_admb Warning
 #' @export
 #' @examples
 #' ## Build a fake TMB object with objective & gradient functions and some

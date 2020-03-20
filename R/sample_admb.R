@@ -28,15 +28,34 @@
 #' @author Cole Monnahan
 #' @param model Name of model (i.e., model.tpl)
 #' @param path Path to model executable. Defaults to working
-#'   directory. Often best to have model files in a separate subdirectory,
-#'   particularly for parallel.
-#' @param mceval Whether to run the model with \code{-mceval} on samples
-#'   from merged chains.
-#' @param duration The number of minutes after which the model will quit
-#'   running.
-#' @param algorithm Which algorithm to use, either "NUTS" or "RWM".
-#' @inheritParams sample_tmb
-#' @inheritSection sample_tmb Warning
+#'   directory. Often best to have model files in a separate
+#'   subdirectory, particularly for parallel.
+#' @param mceval Whether to run the model with \code{-mceval} on
+#'   samples from merged chains.
+#' @param duration The number of minutes after which the model
+#'   will quit running.
+#' @param algorithm Which algorithm to use, either "NUTS" or
+#'   "RWM".
+#' @param parallel A boolean for whether to use parallel
+#'   cores. The package snowfall is used if TRUE.
+#' @param cores The number of cores to use for parallel
+#'   execution.
+#' @param control A list to control the sampler. See details for
+#'   further use.
+#' @param algorithm The algorithm to use."NUTS" is the default
+#'   and recommended one, but "RWM" for the random walk
+#'   Metropolis sampler and "HMC" for the static HMC sampler are
+#'   available. HMC is deprecated but may be of use in special
+#'   situations. These algorithms require different arguments;
+#'   see their help files for more information.
+#' @section Warning:
+#' The user is responsible for specifying the model properly (priors,
+#'   starting values, desired parameters fixed, etc.), as well as assessing
+#'   the convergence and validity of the resulting samples (e.g., through
+#'   the \code{coda} package), or with function
+#'   \code{\link{launch_shinytmb}} before making inference. Specifically,
+#'   priors must be specified in the template file for each
+#'   parameter. Unspecified priors will be implicitly uniform.
 #' @export
 #' @examples
 #' \dontrun{
@@ -60,11 +79,20 @@
 #' setwd(oldwd)
 #' }
 #'
-sample_admb <-
-  function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
-           seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
-           parallel=FALSE, cores=NULL, control=NULL, algorithm="NUTS", ...){
+sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
+                        seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
+                        parallel=FALSE, cores=NULL, control=NULL, algorithm="NUTS", ...){
   ## Argument checking and processing
+  if (!missing(parallel)) {
+    warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
+            call. = FALSE)
+  }
+  if(is.null(cores)) cores <- parallel::detectCores()-1
+  stopifnot(is.numeric(cores))
+  if(cores<1) stop(paste("Cores must be >=1, but is", cores))
+  parallel <- ifelse(cores==1, FALSE, TRUE)
+  if(parallel & cores < chains)
+    message(paste("Recommend using chains < cores=", cores))
   stopifnot(thin >=1); stopifnot(chains >= 1)
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
   if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
@@ -111,9 +139,11 @@ sample_admb <-
     }
     ## Parallel execution
   } else {
-    if(!requireNamespace("snowfall", quietly=TRUE)) stop("snowfall package not found")
+    snowfall::sfStop()
     snowfall::sfInit(parallel=TRUE, cpus=cores)
-    snowfall::sfExportAll()
+    ## errors out with empty workspace
+    if(length(ls(envir=globalenv()))>0)
+      snowfall::sfExportAll()
     on.exit(snowfall::sfStop())
     mcmc.out <- snowfall::sfLapply(1:chains, function(i)
       sample_admb_parallel(parallel_number=i, path=path, model=model,

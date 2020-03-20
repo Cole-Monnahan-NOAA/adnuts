@@ -11,7 +11,8 @@ Description: Bayesian inference using the no-U-turn (NUTS) algorithm by
  and the 'rstan' and 'shinystan' packages are used for diagnostics and 
  inference.
 Depends:
-    R (>= 3.5.0)
+    R (>= 3.5.0),
+    snowfall (>= 1.84.6.1)
 URL: https://github.com/colemonnahan/adnuts
 BugReports: https://github.com/colemonnahan/adnuts/issues
 License: GPL-3
@@ -20,7 +21,6 @@ LazyData: true
 RoxygenNote: 7.0.2
 ByteCompile: true
 Suggests:
-    snowfall (>= 1.84.6.1),
     shinystan (>= 2.5.0),
     matrixcalc (>= 1.0.3),
     TMB (>= 1.7.15),
