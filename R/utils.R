@@ -143,8 +143,7 @@ plot_sampler_params <- function(fit, plot=TRUE){
 #' Function to generate random initial values from a previous fit using
 #' adnuts
 #'
-#' @param fit An outputted list from \code{\link{sample_admb}} or
-#'   \code{\link{sample_tmb}}
+#' @param fit An outputted list from \code{\link{sample_admb}}
 #' @param chains The number of chains for the subsequent run, which
 #'   determines the number to return.
 #' @return A list of lists which can be passed back into
@@ -334,11 +333,10 @@ check_identifiable <- function(model, path=getwd()){
 ##   \code{sampler_params} can be passed. This function essentially extends
 ##   the functionality of \code{as.shinystan} to work specifically with
 ##   fits from adnuts (TMB or ADMB). The user can thus explore their model
-##   with \code{launch_shinystan(as.shinystan.tmb(fit))} in the same way
+##   with \code{launch_shinystan(.as.shinyadnuts(fit))} in the same way
 ##   that Stan models are examined.
-## @param fit Output list from \code{sample_tmb} or
-##   \code{sample_admb}.
-## @seealso launch_shinytmb, launch_shinyadmb
+## @param fit Output list from  \code{sample_admb}.
+## @seealso launch_shinyadmb
 ## @return An S4 object of class shinystan. Depending on the algorithm
 ##   used, this list will have slight differences.
 .as.shinyadnuts <- function(fit){
@@ -359,7 +357,6 @@ check_identifiable <- function(model, path=getwd()){
 #'
 #' @param fit A named list returned by \code{sample_tmb}.
 #' @seealso \code{launch_shinyadmb}
-#' @export
 launch_shinytmb <- function(fit){
   shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
@@ -387,7 +384,7 @@ launch_shinyadmb <- function(fit){
 #'   samples are not valid and should never be used for inference, but may
 #'   be useful in some cases for diagnosing issues.
 #'
-#' @param fit A list returned by \code{sample_tmb} or \code{sample_admb}.
+#' @param fit A list returned by \code{sample_admb}.
 #' @param inc_warmup Whether to extract the warmup samples or not
 #'   (default). Warmup samples should never be used for inference, but may
 #'   be useful for diagnostics.
@@ -433,16 +430,16 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
 #'   leapfrog steps. This function extracts these into a data.frame, which
 #'   may be useful for diagnosing issues in certain cases. In general, the
 #'   user should not need to examine them, or preferably should via
-#'   \code{\link{launch_shinytmb}} or \code{\link{launch_shinyadmb}}.
+#'   \code{\link{plot_sampler_params}} or  \code{\link{launch_shinyadmb}}.
 #'
-#' @param fit A list returned by \code{sample_admb} or \code{sample_tmb}.
+#' @param fit A list returned by \code{sample_admb}.
 #' @param inc_warmup Whether to extract the warmup samples or not
 #'   (default). Warmup samples should never be used for inference, but may
 #'   be useful for diagnostics.
 #' @return An invisible data.frame containing samples (rows) of each
 #'   parameter (columns). If multiple chains exist they will be rbinded
 #'   together.
-#' @seealso \code{\link{launch_shinytmb}} and \code{\link{launch_shinyadmb}}.
+#' @seealso \code{\link{launch_shinyadmb}}.
 #' @export
 #' @examples
 #' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))

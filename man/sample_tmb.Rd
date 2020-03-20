@@ -49,13 +49,15 @@ Inf and numeric.}
 \item{thin}{The thinning rate to apply to samples. Typically not used
 with NUTS.}
 
-\item{parallel}{A boolean for whether to use parallel cores. The package
-snowfall is used if TRUE.}
+\item{parallel}{A boolean for whether to use parallel
+cores. The package snowfall is used if TRUE.}
 
-\item{cores}{The number of cores to use for parallel execution.}
+\item{cores}{The number of cores to use for parallel
+execution.}
 
-\item{path}{The path to the TMB DLL. This is only required if using
-parallel, since each core needs to link to the DLL again.}
+\item{path}{Path to model executable. Defaults to working
+directory. Often best to have model files in a separate
+subdirectory, particularly for parallel.}
 
 \item{algorithm}{The algorithm to use. NUTS is the default and
 recommended one, but "RWM" for the random walk Metropolis sampler and
@@ -68,8 +70,8 @@ information.}
 parameters are declared as random. Default is to turn off this
 functionality and integrate across all parameters with MCMC.}
 
-\item{control}{A list to control the sampler. See details for further
-use.}
+\item{control}{A list to control the sampler. See details for
+further use.}
 
 \item{...}{Further arguments to be passed to the algorithm. See help
 files for the samplers for further arguments.}
@@ -117,6 +119,7 @@ The user is responsible for specifying the model properly (priors,
 \examples{
 ## Build a fake TMB object with objective & gradient functions and some
 ## other flags
+\dontrun{
 f <- function(x, order=0){
   if(order != 1) # negative log density
     -sum(dnorm(x=x, mean=0, sd=1, log=TRUE))
@@ -134,9 +137,8 @@ max(Rhat)
 ess <- mon[, 'n_eff']
 min(ess)
 ## Or do it interactively with ShinyStan
-\dontrun{
-  launch_shinytmb(fit)
-  }
+launch_shinytmb(fit)
+}
 
 }
 \seealso{

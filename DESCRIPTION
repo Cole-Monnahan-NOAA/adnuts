@@ -1,12 +1,12 @@
 Package: adnuts
-Title: No-U-Turn MCMC Sampling for 'ADMB' and 'TMB' Models
+Title: No-U-Turn MCMC Sampling for 'ADMB' Models
 Version: 1.0.1.9000
 Authors@R: person("Cole", "Monnahan", email = "monnahc@uw.edu", role = c("aut", "cre"))
 Description: Bayesian inference using the no-U-turn (NUTS) algorithm by 
  Hoffman and Gelman (2014) <http://www.jmlr.org/papers/v15/hoffman14a.html>. 
  Designed for 'AD Model Builder' ('ADMB') models,
  or when R functions for log-density and log-density gradient
- are available, such as 'Template Model Builder' ('TMB')
+ are available, such as 'Template Model Builder'
  models and other special cases. Functionality is similar to 'Stan', 
  and the 'rstan' and 'shinystan' packages are used for diagnostics and 
  inference.
@@ -18,12 +18,11 @@ BugReports: https://github.com/colemonnahan/adnuts/issues
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 ByteCompile: true
 Suggests:
     shinystan (>= 2.5.0),
     matrixcalc (>= 1.0.3),
-    TMB (>= 1.7.15),
     stats,
     knitr,
     rmarkdown,

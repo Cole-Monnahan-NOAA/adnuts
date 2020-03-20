@@ -69,6 +69,7 @@
 #'
 #' @docType package
 #' @name adnuts
+#' @import snowfall
 #' @importFrom stats rnorm runif cov acf cor dnorm qnorm
 #' @importFrom utils read.csv read.table write.table
 #' @importFrom grDevices gray rgb

@@ -26,8 +26,8 @@ sample_admb(
 \item{model}{Name of model (i.e., model.tpl)}
 
 \item{path}{Path to model executable. Defaults to working
-directory. Often best to have model files in a separate subdirectory,
-particularly for parallel.}
+directory. Often best to have model files in a separate
+subdirectory, particularly for parallel.}
 
 \item{iter}{The number of samples to draw.}
 
@@ -46,21 +46,27 @@ for all chains.}
 \item{thin}{The thinning rate to apply to samples. Typically not used
 with NUTS.}
 
-\item{mceval}{Whether to run the model with \code{-mceval} on samples
-from merged chains.}
+\item{mceval}{Whether to run the model with \code{-mceval} on
+samples from merged chains.}
 
-\item{duration}{The number of minutes after which the model will quit
-running.}
+\item{duration}{The number of minutes after which the model
+will quit running.}
 
-\item{parallel}{A boolean for whether to use parallel cores. The package
-snowfall is used if TRUE.}
+\item{parallel}{A boolean for whether to use parallel
+cores. The package snowfall is used if TRUE.}
 
-\item{cores}{The number of cores to use for parallel execution.}
+\item{cores}{The number of cores to use for parallel
+execution.}
 
-\item{control}{A list to control the sampler. See details for further
-use.}
+\item{control}{A list to control the sampler. See details for
+further use.}
 
-\item{algorithm}{Which algorithm to use, either "NUTS" or "RWM".}
+\item{algorithm}{The algorithm to use."NUTS" is the default
+and recommended one, but "RWM" for the random walk
+Metropolis sampler and "HMC" for the static HMC sampler are
+available. HMC is deprecated but may be of use in special
+situations. These algorithms require different arguments;
+see their help files for more information.}
 
 \item{...}{Further arguments to be passed to the algorithm. See help
 files for the samplers for further arguments.}

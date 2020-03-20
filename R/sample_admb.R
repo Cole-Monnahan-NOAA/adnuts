@@ -30,6 +30,17 @@
 #' @param path Path to model executable. Defaults to working
 #'   directory. Often best to have model files in a separate
 #'   subdirectory, particularly for parallel.
+#' @param iter The number of samples to draw.
+#' @param init A list of lists containing the initial parameter vectors,
+#'   one for each chain or a function. It is strongly recommended to
+#'   initialize multiple chains from dispersed points. A of NULL signifies
+#'   to use the starting values present in the model (i.e., \code{obj$par})
+#'   for all chains.
+#' @param chains The number of chains to run.
+#' @param warmup The number of warmup iterations.
+#' @param seeds A vector of seeds, one for each chain.
+#' @param thin The thinning rate to apply to samples. Typically not used
+#'   with NUTS.
 #' @param mceval Whether to run the model with \code{-mceval} on
 #'   samples from merged chains.
 #' @param duration The number of minutes after which the model
@@ -48,6 +59,8 @@
 #'   available. HMC is deprecated but may be of use in special
 #'   situations. These algorithms require different arguments;
 #'   see their help files for more information.
+#' @param ... Further arguments to be passed to the algorithm. See help
+#'   files for the samplers for further arguments.
 #' @section Warning:
 #' The user is responsible for specifying the model properly (priors,
 #'   starting values, desired parameters fixed, etc.), as well as assessing
@@ -90,7 +103,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   if(is.null(cores)) cores <- parallel::detectCores()-1
   stopifnot(is.numeric(cores))
   if(cores<1) stop(paste("Cores must be >=1, but is", cores))
-  parallel <- ifelse(cores==1, FALSE, TRUE)
+  parallel <- ifelse(cores==1 | chains ==1, FALSE, TRUE)
   if(parallel & cores < chains)
     message(paste("Recommend using chains < cores=", cores))
   stopifnot(thin >=1); stopifnot(chains >= 1)

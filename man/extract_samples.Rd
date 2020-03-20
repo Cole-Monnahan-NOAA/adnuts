@@ -7,7 +7,7 @@
 extract_samples(fit, inc_warmup = FALSE, inc_lp = FALSE, as.list = FALSE)
 }
 \arguments{
-\item{fit}{A list returned by \code{sample_tmb} or \code{sample_admb}.}
+\item{fit}{A list returned by \code{sample_admb}.}
 
 \item{inc_warmup}{Whether to extract the warmup samples or not
 (default). Warmup samples should never be used for inference, but may

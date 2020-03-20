@@ -21,8 +21,8 @@ sample_admb_nuts(
 }
 \arguments{
 \item{path}{Path to model executable. Defaults to working
-directory. Often best to have model files in a separate subdirectory,
-particularly for parallel.}
+directory. Often best to have model files in a separate
+subdirectory, particularly for parallel.}
 
 \item{model}{Name of model (i.e., model.tpl)}
 
@@ -43,11 +43,11 @@ with NUTS.}
 
 \item{seed}{Random seed to use.}
 
-\item{duration}{The number of minutes after which the model will quit
-running.}
+\item{duration}{The number of minutes after which the model
+will quit running.}
 
-\item{control}{A list to control the sampler. See details for further
-use.}
+\item{control}{A list to control the sampler. See details for
+further use.}
 
 \item{verbose}{Boolean for whether to print ADMB output to console.}
 

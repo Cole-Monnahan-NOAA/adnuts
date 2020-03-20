@@ -51,8 +51,8 @@ the first \code{warmup} steps.}
 \item{thin}{The thinning rate to apply to samples. Typically not used
 with NUTS.}
 
-\item{control}{A list to control the sampler. See details for further
-use.}
+\item{control}{A list to control the sampler. See details for
+further use.}
 }
 \value{
 A list containing samples ('par') and algorithm details such as

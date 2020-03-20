@@ -40,8 +40,8 @@ with NUTS.}
 
 \item{seed}{The random seed to use.}
 
-\item{control}{A list to control the sampler. See details for further
-use.}
+\item{control}{A list to control the sampler. See details for
+further use.}
 }
 \description{
 Draw MCMC samples from a model posterior using the No-U-Turn (NUTS)

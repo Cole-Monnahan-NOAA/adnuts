@@ -7,7 +7,7 @@
 extract_sampler_params(fit, inc_warmup = FALSE)
 }
 \arguments{
-\item{fit}{A list returned by \code{sample_admb} or \code{sample_tmb}.}
+\item{fit}{A list returned by \code{sample_admb}.}
 
 \item{inc_warmup}{Whether to extract the warmup samples or not
 (default). Warmup samples should never be used for inference, but may
@@ -28,7 +28,7 @@ Each trajectory (iteration) in NUTS has associated information
   leapfrog steps. This function extracts these into a data.frame, which
   may be useful for diagnosing issues in certain cases. In general, the
   user should not need to examine them, or preferably should via
-  \code{\link{launch_shinytmb}} or \code{\link{launch_shinyadmb}}.
+  \code{\link{plot_sampler_params}} or  \code{\link{launch_shinyadmb}}.
 }
 \examples{
 fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
@@ -46,5 +46,5 @@ legend('topright', cex=.7, legend=paste("chain1", 1:2), lty=1, col=1:2)
 
 }
 \seealso{
-\code{\link{launch_shinytmb}} and \code{\link{launch_shinyadmb}}.
+\code{\link{launch_shinyadmb}}.
 }

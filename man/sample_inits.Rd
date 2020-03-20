@@ -8,8 +8,7 @@ adnuts}
 sample_inits(fit, chains)
 }
 \arguments{
-\item{fit}{An outputted list from \code{\link{sample_admb}} or
-\code{\link{sample_tmb}}}
+\item{fit}{An outputted list from \code{\link{sample_admb}}}
 
 \item{chains}{The number of chains for the subsequent run, which
 determines the number to return.}

@@ -41,8 +41,8 @@ with NUTS.}
 
 \item{seed}{The random seed to use.}
 
-\item{control}{A list to control the sampler. See details for further
-use.}
+\item{control}{A list to control the sampler. See details for
+further use.}
 }
 \value{
 A list containing samples and other metadata.

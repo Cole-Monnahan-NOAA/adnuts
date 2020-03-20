@@ -25,17 +25,6 @@
 #'
 #' @author Cole Monnahan
 #' @param obj A TMB model object.
-#' @param iter The number of samples to draw.
-#' @param init A list of lists containing the initial parameter vectors,
-#'   one for each chain or a function. It is strongly recommended to
-#'   initialize multiple chains from dispersed points. A of NULL signifies
-#'   to use the starting values present in the model (i.e., \code{obj$par})
-#'   for all chains.
-#' @param chains The number of chains to run.
-#' @param warmup The number of warmup iterations.
-#' @param seeds A vector of seeds, one for each chain.
-#' @param thin The thinning rate to apply to samples. Typically not used
-#'   with NUTS.
 #' @param lower A vector of lower bounds for parameters. Allowed values are
 #'   -Inf and numeric.
 #' @param upper A vector of upper bounds for parameters. Allowed values are
@@ -49,8 +38,6 @@
 #' @param laplace Whether to use the Laplace approximation if some
 #'   parameters are declared as random. Default is to turn off this
 #'   functionality and integrate across all parameters with MCMC.
-#' @param ... Further arguments to be passed to the algorithm. See help
-#'   files for the samplers for further arguments.
 #' @return A list containing the samples, and properties of the sampler
 #'   useful for diagnosing behavior and efficiency.
 #' @seealso \code{\link{extract_samples}} to extract samples and
@@ -58,11 +45,11 @@
 #'   is a wrapper for the \code{\link[shinystan]{launch_shinystan}} function.
 #' @inheritParams sample_admb
 #' @inheritSection sample_admb Warning
-#' @export
 #' @examples
 #' ## Build a fake TMB object with objective & gradient functions and some
 #' ## other flags
-#'f <- function(x, order=0){
+#' \dontrun{
+#' f <- function(x, order=0){
 #'   if(order != 1) # negative log density
 #'     -sum(dnorm(x=x, mean=0, sd=1, log=TRUE))
 #'   else x # gradient of negative log density
@@ -79,16 +66,16 @@
 #' ess <- mon[, 'n_eff']
 #' min(ess)
 #' ## Or do it interactively with ShinyStan
-#' \dontrun{
-#'   launch_shinytmb(fit)
-#'   }
+#' launch_shinytmb(fit)
+#' }
 #'
 sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
                        warmup=floor(iter/2), lower=NULL,
                        upper=NULL, thin=1, parallel=FALSE,
                        cores=NULL, path=NULL, algorithm="NUTS",
                        laplace=FALSE, control=NULL, ...){
-
+  .Deprecated("tmbstan", package='tmbstan',
+     msg='Use tmbstan::tmbstan instead, this function is no longer under development/maintenance')
   control <- .update_control(control)
   ## Argument checking.
   if(is.null(init)){
