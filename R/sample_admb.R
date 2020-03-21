@@ -220,6 +220,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                  algorithm=algorithm, warmup=warmup,
                  model=model, max_treedepth=mcmc.out[[1]]$max_treedepth,
                  cmd=cmd, covar.est=covar.est, mle=mle)
+  class(result) <- 'adfit'
   return(invisible(result))
 }
 

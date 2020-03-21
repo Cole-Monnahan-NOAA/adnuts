@@ -1,3 +1,66 @@
+
+#' Constructor for the "adfit" (A-D fit) class
+#' @param fit Fitted object from \code{\link{sample_admb}}
+#'
+#' @return An object of class "adfit"
+adfit <- function(fit){
+  stopifnot(is.list(fit))
+  if(is.null(fit$samples)) stop("Samples missing from fit")
+  if(is.null(fit$algorithm)) stop("Algorithm missing from fit")
+  class(fit) <- 'adfit'
+}
+
+#' Check object of class adfit
+#' @param fit Returned list from \code{\link{sample_admb}}
+#'
+is.adfit <- function(fit) inherits(fit, "adfit")
+
+
+#' Plot object of class adfit
+#' @param fit Fitted object from \code{\link{sample_admb}}
+plot.adfit <- function(fit)
+  warning("plot.adfit not yet implemented -- try pairs_admb")
+
+#' Print summary of object of class adfit
+#' @param fit Fitted object from \code{\link{sample_admb}}
+summary.adfit <- function(fit) print(fit)
+
+#' Print summary of adfit object
+#' @param fit Fitted object from \code{\link{sample_admb}}
+print.adfit <- function(fit){
+  iter <- dim(fit$samples)[1]
+  chains <- dim(fit$samples)[2]
+  pars <- dim(fit$samples)[3]
+  samples <- (iter-fit$warmup)*chains
+  with(fit, cat(paste0("Model '", fit$model,"'"), "has", pars,
+                       "pars, and was fit using", fit$algorithm,
+                           "with", iter, "iter and", chains,
+                           "chains\n"))
+  rt <- sum(fit$time.total)/chains
+  ru <- 'seconds'
+  if(rt>60){
+    rt <- rt/60; ru <- 'minutes'
+  } else if(rt>60*60) {
+    rt <- rt/(60*60); ru <- 'hours'
+  }
+  cat("Average run time per chain was", round(rt,2),  ru, '\n')
+  if(!is.null(fit$monitor)){
+    minESS <- min(fit$monitor$n_eff)
+    maxRhat <- round(max(fit$monitor$Rhat),3)
+    cat(paste0("Minimum ESS=",
+                   minESS,
+                   " (",
+                   round(100*minESS/samples,2),
+                   "%), and maximum Rhat=", maxRhat, '\n'))
+  }
+  if(fit$algorithm=='NUTS'){
+    ndivs <- sum(extract_sampler_params(fit)[,'divergent__'])
+    cat(paste0("There were ", ndivs, " divergences after warmup\n"))
+  }
+}
+
+
+
 #' Plot marginal distributions for a fitted model
 #'
 #' @param fit A fitted object returned by
