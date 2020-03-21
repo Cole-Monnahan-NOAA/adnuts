@@ -26,6 +26,7 @@ Suggests:
     stats,
     knitr,
     rmarkdown,
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    TMB
 Imports: ellipse, rstan, R2admb, ggplot2, rlang
 VignetteBuilder: knitr
