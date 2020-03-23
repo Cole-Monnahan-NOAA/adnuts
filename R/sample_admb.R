@@ -59,6 +59,15 @@
 #'   available. HMC is deprecated but may be of use in special
 #'   situations. These algorithms require different arguments;
 #'   see their help files for more information.
+#' @param skip_monitor Whether to skip calculating diagnostics
+#'   (effective sample size, Rhat) via the
+#'   \code{rstan::monitor} function. This can be slow for
+#'   models with high dimension or many iterations. The result is
+#'   used in plots and summaries so it is recommended to turn
+#'   on. If model run with \code{skip_monitor=FALSE} you can
+#'   recreate it post-hoc by setting
+#'   \code{fit$monitor=rstan::monitor(fit$samples, fit$warmup,
+#'   print=FALSE)}.
 #' @param ... Further arguments to be passed to the algorithm. See help
 #'   files for the samplers for further arguments.
 #' @section Warning:
@@ -94,7 +103,8 @@
 #'
 sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
-                        parallel=FALSE, cores=NULL, control=NULL, algorithm="NUTS", ...){
+                        parallel=FALSE, cores=NULL, control=NULL,
+                        algorithm="NUTS", skip_monitor=FALSE, ...){
   ## Argument checking and processing
   if (!missing(parallel)) {
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
@@ -210,16 +220,22 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     message("... Running -mceval on merged chains")
     system(paste(model, "-mceval -noest -nohess"), ignore.stdout=FALSE)
   }
-  ## message("... Calculating ESS and Rhat")
-  ## temp <- (rstan::monitor(samples, warmup=warmup, probs=.5, print=FALSE))
-  ## Rhat <- temp[,6]; ess <- temp[,5]
   covar.est <- cov(unbounded)
+  if(!skip_monitor){
+    if(!requireNamespace("rstan", quietly = TRUE))
+      stop("Package 'rstan' is required to calculate diagnostics.\n Install it and try again, or set skip_monitor=FALSE.")
+    message('Calculating ESS and Rhat statistics...')
+    mon <- rstan::monitor(samples, warmup, print=FALSE)
+  } else {
+    message('Skipping ESS and Rhat statistics..')
+    mon <- NULL
+  }
   result <- list(samples=samples, sampler_params=sampler_params,
-                 ## ess=ess, Rhat=Rhat,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
                  model=model, max_treedepth=mcmc.out[[1]]$max_treedepth,
-                 cmd=cmd, covar.est=covar.est, mle=mle)
+                 cmd=cmd, covar.est=covar.est, mle=mle,
+                 monitor=mon)
   class(result) <- 'adfit'
   return(invisible(result))
 }
