@@ -19,6 +19,7 @@ sample_admb(
   cores = NULL,
   control = NULL,
   algorithm = "NUTS",
+  skip_monitor = FALSE,
   ...
 )
 }
@@ -67,6 +68,16 @@ Metropolis sampler and "HMC" for the static HMC sampler are
 available. HMC is deprecated but may be of use in special
 situations. These algorithms require different arguments;
 see their help files for more information.}
+
+\item{skip_monitor}{Whether to skip calculating diagnostics
+(effective sample size, Rhat) via the
+\code{rstan::monitor} function. This can be slow for
+models with high dimension or many iterations. The result is
+used in plots and summaries so it is recommended to turn
+on. If model run with \code{skip_monitor=FALSE} you can
+recreate it post-hoc by setting
+\code{fit$monitor=rstan::monitor(fit$samples, fit$warmup,
+print=FALSE)}.}
 
 \item{...}{Further arguments to be passed to the algorithm. See help
 files for the samplers for further arguments.}

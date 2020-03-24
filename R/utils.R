@@ -3,30 +3,35 @@
 #' @param fit Fitted object from \code{\link{sample_admb}}
 #'
 #' @return An object of class "adfit"
+#' @export
 adfit <- function(fit){
   stopifnot(is.list(fit))
   if(is.null(fit$samples)) stop("Samples missing from fit")
   if(is.null(fit$algorithm)) stop("Algorithm missing from fit")
   class(fit) <- 'adfit'
+  fit
 }
 
 #' Check object of class adfit
 #' @param fit Returned list from \code{\link{sample_admb}}
-#'
+#' @export
 is.adfit <- function(fit) inherits(fit, "adfit")
 
 
 #' Plot object of class adfit
 #' @param fit Fitted object from \code{\link{sample_admb}}
+#' @export
 plot.adfit <- function(fit)
   warning("plot.adfit not yet implemented -- try pairs_admb")
 
 #' Print summary of object of class adfit
 #' @param fit Fitted object from \code{\link{sample_admb}}
+#' @export
 summary.adfit <- function(fit) print(fit)
 
 #' Print summary of adfit object
 #' @param fit Fitted object from \code{\link{sample_admb}}
+#' @export
 print.adfit <- function(fit){
   iter <- dim(fit$samples)[1]
   chains <- dim(fit$samples)[2]
