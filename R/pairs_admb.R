@@ -7,34 +7,54 @@
 #'   'slow' and 'fast' which are based on the effective sample
 #'   sizes ordered by slowest or fastest mixing respectively. See
 #'   example for usage.
-#' @param diag What type of plot to include on the diagonal, options are
-#'   'acf' which plots the autocorrelation function \code{acf}, 'hist'
-#'   shows marginal posterior histograms, and 'trace' the trace plot.
-#' @param pars A vector of parameter names or integers representing which
-#'   parameters to subset. Useful if the model has a larger number of
-#'   parameters and you just want to show a few key ones.
-#' @param acf.ylim If using the acf function on the diagonal, specify the y
-#'   limit. The default is c(-1,1).
-#' @param ymult A vector of length ncol(posterior) specifying how much room
-#'   to give when using the hist option for the diagonal. For use if the
-#'   label is blocking part of the plot. The default is 1.3 for all
-#'   parameters.
+#' @param diag What type of plot to include on the diagonal,
+#'   options are 'acf' which plots the autocorrelation function
+#'   \code{acf}, 'hist' shows marginal posterior histograms, and
+#'   'trace' the trace plot.
+#' @param pars A vector of parameter names or integers
+#'   representing which parameters to subset. Useful if the model
+#'   has a larger number of parameters and you just want to show
+#'   a few key ones.
+#' @param acf.ylim If using the acf function on the diagonal,
+#'   specify the y limit. The default is c(-1,1).
+#' @param ymult A vector of length ncol(posterior) specifying how
+#'   much room to give when using the hist option for the
+#'   diagonal. For use if the label is blocking part of the
+#'   plot. The default is 1.3 for all parameters.
 #' @param label.cex Control size of labels
 #' @param axis.col Color of axes
-#' @param ... Arguments to be passed to plot call in lower diagonal panels
-#' @param limits A list containing the ranges for each parameter to use in
-#'   plotting.
+#' @param ... Arguments to be passed to plot call in lower
+#'   diagonal panels
+#' @param limits A list containing the ranges for each parameter
+#'   to use in plotting.
 #' @return Produces a plot, and returns nothing.
+#' @details This function is modified from the base \code{pairs}
+#'   code to work specifically with fits from the
+#'   \package{adnuts} package using either the NUTS or RWM MCMC
+#'   algorithms. If an invertible Hessian was found (in
+#'   \code{fit$mle}) then estimated covariances are available to
+#'   compare and added automatically (blue ellipses). Likewise, a
+#'   "monitor" object from \code{rstan::monitor} is attached as
+#'   \code{fit$monitor} and provides effective sample sizes (ESS)
+#'   and Rhat values. The ESS are used to potentially order the
+#'   parameters via argument \code{order}, but also printed on
+#'   the diagonal.
 #' @export
 #' @author Cole Monnahan
 #' @examples
 #' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
 #' pairs_admb(fit)
+#' pairs_admb(fit, pars=1:2)
+#' pairs_admb(fit, pars=c('b', 'a'))
+#' pairs_admb(fit, pars=1:2, order='slow')
+#' pairs_admb(fit, pars=1:2, order='fast')
 #'
 pairs_admb <- function(fit, order=NULL,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        pars=NULL, label.cex=.5, limits=NULL, ...){
+  if(!is.adfit(fit)){
+    stop("Argument 'fit' is not a valid object returned by 'sample_admb'")
   mle <- fit$mle
   posterior <- extract_samples(fit, inc_lp=TRUE)
   chains <- rep(1:dim(fit$samples)[2], each=dim(fit$samples)[1]-fit$warmup)
@@ -58,6 +78,8 @@ pairs_admb <- function(fit, order=NULL,
   diag <- match.arg(diag)
   par.names <- names(posterior)
   ess <- fit$monitor$n_eff
+  if(is.null(ess))
+    warning("No monitor information found in fitted object so ESS and Rhat not available. See details of help.")
   if(!is.null(order)){
     if(! order %in% c('slow', 'fast')){
       stop("Invalid 'order' argument, should be 'slow', 'fast', or NULL")
