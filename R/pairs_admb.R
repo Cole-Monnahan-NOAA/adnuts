@@ -2,6 +2,11 @@
 #' confidence ellipses.
 #'
 #' @param fit A list as returned by \code{sample_admb}.
+#' @param pars A vector of parameter names or integers
+#'   representing which parameters to subset. Useful if the model
+#'   has a larger number of parameters and you just want to show
+#'   a few key ones.
+#' @param label.cex Control size of outer and diagonal labels (default 1)
 #' @param order The order to consider the parameters. Options are
 #'   NULL (default) to use the order declared in the model, or
 #'   'slow' and 'fast' which are based on the effective sample
@@ -11,22 +16,19 @@
 #'   options are 'acf' which plots the autocorrelation function
 #'   \code{acf}, 'hist' shows marginal posterior histograms, and
 #'   'trace' the trace plot.
-#' @param pars A vector of parameter names or integers
-#'   representing which parameters to subset. Useful if the model
-#'   has a larger number of parameters and you just want to show
-#'   a few key ones.
 #' @param acf.ylim If using the acf function on the diagonal,
 #'   specify the y limit. The default is c(-1,1).
 #' @param ymult A vector of length ncol(posterior) specifying how
 #'   much room to give when using the hist option for the
 #'   diagonal. For use if the label is blocking part of the
 #'   plot. The default is 1.3 for all parameters.
-#' @param label.cex Control size of labels
 #' @param axis.col Color of axes
 #' @param ... Arguments to be passed to plot call in lower
 #'   diagonal panels
 #' @param limits A list containing the ranges for each parameter
 #'   to use in plotting.
+#' @param add.monitor Boolean whether to print effective sample
+#'   size (ESS) and Rhat values on the diagonal.
 #' @return Produces a plot, and returns nothing.
 #' @details This function is modified from the base \code{pairs}
 #'   code to work specifically with fits from the
@@ -52,8 +54,10 @@
 pairs_admb <- function(fit, order=NULL,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
-                       pars=NULL, label.cex=.5, limits=NULL, ...){
-  if(!is.adfit(fit)){
+                       pars=NULL, label.cex=.8, limits=NULL,
+                       add.monitor=TRUE,
+                       ...){
+  if(!is.adfit(fit))
     stop("Argument 'fit' is not a valid object returned by 'sample_admb'")
   mle <- fit$mle
   posterior <- extract_samples(fit, inc_lp=TRUE)
@@ -78,6 +82,7 @@ pairs_admb <- function(fit, order=NULL,
   diag <- match.arg(diag)
   par.names <- names(posterior)
   ess <- fit$monitor$n_eff
+  Rhat <- fit$monitor$Rhat
   if(is.null(ess))
     warning("No monitor information found in fitted object so ESS and Rhat not available. See details of help.")
   if(!is.null(order)){
@@ -182,6 +187,10 @@ pairs_admb <- function(fit, order=NULL,
           }
           temp.box()
         }
+        ## Add ESS and Rhat info to diagonal
+        if(!is.null(ess) & !is.null(Rhat) & add.monitor)
+          mtext(paste0('ESS=', round(ess[row], 0), " Rhat=", format(round(Rhat[row],2),nsmall=2)),
+                cex=label.cex, line=-1.5)
       }
       ## If lower triangle and covariance known, add scatterplot
       if(row>col){
@@ -196,7 +205,7 @@ pairs_admb <- function(fit, order=NULL,
         if(!is.na(p1) & !is.na(p2)){
           ## Add bivariate 95% normal levels from MLE
           points(x=mle$est[p2], y=mle$est[p1],
-                 pch=16, cex=.5, col=2)
+                 pch=16, cex=.5, col='blue')
           ## Get points of a bivariate normal 95% confidence contour
           if(!requireNamespace("ellipse", quietly=TRUE)){
             warning("ellipse package needs to be installed to show ellipses")
@@ -206,7 +215,7 @@ pairs_admb <- function(fit, order=NULL,
                                     scale=mle$se[c(p2, p1)],
                                     centre= mle$est[c(p2, p1)], npoints=1000,
                                     level=.95)
-            lines(ellipse.temp , lwd=.5, lty=1, col="red")
+            lines(ellipse.temp , lwd=.5, lty=1, col="blue")
           }
         }
         par(xaxs="i", yaxs="i")
