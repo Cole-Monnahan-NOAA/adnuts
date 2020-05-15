@@ -2,6 +2,11 @@
 #' confidence ellipses.
 #'
 #' @param fit A list as returned by \code{sample_admb}.
+#' @param order The order to consider the parameters. Options are
+#'   NULL (default) to use the order declared in the model, or
+#'   'slow' and 'fast' which are based on the effective sample
+#'   sizes ordered by slowest or fastest mixing respectively. See
+#'   example for usage.
 #' @param diag What type of plot to include on the diagonal, options are
 #'   'acf' which plots the autocorrelation function \code{acf}, 'hist'
 #'   shows marginal posterior histograms, and 'trace' the trace plot.
@@ -26,7 +31,7 @@
 #' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
 #' pairs_admb(fit)
 #'
-pairs_admb <- function(fit,
+pairs_admb <- function(fit, order=NULL,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        pars=NULL, label.cex=.5, limits=NULL, ...){
@@ -52,6 +57,20 @@ pairs_admb <- function(fit,
   on.exit(par(old.par))
   diag <- match.arg(diag)
   par.names <- names(posterior)
+  ess <- fit$monitor$n_eff
+  if(!is.null(order)){
+    if(! order %in% c('slow', 'fast')){
+      stop("Invalid 'order' argument, should be 'slow', 'fast', or NULL")
+    }
+    if(is.null(ess)){
+      stop("No effective sample sizes found so cannot order by slow/fast.")
+    }
+    if(!is.numeric(pars[1])){
+      warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
+    } else {
+      par.names <- par.names[order(ess, decreasing=(order=='fast'))]
+    }
+  }
   ## if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
   ##   stop("Number of parameters in posterior and mle not the same")
   ## pars will either be NULL, so use all parameters. OR a vector of
@@ -72,6 +91,7 @@ pairs_admb <- function(fit,
   pars.bad <- match(x=pars, table=names(posterior))
   if(any(is.na(pars.bad))){
     warning("Some par names did not match -- dropped")
+    print(pars.bad)
     pars <- pars[!is.na(pars.bad)]
   }
   n <- length(pars)
