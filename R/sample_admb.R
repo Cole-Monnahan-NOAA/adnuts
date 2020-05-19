@@ -9,8 +9,9 @@
 #' @details This function implements algorithm 6 of Hoffman and Gelman (2014),
 #' and loosely follows package \code{rstan}. The step size can be
 #'   adapted or specified manually. The metric (i.e., mass matrix) can be
-#'   unit diagonal, adapted diagonal (default and recommended), or a dense
-#'   matrix specified by the user. Further control of algorithms can be
+#'   unit diagonal, adapted diagonal (default and recommended), a dense
+#'   matrix specified by the user, or an adapted dense matrix.
+#'  Further control of algorithms can be
 #'   specified with the \code{control} argument.  Elements are:
 #' \describe{
 #' \item{adapt_delta}{The target acceptance rate. D}
@@ -20,10 +21,26 @@
 #' \item{adapt_delta}{Whether adaptation of step size is turned on.}
 #' \item{adapt_mass}{Whether adaptation of mass matrix is turned
 #'   on. Currently only allowed for diagonal metric.}
+#' \item{adapt_mass_dense}{Whether dense adaptation of mass
+#'   matrix is turned on.}
 #' \item{max_treedepth}{Maximum treedepth for the NUTS algorithm.}
 #' \item{stepsize}{The stepsize for the NUTS algorithm. If \code{NULL} it
 #'   will be adapted during warmup.}
+#' \item{adapt_init_buffer}{The initial buffer size during mass matrix
+#'   adaptation where sample information is not used (default
+#'   50)}
+#' \item{adapt_term_buffer}{The terminal buffer size (default 75)
+#'   during mass
+#'   matrix adpatation (final fast phase)}
+#' \item{adapt_window}{The initial size of the mass matrix
+#'   adaptation window, which gets doubled each time thereafter.}
+#' \item{refresh}{The rate at which to refresh progress to the
+#'   console. Defaults to even 10%. A value of 0 turns off
+#'   progress updates.}
 #' }
+#' The adaptation scheme (step size and mass matrix) is based heavily on those by the
+#'   software Stan, and more details can be found in that
+#'   documentation and this vignette.
 #'
 #' @author Cole Monnahan
 #' @param model Name of model (i.e., model.tpl)
@@ -72,6 +89,8 @@
 #'   version of the posterior samples in addition to the bounded
 #'   ones. It may be advisable to set to FALSE for very large
 #'   models to save space.
+#' @param admb_args A character string which gets passed to the
+#'   command line, allowing finer control
 #' @param ... Further arguments to be passed to the algorithm. See help
 #'   files for the samplers for further arguments.
 #' @section Warning:
@@ -109,7 +128,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
                         algorithm="NUTS", skip_monitor=FALSE,
-                        skip_unbounded=FALSE,
+                        skip_unbounded=FALSE, admb_args=NULL,
                         ...){
   ## Argument checking and processing
   if (!missing(parallel)) {
@@ -159,12 +178,15 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
       mcmc.out <- lapply(1:chains, function(i)
         sample_admb_nuts(path=path, model=model, warmup=warmup, duration=duration,
                          iter=iter, init=init[[i]], chain=i,
-                         seed=seeds[i], thin=thin, control=control, ...))
+                         seed=seeds[i], thin=thin,
+                         control=control, admb_args=admb_args,
+                         ...))
     } else {
       mcmc.out <- lapply(1:chains, function(i)
         sample_admb_rwm(path=path, model=model, warmup=warmup, duration=duration,
                         iter=iter, init=init[[i]], chain=i,
-                        seed=seeds[i], thin=thin, control=control, ...))
+                        seed=seeds[i], thin=thin, control=control,
+                        admb_args=admb_args, ...))
     }
     ## Parallel execution
   } else {
@@ -179,7 +201,8 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                            duration=duration,
                            algorithm=algorithm,
                            iter=iter, init=init[[i]], warmup=warmup,
-                           seed=seeds[i], thin=thin, control=control, ...))
+                           seed=seeds[i], thin=thin, control=control,
+                           admb_args=admb_args, ...))
   }
     warmup <- mcmc.out[[1]]$warmup
     mle <- .read_mle_fit(model=model, path=path)
@@ -233,7 +256,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   if(!skip_monitor){
     if(!requireNamespace("rstan", quietly = TRUE))
       stop("Package 'rstan' is required to calculate diagnostics.\n Install it and try again, or set skip_monitor=FALSE.")
-    message('Calculating ESS and Rhat statistics...')
+    message('Calculating ESS and Rhat (skip_monitor=TRUE will skip)...')
     mon <- rstan::monitor(samples, warmup, print=FALSE)
   } else {
     message('Skipping ESS and Rhat statistics..')
@@ -258,7 +281,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 #' @inheritParams sample_admb
 #' @param seed Random seed to use.
 #' @param chain Chain number, for printing purposes only.
-#' @param extra.args Character string of extra command line argument to
+#' @param admb_args Character string of extra command line argument to
 #' pass to ADMB.
 #' @param verbose Boolean for whether to print ADMB output to console.
 #' @seealso \code{\link{sample_admb}}
@@ -266,7 +289,14 @@ sample_admb_nuts <- function(path, model, iter=2000,
                              init=NULL, chain=1,
                              thin=1, warmup=NULL,
                              seed=NULL, duration=NULL, control=NULL,
-                             verbose=TRUE, extra.args=NULL){
+                             verbose=TRUE, admb_args=admb_args, extra.args=NULL){
+
+  if (!missing(extra.args)) {
+    warning("Argument extra.args is deprecated, use admb_args instead",
+            call. = FALSE)
+    admb_args <- extra.args
+  }
+
   wd.old <- getwd(); on.exit(setwd(wd.old))
   setwd(path)
   ## Now contains all required NUTS arguments
@@ -296,6 +326,8 @@ sample_admb_nuts <- function(path, model, iter=2000,
     cmd <- paste(cmd, "-adapt_term_buffer", control$adapt_term_buffer)
   if(!is.null(control$adapt_window))
     cmd <- paste(cmd, "-adapt_window", control$adapt_window)
+  if(!is.null(control$refresh))
+    cmd <- paste(cmd, "-refresh", control$refresh)
 
   ## Three options for metric. (1) 'mle' is to use the MLE estimates in
   ## admodel.cov without mass adaptation. (2) If a matrix is passed, this
@@ -337,7 +369,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
     ## Use MLE values which are read in from the admodel.hes file
     ## which is the default behavior
   }
-  if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
+  if(!is.null(admb_args)) cmd <- paste(cmd, admb_args)
 
   ## Run it and get results
   time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
@@ -373,7 +405,14 @@ sample_admb_nuts <- function(path, model, iter=2000,
 sample_admb_rwm <-
   function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL,  chain=1, seed=NULL, control=NULL,
-           verbose=TRUE, extra.args=NULL, duration=NULL){
+           verbose=TRUE, duration=NULL, extra.args=NULL, admb_args=NULL){
+
+    if (!missing(extra.args)) {
+      warning("Argument extra.args is deprecated, use admb_args instead",
+              call. = FALSE)
+      admb_args <- extra.args
+    }
+
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(path)
     ## Now contains all required NUTS arguments
@@ -419,7 +458,7 @@ sample_admb_rwm <-
       cmd <- paste(cmd, "-mcpin init.pin")
       write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
     }
-    if(!is.null(extra.args)) cmd <- paste(cmd, extra.args)
+    if(!is.null(admb_args)) cmd <- paste(cmd, admb_args)
 
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]

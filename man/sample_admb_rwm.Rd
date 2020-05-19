@@ -15,8 +15,9 @@ sample_admb_rwm(
   seed = NULL,
   control = NULL,
   verbose = TRUE,
+  duration = NULL,
   extra.args = NULL,
-  duration = NULL
+  admb_args = NULL
 )
 }
 \arguments{
@@ -48,11 +49,11 @@ further use.}
 
 \item{verbose}{Boolean for whether to print ADMB output to console.}
 
-\item{extra.args}{Character string of extra command line argument to
-pass to ADMB.}
-
 \item{duration}{The number of minutes after which the model
 will quit running.}
+
+\item{admb_args}{Character string of extra command line argument to
+pass to ADMB.}
 }
 \description{
 A low level function to run a single chain. Unlikely to be used by a

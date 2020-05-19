@@ -16,6 +16,7 @@ sample_admb_nuts(
   duration = NULL,
   control = NULL,
   verbose = TRUE,
+  admb_args = admb_args,
   extra.args = NULL
 )
 }
@@ -51,7 +52,7 @@ further use.}
 
 \item{verbose}{Boolean for whether to print ADMB output to console.}
 
-\item{extra.args}{Character string of extra command line argument to
+\item{admb_args}{Character string of extra command line argument to
 pass to ADMB.}
 }
 \description{

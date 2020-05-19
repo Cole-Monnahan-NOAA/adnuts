@@ -20,6 +20,8 @@ sample_admb(
   control = NULL,
   algorithm = "NUTS",
   skip_monitor = FALSE,
+  skip_unbounded = FALSE,
+  admb_args = NULL,
   ...
 )
 }
@@ -79,6 +81,14 @@ recreate it post-hoc by setting
 \code{fit$monitor=rstan::monitor(fit$samples, fit$warmup,
 print=FALSE)}.}
 
+\item{skip_unbounded}{Whether to skip returning the unbounded
+version of the posterior samples in addition to the bounded
+ones. It may be advisable to set to FALSE for very large
+models to save space.}
+
+\item{admb_args}{A character string which gets passed to the
+command line, allowing finer control}
+
 \item{...}{Further arguments to be passed to the algorithm. See help
 files for the samplers for further arguments.}
 }
@@ -93,8 +103,9 @@ execution reduces overall run time.
 This function implements algorithm 6 of Hoffman and Gelman (2014),
 and loosely follows package \code{rstan}. The step size can be
   adapted or specified manually. The metric (i.e., mass matrix) can be
-  unit diagonal, adapted diagonal (default and recommended), or a dense
-  matrix specified by the user. Further control of algorithms can be
+  unit diagonal, adapted diagonal (default and recommended), a dense
+  matrix specified by the user, or an adapted dense matrix.
+ Further control of algorithms can be
   specified with the \code{control} argument.  Elements are:
 \describe{
 \item{adapt_delta}{The target acceptance rate. D}
@@ -104,10 +115,26 @@ and loosely follows package \code{rstan}. The step size can be
 \item{adapt_delta}{Whether adaptation of step size is turned on.}
 \item{adapt_mass}{Whether adaptation of mass matrix is turned
   on. Currently only allowed for diagonal metric.}
+\item{adapt_mass_dense}{Whether dense adaptation of mass
+  matrix is turned on.}
 \item{max_treedepth}{Maximum treedepth for the NUTS algorithm.}
 \item{stepsize}{The stepsize for the NUTS algorithm. If \code{NULL} it
   will be adapted during warmup.}
+\item{adapt_init_buffer}{The initial buffer size during mass matrix
+  adaptation where sample information is not used (default
+  50)}
+\item{adapt_term_buffer}{The terminal buffer size (default 75)
+  during mass
+  matrix adpatation (final fast phase)}
+\item{adapt_window}{The initial size of the mass matrix
+  adaptation window, which gets doubled each time thereafter.}
+\item{refresh}{The rate at which to refresh progress to the
+  console. Defaults to even 10%. A value of 0 turns off
+  progress updates.}
 }
+The adaptation scheme (step size and mass matrix) is based heavily on those by the
+  software Stan, and more details can be found in that
+  documentation and this vignette.
 }
 \section{Warning}{
 

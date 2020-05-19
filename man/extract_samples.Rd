@@ -4,7 +4,13 @@
 \alias{extract_samples}
 \title{Extract posterior samples from a model fit.}
 \usage{
-extract_samples(fit, inc_warmup = FALSE, inc_lp = FALSE, as.list = FALSE)
+extract_samples(
+  fit,
+  inc_warmup = FALSE,
+  inc_lp = FALSE,
+  as.list = FALSE,
+  unbounded = FALSE
+)
 }
 \arguments{
 \item{fit}{A list returned by \code{sample_admb}.}
@@ -18,6 +24,11 @@ be useful for diagnostics.}
 
 \item{as.list}{Whether to return the samples as a list (one element per
 chain). This could then be converted to a CODA mcmc object.}
+
+\item{unbounded}{Boolean flag whether to return samples in
+unbounded (untransformed) space. Will only be differences
+when init_bounded types are used in the ADMB template. This
+can be useful for model debugging.}
 }
 \value{
 If as.list is FALSE, an invisible data.frame containing samples
