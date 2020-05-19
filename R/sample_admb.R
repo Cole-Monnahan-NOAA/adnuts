@@ -68,6 +68,10 @@
 #'   recreate it post-hoc by setting
 #'   \code{fit$monitor=rstan::monitor(fit$samples, fit$warmup,
 #'   print=FALSE)}.
+#' @param skip_unbounded Whether to skip returning the unbounded
+#'   version of the posterior samples in addition to the bounded
+#'   ones. It may be advisable to set to FALSE for very large
+#'   models to save space.
 #' @param ... Further arguments to be passed to the algorithm. See help
 #'   files for the samplers for further arguments.
 #' @section Warning:
@@ -104,7 +108,9 @@
 sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
-                        algorithm="NUTS", skip_monitor=FALSE, ...){
+                        algorithm="NUTS", skip_monitor=FALSE,
+                        skip_unbounded=FALSE,
+                        ...){
   ## Argument checking and processing
   if (!missing(parallel)) {
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
@@ -190,10 +196,13 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   } else {
     N <- iter/thin
   }
-  samples <- array(NA, dim=c(N, chains, 1+length(par.names)),
+  samples <- samples.unbounded <- array(NA, dim=c(N, chains, 1+length(par.names)),
                    dimnames=list(NULL, NULL, c(par.names,'lp__')))
-  for(i in 1:chains)
+  for(i in 1:chains){
     samples[,i,] <- mcmc.out[[i]]$samples[1:N,]
+    samples.unbounded[,i,] <-
+      cbind(mcmc.out[[i]]$unbounded[1:N,], mcmc.out[[i]]$samples[,1+length(par.names)])
+  }
   if(algorithm=="NUTS")
     sampler_params <-
       lapply(mcmc.out, function(x) x$sampler_params[1:N,])
@@ -230,7 +239,9 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     message('Skipping ESS and Rhat statistics..')
     mon <- NULL
   }
+  if(skip_unbounded) samples.unbounded <- NULL
   result <- list(samples=samples, sampler_params=sampler_params,
+                 samples_unbounded=samples.unbounded,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
                  model=model, max_treedepth=mcmc.out[[1]]$max_treedepth,

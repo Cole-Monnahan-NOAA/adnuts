@@ -28,6 +28,8 @@
 #' @param limits A list containing the ranges for each parameter
 #'   to use in plotting.
 #' @param add.monitor Boolean whether to print effective sample
+#' @param unbounded Whether to use the bounded or unbounded
+#'   version of the parameters.
 #'   size (ESS) and Rhat values on the diagonal.
 #' @return Produces a plot, and returns nothing.
 #' @details This function is modified from the base \code{pairs}
@@ -55,12 +57,16 @@ pairs_admb <- function(fit, order=NULL,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        pars=NULL, label.cex=.8, limits=NULL,
-                       add.monitor=TRUE,
+                       add.monitor=TRUE, unbounded=FALSE,
                        ...){
   if(!is.adfit(fit))
     stop("Argument 'fit' is not a valid object returned by 'sample_admb'")
-  mle <- fit$mle
-  posterior <- extract_samples(fit, inc_lp=TRUE)
+  if(unbounded){
+    mle <- NULL
+  } else {
+    mle <- fit$mle
+  }
+  posterior <- extract_samples(fit, inc_lp=TRUE, unbounded=unbounded)
   chains <- rep(1:dim(fit$samples)[2], each=dim(fit$samples)[1]-fit$warmup)
   divs <- if(fit$algorithm=="NUTS")
             extract_sampler_params(fit)$divergent__ else NULL

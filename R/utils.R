@@ -460,6 +460,10 @@ launch_shinyadmb <- function(fit){
 #'   (last column). For diagnostics it can be useful.
 #' @param as.list Whether to return the samples as a list (one element per
 #'   chain). This could then be converted to a CODA mcmc object.
+#' @param unbounded Boolean flag whether to return samples in
+#'   unbounded (untransformed) space. Will only be differences
+#'   when init_bounded types are used in the ADMB template. This
+#'   can be useful for model debugging.
 #' @return If as.list is FALSE, an invisible data.frame containing samples
 #'   (rows) of each parameter (columns). If multiple chains exist they will
 #'   be rbinded together, maintaining order within each chain. If as.list
@@ -470,8 +474,17 @@ launch_shinyadmb <- function(fit){
 #' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
 #' post <- extract_samples(fit)
 #' tail(apply(post, 2, median))
-extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE, as.list=FALSE){
-  x <- fit$samples
+extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE,
+                            as.list=FALSE, unbounded=FALSE){
+  if(!is.adfit(fit)) stop("fit is not a valid object")
+  if(unbounded){
+    x <- fit$samples_unbounded
+    if(is.null(x))
+      stop("No unbounded parameters in this fit")
+  } else {
+    x <- fit$samples
+    if(is.null(x)) stop("No posterior samples found")
+  }
   if(!is.array(x)) stop("fit$samples is not an array -- valid fit object?")
   ind <- if(inc_warmup) 1:dim(x)[1] else -(1:fit$warmup)
   ## Drop LP
