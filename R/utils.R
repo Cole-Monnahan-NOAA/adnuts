@@ -343,7 +343,7 @@ check_identifiable <- function(model, path=getwd()){
 ##   in \code{control}
 .update_control <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
-                  adapt_mass=TRUE, max_treedepth=12, w1=75, w2=50, w3=25)
+                  adapt_mass=TRUE, max_treedepth=12)
   if(is.matrix(control$metric) & !is.null(control$adapt_mass)){
     if(control$adapt_mass==TRUE){
       warning("Mass matrix adaptation disabled if metric is a matrix")

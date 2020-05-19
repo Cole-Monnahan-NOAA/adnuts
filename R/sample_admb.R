@@ -279,6 +279,12 @@ sample_admb_nuts <- function(path, model, iter=2000,
   if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
   cmd <- paste(cmd, "-max_treedepth", max_td, "-adapt_delta", adapt_delta)
   if(!is.null(eps)) cmd <- paste(cmd, "-hyeps", eps)
+  if(!is.null(control$adapt_init_buffer))
+    cmd <- paste(cmd, "-adapt_init_buffer", control$adapt_init_buffer)
+  if(!is.null(control$adapt_term_buffer))
+    cmd <- paste(cmd, "-adapt_term_buffer", control$adapt_term_buffer)
+  if(!is.null(control$adapt_window))
+    cmd <- paste(cmd, "-adapt_window", control$adapt_window)
 
   ## Three options for metric. (1) 'mle' is to use the MLE estimates in
   ## admodel.cov without mass adaptation. (2) If a matrix is passed, this
