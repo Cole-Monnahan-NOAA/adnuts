@@ -342,18 +342,13 @@ check_identifiable <- function(model, path=getwd()){
 ## @return A list with default control elements updated by those supplied
 ##   in \code{control}
 .update_control <- function(control){
-  default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
-                  adapt_mass=TRUE, max_treedepth=12)
-  if(is.matrix(control$metric) & !is.null(control$adapt_mass)){
-    if(control$adapt_mass==TRUE){
-      warning("Mass matrix adaptation disabled if metric is a matrix")
-    }
-    control$adapt_mass <- FALSE
-  }
+  default <- list(adapt_delta=0.8, metric='unit', stepsize=NULL,
+                  adapt_mass=TRUE, adapt_mass_dense=FALSE,
+                  max_treedepth=12)
   new <- default
   if(!is.null(control))
     for(i in names(control))  new[[i]] <- control[[i]]
-  if(is.matrix(new$metric)) new$adapt_mass <- FALSE
+  if(new$adapt_mass_dense & new$adapt_mass) new$adapt_mass <- FALSE
   return(new)
 }
 

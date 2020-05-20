@@ -302,7 +302,6 @@ sample_admb_nuts <- function(path, model, iter=2000,
   ## Now contains all required NUTS arguments
   control <- .update_control(control)
   eps <- control$stepsize
-  metric <- control$metric
   stopifnot(iter >= 1)
   stopifnot(warmup <= iter)
   stopifnot(duration > 0)
@@ -311,7 +310,6 @@ sample_admb_nuts <- function(path, model, iter=2000,
   if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
-  adapt_mass <- control$adapt_mass
 
   ## Build the command to run the model
   cmd <- paste(model,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
@@ -328,16 +326,18 @@ sample_admb_nuts <- function(path, model, iter=2000,
     cmd <- paste(cmd, "-adapt_window", control$adapt_window)
   if(!is.null(control$refresh))
     cmd <- paste(cmd, "-refresh", control$refresh)
+  if(control$adapt_mass)
+    cmd <- paste(cmd, "-adapt_mass", control$adapt_mass)
+  if(control$adapt_mass_dense)
+    cmd <- paste(cmd, "-adapt_mass_dense", control$adapt_mass_dense)
 
   ## Three options for metric. (1) 'mle' is to use the MLE estimates in
   ## admodel.cov without mass adaptation. (2) If a matrix is passed, this
   ## is written to file admodel.cov and no adaptation is done. (3) (default)
   ## Adaptation starting with diagonal. (4) Diagonal without mass adaptation.
-  if(is.null(metric)) {
-    ## The default: Use mass matrix adaptating starting from unit
-    ## diag. Currently the only option where mass adaptation is used.
-    cmd <- paste(cmd, '-adapt_mass')
-  } else if(is.matrix(metric)){
+  metric <- control$metric
+  stopifnot(!is.null(metric))
+  if(is.matrix(metric)){
     ## User defined one will be writen to admodel.cov
     if(!requireNamespace("matrixcalc", quietly = TRUE))
       stop("Package 'matrixcalc' is required to pass a matrix.\n Install it and try again.")
@@ -346,14 +346,10 @@ sample_admb_nuts <- function(path, model, iter=2000,
       stop("Invalid mass matrix passed: it is not positive definite.\n Check 'metric' argument or use different option.")
     .write.admb.cov(metric, hbf=1)
     warning("admodel.cov overwritten, revert admodel_original.cov if needed")
-    if(adapt_mass){
-      warning("Mass matrix adaptation not allowed with user-specified matrix")
-      adapt_mass <- FALSE
-    }
-  } else if(metric=='unit') {
-    ## Identity in unbounded space, without mass adapataion
-    cmd <- paste(cmd, "-mcdiag")
-  } else if(metric=='mle') {
+  } else if(is.character(metric) && metric == 'unit') {
+    ## The default: Start from unit diag.
+    cmd <- paste(cmd, '-mcdiag')
+  } else if(is.character(metric) && metric=='mle') {
     ## ADMB default so do nothing special. No adaptation, will use
     ## estimated MLE covariance matrix in unbounded space (read from
     ## admodel.cov)
