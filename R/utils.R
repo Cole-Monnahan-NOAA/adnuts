@@ -69,18 +69,26 @@ print.adfit <- function(fit){
 #' Plot marginal distributions for a fitted model
 #'
 #' @param fit A fitted object returned by
-#' \code{\link{sample_admb}}.
-#' @param mon An object returned by rstan::monitor(fit)
+#'   \code{\link{sample_admb}}.
+#' @param pars A numeric or character vector of parameters which
+#'   to plot, for plotting a subset of the total (defaults to all)
+#' @param mfrow A custom grid size (vector of two) to be called
+#'   as \code{par(mfrow)}, overriding the defaults.
+#' @param add.mle Whether to add marginal normal distributions
+#'   determined from the inverse Hessian file
+#' @param add.monitor Whether to add ESS and Rhat information
+#' @param breaks The number of breaks to use in \code{hist()},
+#'   defaulting to 30
 #' @export
 #'
-#' @details This function plots 4x4 grid cells of all parameters
+#' @details This function plots grid cells of all parameters
 #'   in a model, comparing the marginal posterior histogram vs
 #'   the asympotitic normal (red lines) from the inverse
 #'   Hessian. Its intended use is to quickly gauge differences
 #'   between frequentist and Bayesian inference on the same
 #'   model.
 #'
-#' If argument \code{mon} is provided, the effective sample size
+#' If \code{fit$monitor} exists the effective sample size
 #' (ESS) and R-hat estimates are printed in the top right
 #' corner. See
 #' \url{https://mc-stan.org/rstan/reference/Rhat.html} for more
@@ -90,40 +98,78 @@ print.adfit <- function(fit){
 #' This function is customized to work with multipage PDFs,
 #' specifically:
 #' \code{pdf('marginals.pdf', onefile=TRUE, width=7,height=5)}
+#' produces a nice readable file.
 #' @examples
-#' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
-#' mon <- rstan::monitor(fit$samples, warmup=fit$warmup, print=FALSE)
-#' plot_marginals(fit, mon)
+#' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
+#' plot_marginals(fit, pars=1:4)
+#' plot_marginals(fit, pars=c("sigmap", 'sigmaphi', 'sigmayearphi'))
 #'
-plot_marginals <- function(fit, mon=NULL){
+plot_marginals <- function(fit, pars=NULL, mfrow=NULL,
+                           add.mle=TRUE, add.monitor=TRUE,
+                           breaks=30){
+  if(!is.adfit(fit)) stop("fit is not a valid object")
+  if(!is.null(mfrow)) stopifnot(is.vector(mfrow) && length(mfrow)==2)
+  if(!add.mle) fit$mle <- NULL
+  if(!add.monitor) fit$monitor <- NULL
   par.old <- par()
   on.exit(par(mfrow=par.old$mfrow, mar=par.old$mar,
               mgp=par.old$mgp, oma=par.old$oma, tck=par.old$tck))
-  if(!is.list(fit) | is.null(fit$samples) )
-    stop("Argument 'fit' needs to be a list returned by sample_admb")
-  if(!is.null(mon) & class(mon)[1] != 'simsummary')
-    stop("Argument 'mon' needs to be an object returned by rstan::monitor")
   if(is.null(fit$mle)) message("No MLE information found in fit$mle")
-  posterior <- extract_samples(fit)
+  posterior <- extract_samples(fit, inc_lp=FALSE)
+  par.names <- names(posterior)
+  if(is.null(pars)) pars <- par.names
+  if(is.character(pars[1])){
+    pars.ind <- match(x=pars, table=par.names)
+    if(any(is.na(pars.ind))){
+      warning("Some par names did not match -- dropped")
+      print(pars[is.na(pars.ind)])
+      pars.ind <- pars.ind[!is.na(pars.ind)]
+    }
+    pars <- pars.ind
+  } else if(any(pars > NCOL(posterior))){
+    warning("Some par numbers too big -- dropped")
+    print(pars[pars > NCOL(posterior)])
+    pars <- pars[ pars <=NCOL(posterior)]
+  }
+  n <- length(pars)
+  stopifnot(is.numeric(pars[1]))
   stopifnot(ncol(posterior)>1)
-  par(mfrow=c(4,4), mar=c(1.5,0,.1,0), mgp=c(2,.4,0),
+  par(mar=c(1.5,0,.1,0), mgp=c(2,.4,0),
       oma=c(.25,.25,.25,.25), tck=-.02)
-  for(ii in 1:ncol(posterior)){
-    par <- names(posterior)[ii]
+  if(!is.null(mfrow)){
+    par(mfrow=mfrow)
+  } else if(n>12){
+    par(mfrow=c(4,4))
+  } else if(n>9){
+    par(mfrow=c(4,3))
+  } else if(n>6){
+    par(mfrow=c(3,3))
+  } else if(n>4){
+    par(mfrow=c(3,2))
+  } else if(n>3){
+    par(mfrow=c(2,2))
+  } else {
+    par(mfrow=c(1,n))
+  }
+  for(ii in pars){
+    par <- par.names[ii]
     if(!is.null(fit$mle)){
       mle <- fit$mle$est[ii]
       se <-  fit$mle$se[ii]
       x1 <- seq(qnorm(.001, mle, se), qnorm(.999, mle, se), len=100)
       y1 <- dnorm(x1, mle, se)
+    } else{
+      x1 <- y1 <- NULL
     }
-    tmp <- hist(posterior[,ii], plot=FALSE, breaks=30)
+    tmp <- hist(posterior[,ii], plot=FALSE, breaks=breaks)
     x2 <- tmp$mids; y2 <- tmp$density
     plot(0,0, type='n', xlim=range(c(x1,x2)), yaxs='i',
          ylim=c(0, max(c(y1,y2))*1.3), axes=FALSE, ann=FALSE)
-    hist(posterior[,ii], breaks=30, add=TRUE, yaxs='i', freq=FALSE, col=gray(.8))
+    hist(posterior[,ii], breaks=breaks, add=TRUE, yaxs='i', freq=FALSE, col=gray(.8))
     axis(1);  box(col=gray(.5));
     if(!is.null(fit$mle)) lines(x1,y1, col='red', lwd=2)
-    if(!is.null(mon)){
+    if(!is.null(fit$monitor)){
+      mon <- fit$monitor
       ## add ESS and Rhat to top right
       tmp <- par("usr"); xy <- c(.85,.88)
       text.x <- tmp[1]+xy[1]*diff(tmp[1:2])
