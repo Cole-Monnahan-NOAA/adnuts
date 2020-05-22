@@ -26,11 +26,11 @@ sample_tmb_hmc(
 \item{gr}{A function that returns a vector of gradients of the log of
 the posterior density (same as \code{fn}).}
 
-\item{init}{A list of lists containing the initial parameter vectors,
-one for each chain or a function. It is strongly recommended to
-initialize multiple chains from dispersed points. A of NULL signifies
-to use the starting values present in the model (i.e., \code{obj$par})
-for all chains.}
+\item{init}{A list of lists containing the initial parameter
+vectors, one for each chain or a function. It is strongly
+recommended to initialize multiple chains from dispersed
+points. A of NULL signifies to use the starting values
+present in the model (i.e., \code{obj$par}) for all chains.}
 
 \item{L}{The number of leapfrog steps to take. The NUTS algorithm does
 not require this as an input. If \code{L=1} this function will perform
@@ -48,8 +48,8 @@ the first \code{warmup} steps.}
 
 \item{chain}{The chain number, for printing only.}
 
-\item{thin}{The thinning rate to apply to samples. Typically not used
-with NUTS.}
+\item{thin}{The thinning rate to apply to samples. Typically
+not used with NUTS.}
 
 \item{control}{A list to control the sampler. See details for
 further use.}

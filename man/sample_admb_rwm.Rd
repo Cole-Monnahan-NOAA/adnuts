@@ -17,7 +17,8 @@ sample_admb_rwm(
   verbose = TRUE,
   duration = NULL,
   extra.args = NULL,
-  admb_args = NULL
+  admb_args = NULL,
+  skip_optimization = TRUE
 )
 }
 \arguments{
@@ -29,16 +30,16 @@ subdirectory, particularly for parallel.}
 
 \item{iter}{The number of samples to draw.}
 
-\item{thin}{The thinning rate to apply to samples. Typically not used
-with NUTS.}
+\item{thin}{The thinning rate to apply to samples. Typically
+not used with NUTS.}
 
 \item{warmup}{The number of warmup iterations.}
 
-\item{init}{A list of lists containing the initial parameter vectors,
-one for each chain or a function. It is strongly recommended to
-initialize multiple chains from dispersed points. A of NULL signifies
-to use the starting values present in the model (i.e., \code{obj$par})
-for all chains.}
+\item{init}{A list of lists containing the initial parameter
+vectors, one for each chain or a function. It is strongly
+recommended to initialize multiple chains from dispersed
+points. A of NULL signifies to use the starting values
+present in the model (i.e., \code{obj$par}) for all chains.}
 
 \item{chain}{Chain number, for printing purposes only.}
 
@@ -54,6 +55,11 @@ will quit running.}
 
 \item{admb_args}{Character string of extra command line argument to
 pass to ADMB.}
+
+\item{skip_optimization}{Whether to run the optimizer before
+running MCMC. This is rarely need as it is better to run it
+once before to get the covariance matrix, or the estimates
+are not needed with adaptive NUTS.}
 }
 \description{
 A low level function to run a single chain. Unlikely to be used by a

@@ -4,13 +4,14 @@
 \alias{plot_marginals}
 \title{Plot marginal distributions for a fitted model}
 \usage{
-plot_marginals(fit, mon = NULL)
+plot_marginals(fit, pars = NULL)
 }
 \arguments{
 \item{fit}{A fitted object returned by
 \code{\link{sample_admb}}.}
 
-\item{mon}{An object returned by rstan::monitor(fit)}
+\item{pars}{A numeric or character vector of parameters which
+to plot, for plotting a subset of the total}
 }
 \description{
 Plot marginal distributions for a fitted model
@@ -23,7 +24,7 @@ This function plots 4x4 grid cells of all parameters
   between frequentist and Bayesian inference on the same
   model.
 
-If argument \code{mon} is provided, the effective sample size
+If \code{fit$monitor} exists the effective sample size
 (ESS) and R-hat estimates are printed in the top right
 corner. See
 \url{https://mc-stan.org/rstan/reference/Rhat.html} for more
@@ -35,8 +36,7 @@ specifically:
 \code{pdf('marginals.pdf', onefile=TRUE, width=7,height=5)}
 }
 \examples{
-fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
-mon <- rstan::monitor(fit$samples, warmup=fit$warmup, print=FALSE)
-plot_marginals(fit, mon)
+fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
+plot_marginals(fit)
 
 }

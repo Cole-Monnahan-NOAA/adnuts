@@ -15,6 +15,7 @@ sample_admb_nuts(
   seed = NULL,
   duration = NULL,
   control = NULL,
+  skip_optimization = TRUE,
   verbose = TRUE,
   admb_args = admb_args,
   extra.args = NULL
@@ -29,16 +30,16 @@ subdirectory, particularly for parallel.}
 
 \item{iter}{The number of samples to draw.}
 
-\item{init}{A list of lists containing the initial parameter vectors,
-one for each chain or a function. It is strongly recommended to
-initialize multiple chains from dispersed points. A of NULL signifies
-to use the starting values present in the model (i.e., \code{obj$par})
-for all chains.}
+\item{init}{A list of lists containing the initial parameter
+vectors, one for each chain or a function. It is strongly
+recommended to initialize multiple chains from dispersed
+points. A of NULL signifies to use the starting values
+present in the model (i.e., \code{obj$par}) for all chains.}
 
 \item{chain}{Chain number, for printing purposes only.}
 
-\item{thin}{The thinning rate to apply to samples. Typically not used
-with NUTS.}
+\item{thin}{The thinning rate to apply to samples. Typically
+not used with NUTS.}
 
 \item{warmup}{The number of warmup iterations.}
 
@@ -49,6 +50,11 @@ will quit running.}
 
 \item{control}{A list to control the sampler. See details for
 further use.}
+
+\item{skip_optimization}{Whether to run the optimizer before
+running MCMC. This is rarely need as it is better to run it
+once before to get the covariance matrix, or the estimates
+are not needed with adaptive NUTS.}
 
 \item{verbose}{Boolean for whether to print ADMB output to console.}
 

@@ -25,18 +25,18 @@ sample_tmb_nuts(
 \item{gr}{A function that returns a vector of gradients of the log of
 the posterior density (same as \code{fn}).}
 
-\item{init}{A list of lists containing the initial parameter vectors,
-one for each chain or a function. It is strongly recommended to
-initialize multiple chains from dispersed points. A of NULL signifies
-to use the starting values present in the model (i.e., \code{obj$par})
-for all chains.}
+\item{init}{A list of lists containing the initial parameter
+vectors, one for each chain or a function. It is strongly
+recommended to initialize multiple chains from dispersed
+points. A of NULL signifies to use the starting values
+present in the model (i.e., \code{obj$par}) for all chains.}
 
 \item{warmup}{The number of warmup iterations.}
 
 \item{chain}{The chain number, for printing only.}
 
-\item{thin}{The thinning rate to apply to samples. Typically not used
-with NUTS.}
+\item{thin}{The thinning rate to apply to samples. Typically
+not used with NUTS.}
 
 \item{seed}{The random seed to use.}
 

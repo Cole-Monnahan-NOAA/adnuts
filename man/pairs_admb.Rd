@@ -15,6 +15,7 @@ pairs_admb(
   pars = NULL,
   label.cex = 0.8,
   limits = NULL,
+  add.mle = TRUE,
   add.monitor = TRUE,
   unbounded = FALSE,
   ...
@@ -76,7 +77,7 @@ This function is modified from the base \code{pairs}
   \package{adnuts} package using either the NUTS or RWM MCMC
   algorithms. If an invertible Hessian was found (in
   \code{fit$mle}) then estimated covariances are available to
-  compare and added automatically (blue ellipses). Likewise, a
+  compare and added automatically (red ellipses). Likewise, a
   "monitor" object from \code{rstan::monitor} is attached as
   \code{fit$monitor} and provides effective sample sizes (ESS)
   and Rhat values. The ESS are used to potentially order the

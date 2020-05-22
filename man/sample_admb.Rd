@@ -19,8 +19,9 @@ sample_admb(
   cores = NULL,
   control = NULL,
   algorithm = "NUTS",
+  skip_optimization = TRUE,
   skip_monitor = FALSE,
-  skip_unbounded = FALSE,
+  skip_unbounded = TRUE,
   admb_args = NULL,
   ...
 )
@@ -34,11 +35,11 @@ subdirectory, particularly for parallel.}
 
 \item{iter}{The number of samples to draw.}
 
-\item{init}{A list of lists containing the initial parameter vectors,
-one for each chain or a function. It is strongly recommended to
-initialize multiple chains from dispersed points. A of NULL signifies
-to use the starting values present in the model (i.e., \code{obj$par})
-for all chains.}
+\item{init}{A list of lists containing the initial parameter
+vectors, one for each chain or a function. It is strongly
+recommended to initialize multiple chains from dispersed
+points. A of NULL signifies to use the starting values
+present in the model (i.e., \code{obj$par}) for all chains.}
 
 \item{chains}{The number of chains to run.}
 
@@ -46,8 +47,8 @@ for all chains.}
 
 \item{seeds}{A vector of seeds, one for each chain.}
 
-\item{thin}{The thinning rate to apply to samples. Typically not used
-with NUTS.}
+\item{thin}{The thinning rate to apply to samples. Typically
+not used with NUTS.}
 
 \item{mceval}{Whether to run the model with \code{-mceval} on
 samples from merged chains.}
@@ -71,15 +72,19 @@ available. HMC is deprecated but may be of use in special
 situations. These algorithms require different arguments;
 see their help files for more information.}
 
+\item{skip_optimization}{Whether to run the optimizer before
+running MCMC. This is rarely need as it is better to run it
+once before to get the covariance matrix, or the estimates
+are not needed with adaptive NUTS.}
+
 \item{skip_monitor}{Whether to skip calculating diagnostics
-(effective sample size, Rhat) via the
-\code{rstan::monitor} function. This can be slow for
-models with high dimension or many iterations. The result is
-used in plots and summaries so it is recommended to turn
-on. If model run with \code{skip_monitor=FALSE} you can
-recreate it post-hoc by setting
-\code{fit$monitor=rstan::monitor(fit$samples, fit$warmup,
-print=FALSE)}.}
+(effective sample size, Rhat) via the \code{rstan::monitor}
+function. This can be slow for models with high dimension or
+many iterations. The result is used in plots and summaries
+so it is recommended to turn on. If model run with
+\code{skip_monitor=FALSE} you can recreate it post-hoc by
+setting \code{fit$monitor=rstan::monitor(fit$samples,
+fit$warmup, print=FALSE)}.}
 
 \item{skip_unbounded}{Whether to skip returning the unbounded
 version of the posterior samples in addition to the bounded
@@ -89,8 +94,9 @@ models to save space.}
 \item{admb_args}{A character string which gets passed to the
 command line, allowing finer control}
 
-\item{...}{Further arguments to be passed to the algorithm. See help
-files for the samplers for further arguments.}
+\item{...}{Further arguments to be passed to the
+algorithm. See help files for the samplers for further
+arguments.}
 }
 \description{
 Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
@@ -137,14 +143,15 @@ The adaptation scheme (step size and mass matrix) is based heavily on those by t
   documentation and this vignette.
 }
 \section{Warning}{
-
-The user is responsible for specifying the model properly (priors,
-  starting values, desired parameters fixed, etc.), as well as assessing
-  the convergence and validity of the resulting samples (e.g., through
-  the \code{coda} package), or with function
-  \code{\link{launch_shinytmb}} before making inference. Specifically,
-  priors must be specified in the template file for each
-  parameter. Unspecified priors will be implicitly uniform.
+ The user is responsible for specifying the
+  model properly (priors, starting values, desired parameters
+  fixed, etc.), as well as assessing the convergence and
+  validity of the resulting samples (e.g., through the
+  \code{coda} package), or with function
+  \code{\link{launch_shinytmb}} before making
+  inference. Specifically, priors must be specified in the
+  template file for each parameter. Unspecified priors will be
+  implicitly uniform.
 }
 
 \examples{

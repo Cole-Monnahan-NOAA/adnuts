@@ -28,11 +28,11 @@ sample_tmb(
 
 \item{iter}{The number of samples to draw.}
 
-\item{init}{A list of lists containing the initial parameter vectors,
-one for each chain or a function. It is strongly recommended to
-initialize multiple chains from dispersed points. A of NULL signifies
-to use the starting values present in the model (i.e., \code{obj$par})
-for all chains.}
+\item{init}{A list of lists containing the initial parameter
+vectors, one for each chain or a function. It is strongly
+recommended to initialize multiple chains from dispersed
+points. A of NULL signifies to use the starting values
+present in the model (i.e., \code{obj$par}) for all chains.}
 
 \item{chains}{The number of chains to run.}
 
@@ -46,8 +46,8 @@ for all chains.}
 \item{upper}{A vector of upper bounds for parameters. Allowed values are
 Inf and numeric.}
 
-\item{thin}{The thinning rate to apply to samples. Typically not used
-with NUTS.}
+\item{thin}{The thinning rate to apply to samples. Typically
+not used with NUTS.}
 
 \item{parallel}{A boolean for whether to use parallel
 cores. The package snowfall is used if TRUE.}
@@ -73,8 +73,9 @@ functionality and integrate across all parameters with MCMC.}
 \item{control}{A list to control the sampler. See details for
 further use.}
 
-\item{...}{Further arguments to be passed to the algorithm. See help
-files for the samplers for further arguments.}
+\item{...}{Further arguments to be passed to the
+algorithm. See help files for the samplers for further
+arguments.}
 }
 \value{
 A list containing the samples, and properties of the sampler
@@ -106,14 +107,15 @@ and loosely follows package \code{rstan}. The step size can be
 }
 }
 \section{Warning}{
-
-The user is responsible for specifying the model properly (priors,
-  starting values, desired parameters fixed, etc.), as well as assessing
-  the convergence and validity of the resulting samples (e.g., through
-  the \code{coda} package), or with function
-  \code{\link{launch_shinytmb}} before making inference. Specifically,
-  priors must be specified in the template file for each
-  parameter. Unspecified priors will be implicitly uniform.
+ The user is responsible for specifying the
+  model properly (priors, starting values, desired parameters
+  fixed, etc.), as well as assessing the convergence and
+  validity of the resulting samples (e.g., through the
+  \code{coda} package), or with function
+  \code{\link{launch_shinytmb}} before making
+  inference. Specifically, priors must be specified in the
+  template file for each parameter. Unspecified priors will be
+  implicitly uniform.
 }
 
 \examples{

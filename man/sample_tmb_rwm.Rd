@@ -22,11 +22,11 @@ sample_tmb_rwm(
 
 \item{fn}{A function that returns the log of the posterior density.}
 
-\item{init}{A list of lists containing the initial parameter vectors,
-one for each chain or a function. It is strongly recommended to
-initialize multiple chains from dispersed points. A of NULL signifies
-to use the starting values present in the model (i.e., \code{obj$par})
-for all chains.}
+\item{init}{A list of lists containing the initial parameter
+vectors, one for each chain or a function. It is strongly
+recommended to initialize multiple chains from dispersed
+points. A of NULL signifies to use the starting values
+present in the model (i.e., \code{obj$par}) for all chains.}
 
 \item{alpha}{The amount to scale the proposal, i.e,
 Xnew=Xcur+alpha*Xproposed where Xproposed is generated from a mean-zero
@@ -36,8 +36,8 @@ multivariate normal. Varying \code{alpha} varies the acceptance rate.}
 
 \item{warmup}{The number of warmup iterations.}
 
-\item{thin}{The thinning rate to apply to samples. Typically not used
-with NUTS.}
+\item{thin}{The thinning rate to apply to samples. Typically
+not used with NUTS.}
 
 \item{seed}{The random seed to use.}
 
