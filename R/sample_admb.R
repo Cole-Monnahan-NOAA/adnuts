@@ -303,6 +303,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 #' @param chain Chain number, for printing purposes only.
 #' @param admb_args Character string of extra command line argument to
 #' pass to ADMB.
+#' @param extra.args Deprecated, use \code{admb_args} instead
 #' @param verbose Boolean for whether to print ADMB output to console.
 #' @seealso \code{\link{sample_admb}}
 sample_admb_nuts <- function(path, model, iter=2000,
@@ -440,7 +441,7 @@ sample_admb_rwm <-
     setwd(path)
     ## Now contains all required NUTS arguments
     control <- .update_control(control)
-    metric <- control$metric
+    metric <- 'mle' ## only one allowed
     stopifnot(iter >= 1)
     stopifnot(warmup <= iter)
     stopifnot(duration > 0)

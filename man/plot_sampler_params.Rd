@@ -23,7 +23,6 @@ This utility function quickly plots the adaptation output of NUTS
 chains.
 }
 \examples{
-fit <- readRDS(system.file('examples', 'fit_admb.RDS',
-  package='adnuts'))
+fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 plot_sampler_params(fit)
 }

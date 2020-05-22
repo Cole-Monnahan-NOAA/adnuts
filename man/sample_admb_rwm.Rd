@@ -53,6 +53,8 @@ further use.}
 \item{duration}{The number of minutes after which the model
 will quit running.}
 
+\item{extra.args}{Deprecated, use \code{admb_args} instead}
+
 \item{admb_args}{Character string of extra command line argument to
 pass to ADMB.}
 

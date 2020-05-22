@@ -28,13 +28,14 @@
 #' @param limits A list containing the ranges for each parameter
 #'   to use in plotting.
 #' @param add.monitor Boolean whether to print effective sample
+#' @param add.mle Boolean whether to add 95\% confidence ellipses
 #' @param unbounded Whether to use the bounded or unbounded
 #'   version of the parameters.
 #'   size (ESS) and Rhat values on the diagonal.
 #' @return Produces a plot, and returns nothing.
 #' @details This function is modified from the base \code{pairs}
 #'   code to work specifically with fits from the
-#'   \package{adnuts} package using either the NUTS or RWM MCMC
+#'   'adnuts' package using either the NUTS or RWM MCMC
 #'   algorithms. If an invertible Hessian was found (in
 #'   \code{fit$mle}) then estimated covariances are available to
 #'   compare and added automatically (red ellipses). Likewise, a
@@ -46,7 +47,7 @@
 #' @export
 #' @author Cole Monnahan
 #' @examples
-#' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
+#' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 #' pairs_admb(fit)
 #' pairs_admb(fit, pars=1:2)
 #' pairs_admb(fit, pars=c('b', 'a'))

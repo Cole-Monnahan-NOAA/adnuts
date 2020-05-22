@@ -4,10 +4,15 @@
 \alias{print.adfit}
 \title{Print summary of adfit object}
 \usage{
-\method{print}{adfit}(fit)
+\method{print}{adfit}(x, ...)
 }
 \arguments{
-\item{fit}{Fitted object from \code{\link{sample_admb}}}
+\item{x}{Fitted object from \code{\link{sample_admb}}}
+
+\item{...}{Ignored}
+}
+\value{
+Summary printed to console
 }
 \description{
 Print summary of adfit object

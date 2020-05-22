@@ -4,10 +4,10 @@
 \alias{is.adfit}
 \title{Check object of class adfit}
 \usage{
-is.adfit(fit)
+is.adfit(x)
 }
 \arguments{
-\item{fit}{Returned list from \code{\link{sample_admb}}}
+\item{x}{Returned list from \code{\link{sample_admb}}}
 }
 \description{
 Check object of class adfit

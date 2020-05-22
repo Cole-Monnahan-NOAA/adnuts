@@ -51,7 +51,7 @@ This function is loosely based on the \pkg{rstan} function
 }
 \examples{
 ## A previously run fitted ADMB model
-fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
+fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 post <- extract_samples(fit)
 tail(apply(post, 2, median))
 }

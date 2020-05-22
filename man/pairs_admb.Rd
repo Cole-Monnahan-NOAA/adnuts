@@ -55,6 +55,8 @@ a few key ones.}
 \item{limits}{A list containing the ranges for each parameter
 to use in plotting.}
 
+\item{add.mle}{Boolean whether to add 95\% confidence ellipses}
+
 \item{add.monitor}{Boolean whether to print effective sample}
 
 \item{unbounded}{Whether to use the bounded or unbounded
@@ -74,7 +76,7 @@ confidence ellipses.
 \details{
 This function is modified from the base \code{pairs}
   code to work specifically with fits from the
-  \package{adnuts} package using either the NUTS or RWM MCMC
+  'adnuts' package using either the NUTS or RWM MCMC
   algorithms. If an invertible Hessian was found (in
   \code{fit$mle}) then estimated covariances are available to
   compare and added automatically (red ellipses). Likewise, a
@@ -85,7 +87,7 @@ This function is modified from the base \code{pairs}
   the diagonal.
 }
 \examples{
-fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
+fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 pairs_admb(fit)
 pairs_admb(fit, pars=1:2)
 pairs_admb(fit, pars=c('b', 'a'))

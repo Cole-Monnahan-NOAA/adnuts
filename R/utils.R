@@ -1,47 +1,55 @@
 
 #' Constructor for the "adfit" (A-D fit) class
-#' @param fit Fitted object from \code{\link{sample_admb}}
-#'
+#' @param x Fitted object from \code{\link{sample_admb}}
 #' @return An object of class "adfit"
 #' @export
-adfit <- function(fit){
-  stopifnot(is.list(fit))
-  if(is.null(fit$samples)) stop("Samples missing from fit")
-  if(is.null(fit$algorithm)) stop("Algorithm missing from fit")
-  class(fit) <- 'adfit'
-  fit
+adfit <- function(x){
+  stopifnot(is.list(x))
+  if(is.null(x$samples)) stop("Samples missing from fit")
+  if(is.null(x$algorithm)) stop("Algorithm missing from fit")
+  class(x) <- 'adfit'
+  x
 }
 
 #' Check object of class adfit
-#' @param fit Returned list from \code{\link{sample_admb}}
+#' @param x Returned list from \code{\link{sample_admb}}
 #' @export
-is.adfit <- function(fit) inherits(fit, "adfit")
+is.adfit <- function(x) inherits(x, "adfit")
 
 
 #' Plot object of class adfit
-#' @param fit Fitted object from \code{\link{sample_admb}}
+#' @param x Fitted object from \code{\link{sample_admb}}
+#' @param y Ignored
+#' @param ... Ignored
+#' @return Plot created
+#' @method plot adfit
 #' @export
-plot.adfit <- function(fit)
-  warning("plot.adfit not yet implemented -- try pairs_admb")
+plot.adfit <- function(x, y, ...) plot_marginals(x)
 
 #' Print summary of object of class adfit
-#' @param fit Fitted object from \code{\link{sample_admb}}
+#' @param object Fitted object from \code{\link{sample_admb}}
+#' @param ... Ignored
+#' @return Summary printed to screen
+#' @method summary adfit
 #' @export
-summary.adfit <- function(fit) print(fit)
+summary.adfit <- function(object, ...) print(object)
 
 #' Print summary of adfit object
-#' @param fit Fitted object from \code{\link{sample_admb}}
+#' @param x Fitted object from \code{\link{sample_admb}}
+#' @param ... Ignored
+#' @return Summary printed to console
+#' @method print adfit
 #' @export
-print.adfit <- function(fit){
-  iter <- dim(fit$samples)[1]
-  chains <- dim(fit$samples)[2]
-  pars <- dim(fit$samples)[3]
-  samples <- (iter-fit$warmup)*chains
-  with(fit, cat(paste0("Model '", fit$model,"'"), "has", pars,
-                       "pars, and was fit using", fit$algorithm,
-                           "with", iter, "iter and", chains,
-                           "chains\n"))
-  rt <- sum(fit$time.total)/chains
+print.adfit <- function(x, ...){
+  iter <- dim(x$samples)[1]
+  chains <- dim(x$samples)[2]
+  pars <- dim(x$samples)[3]
+  samples <- (iter-x$warmup)*chains
+  cat(paste0("Model '", x$model,"'"), "has", pars,
+      "pars, and was fit using", x$algorithm,
+      "with", iter, "iter and", chains,
+      "chains\n")
+  rt <- sum(x$time.total)/chains
   ru <- 'seconds'
   if(rt>60){
     rt <- rt/60; ru <- 'minutes'
@@ -49,17 +57,17 @@ print.adfit <- function(fit){
     rt <- rt/(60*60); ru <- 'hours'
   }
   cat("Average run time per chain was", round(rt,2),  ru, '\n')
-  if(!is.null(fit$monitor)){
-    minESS <- min(fit$monitor$n_eff)
-    maxRhat <- round(max(fit$monitor$Rhat),3)
+  if(!is.null(x$monitor)){
+    minESS <- min(x$monitor$n_eff)
+    maxRhat <- round(max(x$monitor$Rhat),3)
     cat(paste0("Minimum ESS=",
                    minESS,
                    " (",
                    round(100*minESS/samples,2),
                    "%), and maximum Rhat=", maxRhat, '\n'))
   }
-  if(fit$algorithm=='NUTS'){
-    ndivs <- sum(extract_sampler_params(fit)[,'divergent__'])
+  if(x$algorithm=='NUTS'){
+    ndivs <- sum(extract_sampler_params(x)[,'divergent__'])
     cat(paste0("There were ", ndivs, " divergences after warmup\n"))
   }
 }
@@ -101,8 +109,7 @@ print.adfit <- function(fit){
 #' produces a nice readable file.
 #' @examples
 #' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
-#' plot_marginals(fit, pars=1:4)
-#' plot_marginals(fit, pars=c("sigmap", 'sigmaphi', 'sigmayearphi'))
+#' plot_marginals(fit, pars=1:2)
 #'
 plot_marginals <- function(fit, pars=NULL, mfrow=NULL,
                            add.mle=TRUE, add.monitor=TRUE,
@@ -195,8 +202,7 @@ plot_marginals <- function(fit, pars=NULL, mfrow=NULL,
 #' @importFrom rlang .data
 #' @export
 #' @examples
-#' fit <- readRDS(system.file('examples', 'fit_admb.RDS',
-#'   package='adnuts'))
+#' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 #' plot_sampler_params(fit)
 plot_sampler_params <- function(fit, plot=TRUE){
   if(!requireNamespace("ggplot2", quietly=TRUE))
@@ -396,7 +402,8 @@ check_identifiable <- function(model, path=getwd()){
   new <- default
   if(!is.null(control))
     for(i in names(control))  new[[i]] <- control[[i]]
-  if(new$adapt_mass_dense & new$adapt_mass) new$adapt_mass <- FALSE
+  if(new$adapt_mass_dense & new$adapt_mass)
+    new$adapt_mass <- FALSE
   return(new)
 }
 
@@ -514,7 +521,7 @@ launch_shinyadmb <- function(fit){
 #' @export
 #' @examples
 #' ## A previously run fitted ADMB model
-#' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
+#' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 #' post <- extract_samples(fit)
 #' tail(apply(post, 2, median))
 extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE,
@@ -566,18 +573,9 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE,
 #' @seealso \code{\link{launch_shinyadmb}}.
 #' @export
 #' @examples
-#' fit <- readRDS(system.file('examples', 'fit_admb.RDS', package='adnuts'))
-#' ## Examine how step size and treedepth changes as the mass matrix updates
-#' ## during warmup
+#' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 #' sp <- extract_sampler_params(fit, inc_warmup=TRUE)
-#' plot(0,0, type='n', xlim=c(0,210), ylim=c(0,3), xlab='Iteration',
-#'      ylab='Step size (eps)')
-#' for(i in 1:2) lines(1:400, sp[sp$chain==i,4], col=i)
-#' legend('topright', cex=.7, legend=paste("chain1", 1:2), lty=1, col=1:2)
-#' plot(0,0, type='n', xlim=c(0,400), ylim=c(0,10), xlab='Iteration',
-#'      ylab='Treedepth')
-#' for(i in 1:2) lines(1:400, sp[sp$chain==i,5], col=i)
-#' legend('topright', cex=.7, legend=paste("chain1", 1:2), lty=1, col=1:2)
+#' str(sp)
 #'
 extract_sampler_params <- function(fit, inc_warmup=FALSE){
   x <- fit$sampler_params

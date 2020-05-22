@@ -60,6 +60,8 @@ are not needed with adaptive NUTS.}
 
 \item{admb_args}{Character string of extra command line argument to
 pass to ADMB.}
+
+\item{extra.args}{Deprecated, use \code{admb_args} instead}
 }
 \description{
 A low level function to run a single chain. Unlikely to be used by a

@@ -4,10 +4,10 @@
 \alias{adfit}
 \title{Constructor for the "adfit" (A-D fit) class}
 \usage{
-adfit(fit)
+adfit(x)
 }
 \arguments{
-\item{fit}{Fitted object from \code{\link{sample_admb}}}
+\item{x}{Fitted object from \code{\link{sample_admb}}}
 }
 \value{
 An object of class "adfit"

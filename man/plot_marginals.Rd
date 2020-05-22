@@ -4,20 +4,38 @@
 \alias{plot_marginals}
 \title{Plot marginal distributions for a fitted model}
 \usage{
-plot_marginals(fit, pars = NULL)
+plot_marginals(
+  fit,
+  pars = NULL,
+  mfrow = NULL,
+  add.mle = TRUE,
+  add.monitor = TRUE,
+  breaks = 30
+)
 }
 \arguments{
 \item{fit}{A fitted object returned by
 \code{\link{sample_admb}}.}
 
 \item{pars}{A numeric or character vector of parameters which
-to plot, for plotting a subset of the total}
+to plot, for plotting a subset of the total (defaults to all)}
+
+\item{mfrow}{A custom grid size (vector of two) to be called
+as \code{par(mfrow)}, overriding the defaults.}
+
+\item{add.mle}{Whether to add marginal normal distributions
+determined from the inverse Hessian file}
+
+\item{add.monitor}{Whether to add ESS and Rhat information}
+
+\item{breaks}{The number of breaks to use in \code{hist()},
+defaulting to 30}
 }
 \description{
 Plot marginal distributions for a fitted model
 }
 \details{
-This function plots 4x4 grid cells of all parameters
+This function plots grid cells of all parameters
   in a model, comparing the marginal posterior histogram vs
   the asympotitic normal (red lines) from the inverse
   Hessian. Its intended use is to quickly gauge differences
@@ -34,9 +52,10 @@ suggest inference may be unreliable.
 This function is customized to work with multipage PDFs,
 specifically:
 \code{pdf('marginals.pdf', onefile=TRUE, width=7,height=5)}
+produces a nice readable file.
 }
 \examples{
 fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
-plot_marginals(fit)
+plot_marginals(fit, pars=1:2)
 
 }

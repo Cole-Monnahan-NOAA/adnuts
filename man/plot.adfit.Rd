@@ -4,10 +4,17 @@
 \alias{plot.adfit}
 \title{Plot object of class adfit}
 \usage{
-\method{plot}{adfit}(fit)
+\method{plot}{adfit}(x, y, ...)
 }
 \arguments{
-\item{fit}{Fitted object from \code{\link{sample_admb}}}
+\item{x}{Fitted object from \code{\link{sample_admb}}}
+
+\item{y}{Ignored}
+
+\item{...}{Ignored}
+}
+\value{
+Plot created
 }
 \description{
 Plot object of class adfit
