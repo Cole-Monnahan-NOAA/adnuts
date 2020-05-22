@@ -2,8 +2,32 @@
 adnuts 1.0.1.9000  
 ------------------------------------------------------------------------
 
-* Fix bug in parallel path which failed when it was absolute. Now can be relative or absolute.
+* Rework metric options to allow user to access ADMB 13.0's new
+  dense mass matrix adaptation scheme. Added new section
+  demonstrating this in the vignette.
+* Add more control to 'sample_admb' via 'skip_monitor',
+  'skip_unbounded', and 'skip_optimization' arguments
+* Remove TMB references from documentation and vignette, 
+  instead pointing users to package 'tmbstan', and collate
+  deprecated R code into a single file
+* Migrate to new github repo: github.com/Cole-Monnahan-NOAA per
+  NOAA's policy
+* Add testing via testthat package
+* Turn on calculation of ESS and Rhat manually, which get used in
+  subsequent functions
+* Created S3 class 'adfit' and generic methods print, summary,
+  and plot
+* Updated pairs_admb to have an 'order' argument for quickly
+  plotting slow/fast parameters
+* Add new function plot_marginals for quickly plotting posterior
+  histograms
+* Add new function plot_sampler_params to plot NUTS sampling  
+* Make parallel the default and deprecate the 'parallel'
+  argument.
+* Fix bug in parallel path which failed when it was absolute. Now
+  can be relative or absolute. 
 * Add check for valid version of ADMB
+* Minor bug fixes and documentation updates
 
 ------------------------------------------------------------------------
 adnuts 1.0.1 (2019-03-15) 
