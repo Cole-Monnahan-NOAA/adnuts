@@ -48,16 +48,16 @@
 #'   directory. Often best to have model files in a separate
 #'   subdirectory, particularly for parallel.
 #' @param iter The number of samples to draw.
-#' @param init A list of lists containing the initial parameter vectors,
-#'   one for each chain or a function. It is strongly recommended to
-#'   initialize multiple chains from dispersed points. A of NULL signifies
-#'   to use the starting values present in the model (i.e., \code{obj$par})
-#'   for all chains.
+#' @param init A list of lists containing the initial parameter
+#'   vectors, one for each chain or a function. It is strongly
+#'   recommended to initialize multiple chains from dispersed
+#'   points. A of NULL signifies to use the starting values
+#'   present in the model (i.e., \code{obj$par}) for all chains.
 #' @param chains The number of chains to run.
 #' @param warmup The number of warmup iterations.
 #' @param seeds A vector of seeds, one for each chain.
-#' @param thin The thinning rate to apply to samples. Typically not used
-#'   with NUTS.
+#' @param thin The thinning rate to apply to samples. Typically
+#'   not used with NUTS.
 #' @param mceval Whether to run the model with \code{-mceval} on
 #'   samples from merged chains.
 #' @param duration The number of minutes after which the model
@@ -76,31 +76,36 @@
 #'   available. HMC is deprecated but may be of use in special
 #'   situations. These algorithms require different arguments;
 #'   see their help files for more information.
+#' @param skip_optimization Whether to run the optimizer before
+#'   running MCMC. This is rarely need as it is better to run it
+#'   once before to get the covariance matrix, or the estimates
+#'   are not needed with adaptive NUTS.
 #' @param skip_monitor Whether to skip calculating diagnostics
-#'   (effective sample size, Rhat) via the
-#'   \code{rstan::monitor} function. This can be slow for
-#'   models with high dimension or many iterations. The result is
-#'   used in plots and summaries so it is recommended to turn
-#'   on. If model run with \code{skip_monitor=FALSE} you can
-#'   recreate it post-hoc by setting
-#'   \code{fit$monitor=rstan::monitor(fit$samples, fit$warmup,
-#'   print=FALSE)}.
+#'   (effective sample size, Rhat) via the \code{rstan::monitor}
+#'   function. This can be slow for models with high dimension or
+#'   many iterations. The result is used in plots and summaries
+#'   so it is recommended to turn on. If model run with
+#'   \code{skip_monitor=FALSE} you can recreate it post-hoc by
+#'   setting \code{fit$monitor=rstan::monitor(fit$samples,
+#'   fit$warmup, print=FALSE)}.
 #' @param skip_unbounded Whether to skip returning the unbounded
 #'   version of the posterior samples in addition to the bounded
 #'   ones. It may be advisable to set to FALSE for very large
 #'   models to save space.
 #' @param admb_args A character string which gets passed to the
 #'   command line, allowing finer control
-#' @param ... Further arguments to be passed to the algorithm. See help
-#'   files for the samplers for further arguments.
-#' @section Warning:
-#' The user is responsible for specifying the model properly (priors,
-#'   starting values, desired parameters fixed, etc.), as well as assessing
-#'   the convergence and validity of the resulting samples (e.g., through
-#'   the \code{coda} package), or with function
-#'   \code{\link{launch_shinytmb}} before making inference. Specifically,
-#'   priors must be specified in the template file for each
-#'   parameter. Unspecified priors will be implicitly uniform.
+#' @param ... Further arguments to be passed to the
+#'   algorithm. See help files for the samplers for further
+#'   arguments.
+#' @section Warning: The user is responsible for specifying the
+#'   model properly (priors, starting values, desired parameters
+#'   fixed, etc.), as well as assessing the convergence and
+#'   validity of the resulting samples (e.g., through the
+#'   \code{coda} package), or with function
+#'   \code{\link{launch_shinytmb}} before making
+#'   inference. Specifically, priors must be specified in the
+#'   template file for each parameter. Unspecified priors will be
+#'   implicitly uniform.
 #' @export
 #' @examples
 #' \dontrun{
@@ -127,8 +132,9 @@
 sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
-                        algorithm="NUTS", skip_monitor=FALSE,
-                        skip_unbounded=FALSE, admb_args=NULL,
+                        algorithm="NUTS", skip_optimization=TRUE,
+                        skip_monitor=FALSE, skip_unbounded=TRUE,
+                        admb_args=NULL,
                         ...){
   ## Argument checking and processing
   if (!missing(parallel)) {
@@ -180,12 +186,15 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                          iter=iter, init=init[[i]], chain=i,
                          seed=seeds[i], thin=thin,
                          control=control, admb_args=admb_args,
+                         skip_optimization=skip_optimization,
                          ...))
     } else {
       mcmc.out <- lapply(1:chains, function(i)
         sample_admb_rwm(path=path, model=model, warmup=warmup, duration=duration,
                         iter=iter, init=init[[i]], chain=i,
-                        seed=seeds[i], thin=thin, control=control,
+                        seed=seeds[i], thin=thin,
+                        control=control,
+                        skip_optimization=skip_optimization,
                         admb_args=admb_args, ...))
     }
     ## Parallel execution
@@ -201,7 +210,9 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                            duration=duration,
                            algorithm=algorithm,
                            iter=iter, init=init[[i]], warmup=warmup,
-                           seed=seeds[i], thin=thin, control=control,
+                           seed=seeds[i], thin=thin,
+                           control=control,
+                           skip_optimization=skip_optimization,
                            admb_args=admb_args, ...))
   }
     warmup <- mcmc.out[[1]]$warmup
@@ -288,7 +299,9 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 sample_admb_nuts <- function(path, model, iter=2000,
                              init=NULL, chain=1,
                              thin=1, warmup=NULL,
-                             seed=NULL, duration=NULL, control=NULL,
+                             seed=NULL, duration=NULL,
+                             control=NULL,
+                             skip_optimization=TRUE,
                              verbose=TRUE, admb_args=admb_args, extra.args=NULL){
 
   if (!missing(extra.args)) {
@@ -312,7 +325,11 @@ sample_admb_nuts <- function(path, model, iter=2000,
   adapt_delta <- control$adapt_delta
 
   ## Build the command to run the model
-  cmd <- paste(model,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
+  if(skip_optimization){
+    cmd <- paste(model,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
+  } else {
+    cmd <- paste(model,"-hbf -nuts -mcmc ",iter)
+  }
   cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
   if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
   if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
@@ -401,7 +418,8 @@ sample_admb_nuts <- function(path, model, iter=2000,
 sample_admb_rwm <-
   function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL,  chain=1, seed=NULL, control=NULL,
-           verbose=TRUE, duration=NULL, extra.args=NULL, admb_args=NULL){
+           verbose=TRUE, duration=NULL, extra.args=NULL,
+           admb_args=NULL, skip_optimization=TRUE){
 
     if (!missing(extra.args)) {
       warning("Argument extra.args is deprecated, use admb_args instead",
@@ -422,7 +440,12 @@ sample_admb_rwm <-
     if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
     ## Build the command to run the model
-    cmd <- paste(model,"-nox -maxfn 0 -phase 1000 -nohess -rwm -mcmc",iter)
+    if(skip_optimization){
+      cmd <- paste(model,"-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
+    } else {
+      cmd <- paste(model,"-rwm -mcmc ",iter)
+    }
+
     cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
     if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)
     if(!is.null(duration)) cmd <- paste(cmd, "-duration", duration)
