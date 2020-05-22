@@ -230,12 +230,22 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   } else {
     N <- iter/thin
   }
-  samples <- samples.unbounded <- array(NA, dim=c(N, chains, 1+length(par.names)),
+  v <- .check_ADMB_version(model=model, path=path)
+  if(v<=12.0) {
+    warning('This version of ADMB is incompatible with skip_unbounded=FALSE, ignoring')
+  }
+  samples <- array(NA, dim=c(N, chains, 1+length(par.names)),
                    dimnames=list(NULL, NULL, c(par.names,'lp__')))
+  if(!skip_unbounded){
+    samples.unbounded <- samples
+  } else {
+    samples.unbounded= NULL
+  }
   for(i in 1:chains){
     samples[,i,] <- mcmc.out[[i]]$samples[1:N,]
-    samples.unbounded[,i,] <-
-      cbind(mcmc.out[[i]]$unbounded[1:N,], mcmc.out[[i]]$samples[,1+length(par.names)])
+    if(!skip_unbounded)
+      samples.unbounded[,i,] <- cbind(mcmc.out[[i]]$unbounded[1:N,],
+                                      mcmc.out[[i]]$samples[,1+length(par.names)])
   }
   if(algorithm=="NUTS")
     sampler_params <-
@@ -273,7 +283,6 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     message('Skipping ESS and Rhat statistics..')
     mon <- NULL
   }
-  if(skip_unbounded) samples.unbounded <- NULL
   result <- list(samples=samples, sampler_params=sampler_params,
                  samples_unbounded=samples.unbounded,
                  time.warmup=time.warmup, time.total=time.total,

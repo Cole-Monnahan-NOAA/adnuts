@@ -206,7 +206,9 @@ plot_sampler_params <- function(fit, plot=TRUE){
   if(v < min.version)
     stop(paste(model,"compiled with old version of ADMB. Version >12.0 required, found:\n", test[3],
                "\nadnuts is incompatible with this version. Update ADMB and try again"))
+  return(invisible(v))
 }
+
 
 #' Function to generate random initial values from a previous fit using
 #' adnuts
