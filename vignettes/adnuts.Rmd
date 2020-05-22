@@ -1,5 +1,5 @@
 ---
-title: "No-U-turn sampling for ADMB and TMB models"
+title: "No-U-turn sampling for ADMB models"
 author: "Cole C. Monnahan"
 date: "`r Sys.Date()`"
 bibliography: refs.bib
@@ -7,39 +7,37 @@ output:
   rmarkdown::html_vignette:
   toc: true
 vignette: >
-  %\VignetteIndexEntry{No-U-turn sampling for ADMB and TMB models}
+  %\VignetteIndexEntry{No-U-turn sampling for ADMB models}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ## Summary
 
-`adnuts` main purpose is to provide a wrapper for performing Bayesian
-analyses using the no-U-turn (NUTS) algorithm [@hoffman2014] for ADMB
-models [@fournier2012]. The ADMB model itself contains the algorithm code,
-but this package provides the user a convenient environment to run and
-diagnose Markov chains, and make inference. In addition, NUTS capabilities
-are provided for any posterior whose log-density and log-density gradient
-can be written as R functions. This includes TMB models [@kristensen2016]
-but also other special cases. This package aims to give ADMB and TMB models
-similar functionality to Stan [@carpenter2017; @stan2017].
+`adnuts` (pronounced A-D NUTS like A-D MB) main purpose is to provide a
+wrapper for performing Bayesian analyses using the no-U-turn (NUTS)
+algorithm [@hoffman2014] for ADMB models [@fournier2012]. The ADMB model
+itself contains the algorithm code, but this package provides the user a
+convenient environment to run and diagnose Markov chains, and make
+inference. In addition, NUTS capabilities are provided for any posterior
+whose log-density and log-density gradient can be written as R
+functions. This includes TMB models [@kristensen2016] but also other
+special cases, although TMB users should prefer the package `tmbstan`.
+This package aims to give ADMB models similar functionality to the software
+Stan and `rstan` [@carpenter2017; @stan2017].
 
 Key features of the packages:
 
-- Run no-U-turn sampler or random walk Metropolis MCMC chains from within R
-  using the `sample_admb` and `sample_tmb` functions.
+- Run no-U-turn sampler (NUTS) or random walk Metropolis (RWM) MCMC chains
+  from within R using the `sample_admb` functions.
+- Parallel execution with automatic merging of chains and linking to other
+  R packages provides a smooth, efficient workflow for ADMB users.
 - Adaptation of the NUTS stepsize is automatically done during the warmup phase.
-- The mass matrix options are: diagonal adaptation during warmup or an
-  arbitrary dense matrix can be passed from R.
-- Parallel execution and automatic merging of chains ease workflow.
+- The mass matrix options are: diagonal or dense adaptation during warmup,
+  the estimated covariance (from admodel.cov file), or an arbitrary dense
+  matrix can be passed from R.
 - Easy diagnostic checking using functionality provided by packages `rstan`
   and `shinystan`.
-
-Additional features for ADMB users:
-
-- The MLE covariance matrix can be used (i.e., ADMB file
-  admodel.cov). Likewise, the model can be initialized from the '.par' file
-  (although not recommended).
 - A 'duration' argument to stop the chains running after a specified period
   of time (e.g., 2 hours), returning whatever samples were generated in
   that period.
@@ -49,15 +47,14 @@ Additional features for ADMB users:
   argument dictating whether to run in this phase when the sampling is
   finished.
 - A modified pairs plot designed to help facilitate comparison between MLE
-  estimates and covariances, and the posterior samples.
+  estimates and covariances, and the posterior samples. 
 
-Typically NUTS works efficiently with default settings and no user
-intervention. However, in some cases you may need to modify the
-settings. See below for a brief description of NUTS and how you can modify
-its behavior and when needed.
-
-Guidance and performance specifically designed for fisheries stock
-assessment is given in [@monnahan2019].
+Typically, for well-designed models, NUTS works efficiently with default
+settings and no user intervention. However, in some cases you may need to
+modify the settings. See below for a brief description of NUTS and how you
+can modify its behavior and when needed. Guidance and performance
+specifically designed for fisheries stock assessment is given in
+[@monnahan2019].
 
 ## Sampling for ADMB models
 ### Setting up the model
@@ -65,49 +62,78 @@ assessment is given in [@monnahan2019].
 In general very little is needed to prepare an ADMB model for use with
 `adnuts`. As with any model, the user must build the template file to
 return a negative log likelihood value for given data and parameters. The
-user is responsible for ensuring the a valid and reasonable model is
+user is responsible for ensuring a valid and reasonable model is
 specified. Typical model building practices such as building complexity
-slowly and validating with simulated data are strongly encouraged.
+slowly and validating with simulated data are strongly encouraged. Users
+must manually specify priors, otherwise there are implicit improper uniform
+distributions for unbounded parameters, and proper uniform distributions
+for bounded parameters (see below for more details). 
+
+The ADMB model is an executable file that contains the code necessary for
+NUTS and RWM. When run, it typically has various input files and generates
+many output files. As such, **I strongly recommend putting the model into a
+subdirectory below the directory containing the R script** (passed as the
+`path` argument). **This is required for parallel execution** but is
+recommended in general.
 
 ### Sampling with sample_admb
 
 Sampling for ADMB models is accomplished with the R function `sample_admb`.
 This function is designed to be similar to Stan's `stan` function in naming
 conventions and behavior. Some differences are necessary, such as passing a
-model name and path. Also note that this function does not do optimization
-nor Variational Inference.
+model name and path. It works with two MCMC algorithms, NUTS and RWM, which
+are built into the ADMB source code so this is just a wrapper
+function. Also note that this function does not do optimization nor
+Variational Inference.
 
 The default behavior for NUTS is to run 3 chains with 2000 iterations, with
 a warmup (i.e., burn-in) phase during the first 1000. There is no external
 thinning (in a sense it is done automatically within the algorithm), and
-thus the `-mcsave` option does not work with NUTS by design. These defaults work well
-in most cases and should be changed only after running chains and
-investigating. Users of the RWM algorithm will accustomed to running
-millions of iterations with a high thinning rate. **Do not do that!**. The
-key thing to understand is that NUTS runs as long as it needs to get nearly
-independent samples. Consult the Stan documentation for advice on a
-workflow for NUTS models (e.g.,
-[this guide](http://mc-stan.org/users/documentation/case-studies/rstan_workflow.html))
+thus the `-mcsave` option does not work with NUTS by design. These defaults
+work well in the case where diagonal mass matrix adaptation is done (e.g.,
+hierarchical models). This adaptation often requires a long warmup
+period. For models starting with a good mass matrix (e.g., from the MLE
+covariance or previous run), a much shorter warmup period can be used. For
+instance `warmup=200` and `iter=800` with multiple chains may work
+sufficiently well during model development. Users of the RWM algorithm will
+accustomed to running millions of iterations with a high thinning
+rate. **Do not do that!**. The key thing to understand is that NUTS runs as
+long as it needs to get nearly independent samples. Consult the Stan
+documentation for advice on a workflow for NUTS models (e.g., [this
+guide](http://mc-stan.org/users/documentation/case-studies/rstan_workflow.html))
 
-`sample_admb` can also run RWM chains via the argument
+
+For poorly-constructed or over-parameterized models, the NUTS algorithm
+will be potentially catastrophically slow. This is likely common in many
+existing fisheries stock assessment models. In these cases it can be very
+informative to run the RWM algorithm because it often provides fast
+feedback from which the user can determine the cause of poor mixing (see
+[@monnahan2019]). `sample_admb` can also run RWM chains via the argument
 `algorithm="RWM"`. Consult the ADMB documentation for more information on a
-workflow with these samplers.
+workflow with these samplers. `adnuts` provides no new options compared to
+the command line from previous ADMB versions (besides a better console
+output), but the option for parallel execution and integration with MCMC
+diagnostic tools should be sufficiently appealing to users. Once a model is
+more appropriately parameterized, NUTS should be used.
 
-One important overlap with Stan the `control` arguments, which allows the
-user to control the algorithm. For NUTS, this includes:
- - Metric or mass matrix (adapted digonal or dense matrix) [`metric`]
- - Maximum treedepth for trajectories [`max_treedepth`']
- - Target acceptance rate [`adapt_delta`]
- - Step size, which if NULL is adapted [`stepsize`]
- - Mass matrix adaptation tuning parameters (not recommended to change)
-   [`w1`, `w2`, `w3`]
+One important overlap with Stan is with the `control` argument, which
+allows the user to control the NUTS algorithm:
 
-For RWM the only argument used is `metric`.
+- Metric or mass matrix (adapted diagonal or dense matrix) [`metric`]
 
-This function returns a list whose elements mimic some of that returned by
-`stan` as well. `stan` returns an object of class `stanfit` while the
-output of `sample_admb` is a simple named list. However, this list has been
-constructed to be useful for plugging into some `rstan` tools (see below).
+- Maximum treedepth for trajectories [`max_treedepth`']
+
+- Target acceptance rate [`adapt_delta`]
+
+- Step size, which if NULL (recommended) is adapted [`stepsize`]
+
+- Mass matrix adaptation tuning parameters (not recommended to change)
+[`adapt_init_buffer`, `adapt_term_buffer`, `adapt_window`]
+
+
+This function returns a list (of class `adfit`) whose elements mimic some
+of that returned by `stan` to be useful for plugging into some `rstan`
+tools (see below).
 
 ### mceval phase and posterior outputs
 
@@ -120,7 +146,10 @@ to 1. This behavior is unchanged with `adnuts`, but is complicated when
 running multiple chains because there will be multiple .psv files. Thus,
 `sample_admb` combines chains in R and writes a single .psv file containing
 samples from all chains (after warmup and thinned samples are
-discarded). This also works in parallel (see below).
+discarded). This also works in parallel (see below). Consequently, the user
+only has to set `mceval=TRUE`, or run `-mceval` from the command line after
+`adnuts` finishes sampling, in order to generate the desired output
+files. 
 
 Previously, ADMB required an estimated covariance function to use the
 random walk Metropolis (RWM) algorithm. Thus, for models without a valid
@@ -135,59 +164,109 @@ RWM). However, it is a convenience function that runs the chains from the
 command line. The list returned by `sample_admb` contains an element `cmd`
 which shows the user the exact command used to call the ADMB model.
 
-The ADMB model is an executable file that contains the code necessary for
-NUTS and RWM. When run, it generates many output files. As such, I
-recommend putting the model into a subdirectory below the directory
-containing the R script (passed as the `path` argument). This is required
-for parallel execution but is recommended in general.
 
 ### Bounds & Priors
 
 Parameter priors must be specified manually in the ADMB template file. For
 instance, a standard normal prior on parameter `B` would be subtracted from
-the objective as `f+=dnorm(B,0.0,1.0)`. Note that statistical functions in
-ADMB, such as `dnorm`, return the negative log density and thus must be
-added to the objective function.
+the objective as `f+=dnorm(B,0.0,1.0)`. Note that contributed statistical
+functions in ADMB, such as `dnorm`, return the negative log density and
+thus must be added to the objective function.
 
 Parameter transformations are limited to box constraints within the ADMB
 template (e.g., `init_bounded_number`). When used, this puts an implicit
-uniform prior on the parameter.
+uniform prior on the parameter over the bounds. Implicit improper uniform
+priors occur when an unbounded parameter has no explicit prior. The
+analysis can procede if the data contain information to update the prior,
+but if not the chains will wander between negative and positive infinity
+and fail diagnostic checks.
 
-However, variance parameters are common and require bounds of (0, Inf). To
-implement such a bound in ADMB, specify the model parameter as the log of
-the variance, and then in the template exponentiate it and use
+Variance parameters are common and require bounds of (0, Inf). To implement
+such a bound in ADMB, specify the model parameter as the log of the
+standard deviation, and then in the template exponentiate it and use
 throughout. Because of this parameter transformation, the Jacbobian
 adjustment is needed. This can be accomplished by subtracting the parameter
 in log space from the negative log-likelihood. For instance, use parameter
 `log_sd` in the template, then let `sigma=exp(log_sd)`, and update the
-objective function: `f-=log_sd;`.
+objective function with the Jacobian: `f-=log_sd;`. The recommended
+half-normal prior for standard deviations can then be added as, e.g.,
+`f+=dnorm(sigma,0,2)`. This also holds for any positively constrained
+parameters of which there are many in ecology and fisheries: somatic growth
+rates, maximum length, unfished recruits, etc.
 
+### Initializing chains
+
+It is generally recommended to intialize multiple chains from "dispersed"
+values relative to the typical set of the posterior. `sample_admb` can
+accept a list of lists (one for each chain), or function which returns a
+list of parameters (e.g., `init <- function() list(a=rnorm(1),
+eta=rnorm(10))`.  If no initial values are specified `init=NULL` then ADMB
+will attempt to read in the optimized values stored in the admodel.hes
+file. Typically these are the MLE (really MPD) values. Starting all chains
+from the model is discouraged because it makes diagnostic tools like Rhat
+(see below) inefficient. From [this
+discussion](https://discourse.mc-stan.org/t/overdispersed-initial-values-general-questions/3966)
+"...Rhat is ratio of overestimate and underestimate of variance, but that
+overestimate is overestimate only if the starting points are diffuse."
+Consequently I **strongly encourage creating a function to generate
+reasonable random initial values**.
+
+If your model has inactive parameters (those with negative phases) they are
+completely ignored in the MCMC analysis (sampling, inputs, outputs, etc.),
+so the intial values are only for active parameters. This means you cannot
+read in the .par file and use it for initial values if there are inactive
+parameters. 
 
 ### Parallel sampling
 
-Parallel sampling is done by brute force using the `snowfall`
-package. `n.cores` chains will be run by making temporary copies of the
-directory `path` (which contain the model executable, data inputs, and any
-other required files). Then a separate R session calls `sample_admb` and
-when done the results are merged together and the temporary folders
-deleted. If errors occur, these temporary folders may need to be deleted
-manually.
+Parallel sampling is done by default as of version 1.2.0. It is done by
+parallelizing multiple chains, not calculations within a chain. The
+`snowfall` package is used. `n.cores` chains will be run by making
+temporary copies of the directory `path` (which contain the model
+executable, data inputs, and any other required files). Then a separate R
+session calls `sample_admb` and when done the results are merged together
+and the temporary folders deleted. If errors occur, these temporary folders
+may need to be deleted manually. The default behavior is to set `n.cores`
+to be one fewer than available to the system, but the user can override
+this and by setting `n.cores=1` the chains will be run in serial which can
+be useful for debugging purposes.
 
-### Diagnostics and plotting results
+## Diagnostics and plotting results
+
+### Diagnosing MCMC chains
+
+MCMC diagnostics refers to checking for signs of non-convergence of the
+Markov chains before using them for inference, and is a key step in
+Bayesian inference. There is a large literature related to this which I
+refer unfamiliar readers to the Stan manual [chapter on
+convergence](https://mc-stan.org/docs/2_23/reference-manual/convergence.html).
+Note that the user is entirely responsible for this component of the
+analysis, `adnuts` only provides tools to help with it.
+
+The `rstan` package provides an improved function for calculating effective
+sample size and $\hat{R}$ statistics vis the function
+`rstan::monitor`. This function is automatically run for completed
+`sample_admb` runs and stored in the output. For very large models (either
+many parameters or many iterations) this operation can be slow and thus a
+user may disable it with the argument `skip_monitor`, however this
+situation should be rare as these quantities should always be checked.
+
+I use a hierarchical mark-recapture model of swallows to demonstrate
+functionality, taken from the examples in [@monnahan2017] read in as a RDS
+file from a previous run.
 
 ```` {r, eval=TRUE, echo=FALSE}
 library(adnuts)
-## library(rstan)
-fit.admb <- readRDS('fit.admb.RDS')
 ````
-The `rstan` package provides an improved function for calculating effective
-sample size and $\hat{R}$ statistics. The samples from the fitted object
-can be plugged directly into it.
+
+The diagnostic information can be directly accessed via the fitted
+object `fit`. :
 
 ````{r}
-mon <- rstan::monitor(fit.admb$samples, print=FALSE)
-mon[1:4,'n_eff']
-mon[1:4,'Rhat']
+fit <- readRDS('fit.RDS')
+print(fit)
+summary(fit$monitor$n_eff)
+summary(fit$monitor$Rhat)
 ````
 
 Likewise both the model parameters and the NUTS sampler parameters can be
@@ -195,13 +274,19 @@ extracted as a data frame. These functions have optional arguments for
 whether to include the warmup samples and log posterior column (lp__)
 
 ````{r}
-post <- extract_samples(fit.admb)
+post <- extract_samples(fit)
 str(post[,1:5])
-sp <- extract_sampler_params(fit.admb)
+sp <- extract_sampler_params(fit)
 str(sp)
 ````
 
-The list returned by `sample_admb` can also be plugged directly into the
+These functions have options whether to include the warmup and
+log-posterior (lp) column, but also whether to return the unbounded
+parameters. The latter can be useful for debugging issues with parameters
+with high density near the bounds or poor mixing issues when using RWM
+chains. 
+
+The object returned by `sample_admb` can also be plugged directly into the
 ShinyStan interactive tool environment by calling the wrapper function
 `launch_shinyadmb`. See ShinyStan documentation for more information on
 this. It is designed to provide NUTS specific diagnostics, but also serves
@@ -210,79 +295,156 @@ chains as well. If desired, the output samples can be converted into `mcmc`
 objects for use with the CODA R package.  For instance, CODA traceplots can
 be accessed like this:
 
-```` {r, eval=FALSE, echo=FALSE}
-post <- extract_samples(fit.admb, as.list=TRUE)
+```` {r, eval=FALSE, echo=TRUE}
+post <- extract_samples(fit, as.list=TRUE)
 postlist <- coda::mcmc.list(lapply(post, coda::mcmc))
 coda::traceplot(postlist)
 ````
 
-Most ADMB models have well defined modes and estimated covariance matrices
+Or into `bayesplot` with a little massaging. Future versions of
+adnuts may link these more directly. But for now it can be done manually
+such as with the energy diagnostic:
+
+```` {r, eval=FALSE, echo=TRUE}
+library(bayesplot)
+library(dplyr)
+library(tidyr)
+color_scheme_set("red")
+np <- extract_sampler_params(fit) %>%
+  pivot_longer(-c(chain, iteration), names_to='Parameter', values_to='Value') %>%
+  select(Iteration=iteration, Parameter, Value, Chain=chain) %>%
+  mutate(Parameter=factor(Parameter),
+         Iteration=as.integer(Iteration),
+         Chain=as.integer(Chain)) %>% as.data.frame()
+mcmc_nuts_energy(np) + ggtitle("NUTS Energy Diagnostic") + theme_minimal()
+````
+
+## Plotting output
+
+A convenience function `plot_marginals` is provided to quickly plot
+marginal posterior distributions with options to overlay the 
+asymptotic estimates. 
+
+```` {r fig1, fig.width=6, fig.height=4.5}
+plot_marginals(fit, pars=1:9)
+````
+
+Many ADMB models have well defined modes and estimated covariance matrices
 used to quantify uncertainty. The `pairs_admb` function can be used to plot
 pairwise posterior draws vs the MLE estimate and confidence ellipses. Major
 discrepancies between the two are cause for concern. As such, this can be a
 good diagnostic tool for both frequentist and Bayesian inference. In
 particular, it often is informative to plot the slowest mixing parameters.
 
-```` {r fig1, fig.width=6, fig.height=4.5}
-slow <-  c("sigmayearphi", "yeareffphi_raw[3]", "yeareffphi_raw[2]",
-           "yeareffphi_raw[4]", "yeareffphi_raw[1]")
-pairs_admb(fit.admb, pars=slow)
+
+
+
+```` {r fig2, fig.width=6, fig.height=4.5}
+pairs_admb(fit, pars=1:5, order='slow')
 ````
 
-Here we see a large mismatch between the ellipses and MCMC samples. Thus,
-even though ADMB found an MLE and successfully inverted the Hessian
-matrix, its estimates are invalid. It is not surprise, as this is a complex
-hierarchical model without a true mode. NUTS works efficiently for this
-model because it does not use these MLE estimates. The standard RWM
-algorithm would grind to a halt and never converge for this model, but NUTS
-works well.
+Looking at the last row for parameter "sigmaphi" which is a hypervariance,
+the last plot shows the traces of two chains (colors), where alternative
+options for argument `diag` are 'trace' (default), 'hist' for histogram,
+and 'acf' for the autocorrelation function. The remaining plots show
+pairwise posterior samples (black points) for the remaining parameters. A
+red point shows the posterior mode and an ellipse shows the 95% bivariate
+confidence region, taken from the inverse Hessian calculated by
+ADMB/. Since the log-posterior (lp__) is not a parameter there is no
+ellipse. Note that the posterior samples and asympotic approximations for
+the two fixed effects `a` match closely, whereas for the `sigmaphi`
+hypervariance parameter there is a notable mismatch. This mismatch is not
+surprising as estimates from optimizing hierarchical models are not
+reliable. Since adaptive NUTS was used for sampling, the information
+contained in red was not used and is only shown for illustration. The
+option `metric='mle'` would use the inverse Hessian as a tuning parameter
+(see section on metric below). More options for plotting fits like these
+are available in the help file `?pairs_admb`.
 
-## Sampling for TMB models
-### Setting up the model
+## Mass matrix adaptation
 
-Noting special needs to be done to setup a TMB object for use with
-`sample_tmb`. Typically the Laplace Approximation is not done during MCMC,
-and so by default the parameters declared as "random" are treated the
-same. You can turn this off with the `laplace` option.
+I assume the reader is familiar with the basics of the mass matrix and its
+effect on sampling with NUTS (if not, see section below). Note that the
+mass matrix represents the geometry of the posterior in untransformed
+(unbounded) space, not the parameter space defined by the user. This space
+is typically hidden from the user but nonetheless is important to recognize
+when thinking about the mass matrix.
 
-### Bounds & Priors
+ADMB has the capability to do both diagonal and dense (full matrix)
+estimation during warmup (adaptation). The initial matrix can likewise
+easily be intialized in two ways. First is a unit diagonal, and second is
+the "MLE" option, which more accurately is the covariance matrix calculated
+from inverting the Hessian at the maximum posterior density (the mode --
+informally referred to as the MLE often). I refer to this as $\Sigma$. As
+such there are 6 options for the mass matrix, summarized in the subsequent
+table. Note that options 3 and 6 were not available before version 1.2.0
+and are only available for ADMB >12.0.
 
-Box constraints can be passed directly to `sample_tmb` as vectors `lower`
-and `upper` the same as to the optimizer. Values of -Inf and Inf are
-allowed to create one-sided constraints, as with variance parameters. Note
-that these parameter transformations are done in R and thus are relatively
-slow. Alternatively variance parameters can be added to the template in log
-space and a Jacobian adjustment added as in ADMB (see above).
+| Initial<br>matrix | Adaptation | adnuts | Command<br>line | Recommended usage | 
+|----------------|-----------------|---------------|---------------------|----------------|
+| Unit  | None | `adapt_mass=FALSE`| `-mcdiag` | Rarely if ever used |
+| Unit  | Diagonal | (default) | `-mcdiag`<br>`-adapt_mass` | Use with minimal correlations, $\Sigma$ is unavailable, or $d$>1000. Often the best choice for hierarchical models | 
+| Unit  | Dense    | `adapt_mass_dense=TRUE`| `-mcdiag`<br>`-adapt_mass_dense`| Use when strong correlations but $\Sigma$ is unavailable and $d$<5000  |
+| $\Sigma$  | None | `metric='mle'`<br>`adapt_mass=FALSE`| (default) | When $\Sigma$ well approximates the posterior | 
+| $\Sigma$  | Diagonal | `metric='mle'`| `-mcdiag`<br>`-adapt_mass` | When $\Sigma$ is poor approximation but $d$>5000. 
+| $\Sigma$  | Dense |  `metric='mle'`<br>`adapt_mass_dense=TRUE`| `-adapt_mass_dense`| When $\Sigma$ is poor approximation but $d$<5000 
 
-### sample_tmb
+$d$ refers to the dimensionality (# of parameters) and this guidance is a
+very rough guess. The reason dimensionality matters is that there is a
+numerical cost to using a dense matrix over a diagonal one, and one that
+scales poorly with dimensionality. However, the more computationally
+expensive the model is (the prediction and log density calculations) the
+smaller relative cost of the dense calculations. Thus there is an interplay
+between the mass matrix form, dimensinality, model computational cost, and
+MCMC sampling efficiency.
 
-Similar to `sample_admb` in its arguments, behavior, and returned
-value. See above for more information.
+In addition to these options, an arbitrary matrix `M` can be passed via
+`metric=M`. This works by using R to overwrite the admodel.cov file so that
+when ADMB runs it reads it in thinking it was the estimated matrix. The
+file admodel_original.cov is copied in case the user wants to revert
+it. Probably the only realistic usage of this feature is when you have
+already run a pilot chain and want to rerun it for longer, and wish to use
+the samples to generate an estimated mass matrix. In this case use
+`M=fit$covar.est` which is the estimate in unbounded space (see
+below). Note that if `M=diag(d)` it is equivalent to the first three rows
+and if `M`=$\Sigma$ it is equivalent to the last three rows.
 
-### Parallel sampling
+The following figure shows the step size of a single chain during warmup
+for these six options for a simple linear model, and demonstrates the
+general differences among them.
 
-Parallel chains can be run using the `snowfall` package by specifying
-`parallel=TRUE` and the number of cores. The TMB object needs to be rebuilt
-because new R sessions are created. No console output is presented when
-running in parallel, but text output is piped to a file for monitoring if
-desired.
+![Effects of mass matrix adaptation on step size adaptation](metric_adaptation.png){width=90%}
 
-### Diagnostics and plotting results
+The three which start with a unit diagonal matrix are apparent by their
+small initial step sizes, while the three which start with dense are
+larger. There is a clear shift in the stepsize at iteration 125 which is
+when the first mass matrix udpate happens (and with improved knowledge of
+the geometry the optimal step size changes). A second update happens later
+but is not apparent, indicating the first was sufficient. All fits with a
+dense matrix end with the same approximate step size, which is larger than
+any without it. Option 3 starts off diagonal but after updating to a dense
+matrix peforms equivalently. For the diagonal options option 1 does not
+update, while option two starts at unit diagonal and aftering updating the
+diagonal performs equally well as option 5 which starts well.
 
-Output returned from `sample_tmb` is very similar as from `sample_admb`, so
-refer to those sections. But use `launch_shinytmb` for these objects.
-There is no equivalent for `pairs_admb` for TMB models.
+Furthermore, it is often hard to estimate a good dense mass matrix,
+especially in the first few phases of warmup with very few samples. In such
+cases the Cholesky decomposition of the estimated matrix may fail. Instead
+of crashing the run I coded ADMB to instead do a diagonal estimate in this
+case, and try a dense update at the next phase, repeating until warmup is
+over. Warnings are printed to the console when this happens.
 
-## Examples
+Which option to use in which situation is still an open question. Certainly
+for hierarchical models where $\Sigma$ is not helpful or doesn't exist,
+option 2 is likely the best. For fisheries stock assessment models which
+already rely on $\Sigma$ options 4-6 are worth exploring. 
 
-````R
-TMB::runExample("simple")
-init <- function() list(mu=u, beta=beta, logsdu=0, logsd0=0)
-fit <- sample_tmb(obj=obj, init=init)
-post <- extract_samples(fit)
-sp <- extract_sampler_params(fit)
-
-````
+## Sampling for TMB models Previous versions of `adnuts` included explicit
+demonstrations of use for TMB models. Now, however, the package `tmbstan`
+([@monnahan2018]) has replaced this functionality and users should
+exclusively use that package except for very rare cases. Consequently I
+deleted the TMB section from this vignette, but older versions on CRAN may
+be helpful for those looking for guidance.
 
 ## The no-U-turn sampler implementation
 
