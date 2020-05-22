@@ -37,7 +37,7 @@
 #'   \package{adnuts} package using either the NUTS or RWM MCMC
 #'   algorithms. If an invertible Hessian was found (in
 #'   \code{fit$mle}) then estimated covariances are available to
-#'   compare and added automatically (blue ellipses). Likewise, a
+#'   compare and added automatically (red ellipses). Likewise, a
 #'   "monitor" object from \code{rstan::monitor} is attached as
 #'   \code{fit$monitor} and provides effective sample sizes (ESS)
 #'   and Rhat values. The ESS are used to potentially order the
@@ -57,11 +57,11 @@ pairs_admb <- function(fit, order=NULL,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        pars=NULL, label.cex=.8, limits=NULL,
-                       add.monitor=TRUE, unbounded=FALSE,
+                       add.mle=TRUE, add.monitor=TRUE, unbounded=FALSE,
                        ...){
   if(!is.adfit(fit))
     stop("Argument 'fit' is not a valid object returned by 'sample_admb'")
-  if(unbounded){
+  if(unbounded | !add.mle){
     mle <- NULL
   } else {
     mle <- fit$mle
@@ -70,8 +70,8 @@ pairs_admb <- function(fit, order=NULL,
   chains <- rep(1:dim(fit$samples)[2], each=dim(fit$samples)[1]-fit$warmup)
   divs <- if(fit$algorithm=="NUTS")
             extract_sampler_params(fit)$divergent__ else NULL
-  ptcex <- .1
-  divcex <- .5
+  ptcex <- .2
+  divcex <- .75
   chaincols <- 1:length(unique(chains))
   wp <- function(par.name) {
     ## Temporary function that finds (w)hich (p)arameter position par.name
@@ -101,7 +101,10 @@ pairs_admb <- function(fit, order=NULL,
     if(!is.numeric(pars[1])){
       warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
     } else {
-      par.names <- par.names[order(ess, decreasing=(order=='fast'))]
+      ind <- order(ess, decreasing=(order=='fast'))
+      par.names <- par.names[ind]
+      ess <- ess[ind]
+      Rhat <- Rhat[ind]
     }
   }
   ## if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
@@ -196,7 +199,7 @@ pairs_admb <- function(fit, order=NULL,
         ## Add ESS and Rhat info to diagonal
         if(!is.null(ess) & !is.null(Rhat) & add.monitor)
           mtext(paste0('ESS=', round(ess[row], 0), " Rhat=", format(round(Rhat[row],2),nsmall=2)),
-                cex=label.cex, line=-1.5)
+                cex=.8*label.cex, line=-1)
       }
       ## If lower triangle and covariance known, add scatterplot
       if(row>col){
@@ -206,12 +209,12 @@ pairs_admb <- function(fit, order=NULL,
              ylim=limits[[row]], ...)
         ## replot divegences on top so they are always visible
         points(x=posterior[which(divs==1),col], y=posterior[which(divs==1),row],
-               pch=mypch, cex=divcex, col='red')
+               pch=mypch, cex=divcex, col='green')
         p1 <- wp(pars[row]); p2 <- wp(pars[col])
         if(!is.na(p1) & !is.na(p2)){
           ## Add bivariate 95% normal levels from MLE
           points(x=mle$est[p2], y=mle$est[p1],
-                 pch=16, cex=.5, col='blue')
+                 pch=16, cex=.5, col='red')
           ## Get points of a bivariate normal 95% confidence contour
           if(!requireNamespace("ellipse", quietly=TRUE)){
             warning("ellipse package needs to be installed to show ellipses")
@@ -221,7 +224,7 @@ pairs_admb <- function(fit, order=NULL,
                                     scale=mle$se[c(p2, p1)],
                                     centre= mle$est[c(p2, p1)], npoints=1000,
                                     level=.95)
-            lines(ellipse.temp , lwd=.5, lty=1, col="blue")
+            lines(ellipse.temp , lwd=.5, lty=1, col="red")
           }
         }
         par(xaxs="i", yaxs="i")
