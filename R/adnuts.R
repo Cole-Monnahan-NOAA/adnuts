@@ -1,6 +1,6 @@
-#' adnuts: No-U-turn sampling for Template Model Builder and AD Model Builder
+#' adnuts: No-U-turn sampling for AD Model Builder (ADMB)
 #'
-#' Draw Bayesian posterior samples from a TMB or ADMB model using the
+#' Draw Bayesian posterior samples from an ADMB model using the
 #' no-U-turn MCMC sampler. Adaptation schemes are used so specifying tuning
 #' parameters is not necessary, and parallel execution reduces overall run
 #' time.
@@ -14,25 +14,23 @@
 #' provided by \pkg{adnuts} is based loosely off Stan and \R package
 #' \pkg{rstan}
 #'
-#' \pkg{adnuts} \R package provides NUTS sampling for two existing software
-#' platforms: ADMB (Fournier et al. 2011) and TMB (Kristensen et al. 2017,
-#' Kristensen 2017). The specific NUTS capabilities include adaptation of
-#' step size and metric (mass matrix), parallel execution, and links to
-#' diagnostic and inference tools provided by \pkg{rstan} and
-#' \pkg{shinystan}.
+#' The \pkg{adnuts} \R package provides an \R workflow for NUTS
+#'   sampling for ADMB models (Fournier et al. 2011), including
+#'   adaptation of step size and metric (mass matrix), parallel
+#'   execution, and links to diagnostic and inference tools
+#'   provided by \pkg{rstan} and \pkg{shinystan}.  The ADMB
+#'   implementation of NUTS code is bundled into the ADMB source
+#'   itself (as of version 12.0). Thus, when a user builds an
+#'   ADMB model the NUTS code is incorporated into the model
+#'   executable. Thus, \pkg{adnuts} simply provides a convenient
+#'   set of wrappers to more easily execute, diagnose, and make
+#'   inference on a model. More details can be found in the
+#'   package vignette.
 #'
-#' For TMB models, \pkg{adnuts} provides NUTS and other MCMC algorithms
-#' written in \R. These can be used with a TMB model by plugging in the
-#' \code{obj$fn} and \code{obj$gr} functions from the DLL directly. It is
-#' possible to use these functions with models outside TMB, as long as the
-#' log density and gradients can be calculated. See
-#' \code{\link{sample_tmb}} for more details.
-#'
-#' The ADMB implementation is different in that the NUTS code is bundled
-#' into the ADMB source itself. Thus, when a user builds an ADMB model the
-#' NUTS code is incorporated into the model executable. Thus, \pkg{adnuts}
-#' simply provides a convenient set of wrappers to more easily execute,
-#' diagnose, and make inference on a model.
+#' Note that previous versions of \pkg{adnuts} included
+#'   functionality for TMB models, but this has been replaced by
+#'   \pkg{tmbstan} (Kristensen et al. 2016, Monnahan and
+#'   Kristensen 2018).
 #'
 #' @references
 #' Carpenter, B., Gelman, A., Hoffman, M.D., Lee, D., Goodrich, B.,
@@ -60,6 +58,11 @@
 #' Monnahan, C.C., Thorson, J.T., Branch, T.A., 2017. Faster estimation of
 #'   Bayesian models in ecology using Hamiltonian Monte Carlo.  Methods in
 #'   Ecology and Evolution. 8:339-348.
+#'
+#' Monnahan C.C., Kristensen K. (2018). No-U-turn sampling for fast
+#'  Bayesian inference in ADMB and TMB: Introducing the adnuts and
+#'  tmbstan R packages PLoS ONE 13(5): e0197954.
+#'  https://doi.org/10.1371/journal.pone.0197954
 #'
 #' Stan Development Team, 2016. Stan modeling language users guide and
 #'   reference manual, version 2.11.0.
