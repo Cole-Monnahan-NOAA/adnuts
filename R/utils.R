@@ -253,7 +253,7 @@ plot_sampler_params <- function(fit, plot=TRUE){
   v <- as.numeric(gsub('ADMB-', '', substr(strsplit(test[3], ' ')[[1]][1], 1,9)))
   if(is.na(v) | !is.numeric(v)){
     warning("Issue verifying ADMB version. Contact package mantainer")
-    return(NULL)
+    return(0)
   }
   if(v < min.version)
     stop(paste(model,"compiled with old version of ADMB. Version >12.0 required, found:\n", test[3],
