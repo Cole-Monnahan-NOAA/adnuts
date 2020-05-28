@@ -231,8 +231,9 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     N <- iter/thin
   }
   v <- .check_ADMB_version(model=model, path=path)
-  if(v<=12.0) {
-    warning('This version of ADMB is incompatible with skip_unbounded=FALSE, ignoring')
+  if(v<=12.0 & !skip_unbounded) {
+    warning(paste('Version', v, 'of ADMB is incompatible with skip_unbounded=FALSE, ignoring'))
+    skip_unbounded <- TRUE
   }
   samples <- array(NA, dim=c(N, chains, 1+length(par.names)),
                    dimnames=list(NULL, NULL, c(par.names,'lp__')))
@@ -354,9 +355,9 @@ sample_admb_nuts <- function(path, model, iter=2000,
   if(!is.null(control$refresh))
     cmd <- paste(cmd, "-refresh", control$refresh)
   if(control$adapt_mass)
-    cmd <- paste(cmd, "-adapt_mass", control$adapt_mass)
+    cmd <- paste(cmd, "-adapt_mass")
   if(control$adapt_mass_dense)
-    cmd <- paste(cmd, "-adapt_mass_dense", control$adapt_mass_dense)
+    cmd <- paste(cmd, "-adapt_mass_dense")
 
   ## Three options for metric. (1) 'mle' is to use the MLE estimates in
   ## admodel.cov without mass adaptation. (2) If a matrix is passed, this
