@@ -142,6 +142,10 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
             call. = FALSE)
   }
   if(is.null(cores)) cores <- parallel::detectCores()-1
+  if(cores > cores.max) {
+    cores <- cores.max-1
+    warning('Specified cores larger than available, using total-1')
+  }
   stopifnot(is.numeric(cores))
   if(cores<1) stop(paste("Cores must be >=1, but is", cores))
   parallel <- ifelse(cores==1 | chains ==1, FALSE, TRUE)
