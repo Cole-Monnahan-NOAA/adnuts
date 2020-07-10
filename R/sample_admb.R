@@ -145,7 +145,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   cores.max  <- parallel::detectCores()
   if(cores > cores.max) {
     cores <- cores.max-1
-    warning('Specified cores larger than available, using total-1')
+    warning(paste('Specified cores larger than available, using total-1=', cores))
   }
   stopifnot(is.numeric(cores))
   if(cores<1) stop(paste("Cores must be >=1, but is", cores))
@@ -182,7 +182,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   }
   ## Delete any psv files in case something goes wrong we dont use old
   ## values by accident
-  trash <- file.remove(list.files()[grep('.psv', x=list.files())])
+  trash <- file.remove(list.files(path)[grep('.psv', x=list.files())])
   ## Run in serial
   if(!parallel){
     if(algorithm=="NUTS"){

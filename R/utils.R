@@ -116,12 +116,16 @@ plot_marginals <- function(fit, pars=NULL, mfrow=NULL,
                            breaks=30){
   if(!is.adfit(fit)) stop("fit is not a valid object")
   if(!is.null(mfrow)) stopifnot(is.vector(mfrow) && length(mfrow)==2)
+  stopifnot(add.mle %in% c(TRUE,FALSE))
+  if(add.mle & is.null(fit$mle)) {
+    add.mle <- FALSE
+    warning("No MLE information found in fit$mle so cannot add")
+  }
   if(!add.mle) fit$mle <- NULL
   if(!add.monitor) fit$monitor <- NULL
   par.old <- par()
   on.exit(par(mfrow=par.old$mfrow, mar=par.old$mar,
               mgp=par.old$mgp, oma=par.old$oma, tck=par.old$tck))
-  if(is.null(fit$mle)) message("No MLE information found in fit$mle")
   posterior <- extract_samples(fit, inc_lp=FALSE)
   par.names <- names(posterior)
   if(is.null(pars)) pars <- par.names
