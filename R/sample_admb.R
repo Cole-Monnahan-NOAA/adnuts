@@ -142,6 +142,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
             call. = FALSE)
   }
   if(is.null(cores)) cores <- parallel::detectCores()-1
+  cores.max  <- parallel::detectCores()
   if(cores > cores.max) {
     cores <- cores.max-1
     warning('Specified cores larger than available, using total-1')
@@ -403,12 +404,25 @@ sample_admb_nuts <- function(path, model, iter=2000,
   time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
   if(!file.exists('adaptation.csv'))
     stop("NUTS output files missing. Check that ADMB version >= 12.0.")
-  sampler_params<- as.matrix(read.csv("adaptation.csv"))
+  sampler_params <- as.matrix(read.csv("adaptation.csv"))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
   dimnames(unbounded) <- NULL
   pars <- .get_psv(model)
   par.names <- names(pars)
-  pars[,'log-posterior'] <- sampler_params[,'energy__']
+  if(!"lp__" %in% dimnames(sampler_params)[[2]]){
+    ## Previous version had a bug where energy__ was stored as
+    ## the log-posterior. So energy is wrong, but log-posterior
+    ## is right here.
+    warning("ADMB version <= 12.0 has a bug where the energy statistic is wrong. Please consider updating")
+    pars[,'log-posterior'] <- sampler_params[,'energy__']
+  } else {
+    ## Later versions has a 7th column containing the LP and 6 is
+    ## the energy. Both enegy and lp are correct
+    pars[,'log-posterior'] <- sampler_params[,'lp__']
+    ## Drop the lp__ here since not used and may cause issues
+    ## downstream.
+    sampler_params <- sampler_params[,-7]
+  }
   pars <- as.matrix(pars)
   ## Thin samples and adaptation post hoc for NUTS
   pars <- pars[seq(1, nrow(pars), by=thin),]
