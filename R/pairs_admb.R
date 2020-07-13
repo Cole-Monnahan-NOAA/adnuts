@@ -74,15 +74,6 @@ pairs_admb <- function(fit, order=NULL,
   ptcex <- .2
   divcex <- .75
   chaincols <- 1:length(unique(chains))
-  wp <- function(par.name) {
-    ## Temporary function that finds (w)hich (p)arameter position par.name
-    ## is in for the MLE. These will not always match due to things like
-    ## log-posterior and derived quantities, in this case, MLEs are NA's
-    x <- which(mle$par.names == par.name)
-    if(length(x)==0) return(NA)
-    if(length(x)>1) stop("Par matched multiple??")
-    return(x)
-  }
   ## reset to old par when exiting
   old.par <- par(no.readonly=TRUE)
   on.exit(par(old.par))
@@ -131,17 +122,21 @@ pairs_admb <- function(fit, order=NULL,
     print(pars.bad)
     pars <- pars[!is.na(pars.bad)]
   }
-  n <- length(pars)
+  ## Converts character to index
+  pars.ind <- match(x=pars, table=names(posterior))
+  pars <- names(posterior)[pars.ind]
+  n <- length(pars.ind)
   if(n==1) stop("This function is only meaningful for >1 parameter")
-  posterior <- posterior[,pars]
+  posterior <- posterior[,pars.ind]
+  ess <- ess[pars.ind]
+  Rhat <- Rhat[pars.ind]
   if(is.null(ymult)) ymult <- rep(1.3, n)
   ## If no limits given, calculate the max range of the posterior samples and
   ## parameter confidence interval
   if(is.null(limits)){
     limits <- list()
     for(i in 1:n){
-      pp <- wp(pars[i])
-      limit.temp <- if(is.na(pp)) NULL else mle$est[pp]+c(-1,1)*1.96*mle$se[pp]
+      limit.temp <- mle$est[pars.ind[i]]+c(-1,1)*1.96*mle$se[pars.ind[i]]
       ## multiplier for the ranges, adjusts the whitespace around the
       ## plots
       min.temp <- min(posterior[,i], limit.temp[1])
@@ -211,7 +206,7 @@ pairs_admb <- function(fit, order=NULL,
         ## replot divegences on top so they are always visible
         points(x=posterior[which(divs==1),col], y=posterior[which(divs==1),row],
                pch=mypch, cex=divcex, col='green')
-        p1 <- wp(pars[row]); p2 <- wp(pars[col])
+        p1 <- pars.ind[row]; p2 <- pars.ind[col]
         if(!is.na(p1) & !is.na(p2)){
           ## Add bivariate 95% normal levels from MLE
           points(x=mle$est[p2], y=mle$est[p1],
