@@ -154,7 +154,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     message(paste("Recommend using chains < cores=", cores))
   stopifnot(thin >=1); stopifnot(chains >= 1)
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
-  if(iter < 10 | !is.numeric(iter)) stop("iter must be > 10")
+  if(iter < 1 | !is.numeric(iter)) stop("iter must be > 1")
   ## Catch path and model name errors early
   stopifnot(is.character(path)); stopifnot(is.character(model))
   if(!dir.exists(path)) stop(paste('Folder', path, 'does not exist. Check argument \'path\''))
@@ -170,6 +170,8 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM')))
     stop("Invalid algorithm specified")
+  if(algorithm=='RWM' & !is.null(control))
+    warning("The control argument ignored when using RWM")
   if(is.null(init)){
     warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
   }  else if(is.function(init)){
@@ -294,7 +296,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
                  model=model, max_treedepth=mcmc.out[[1]]$max_treedepth,
-                 cmd=cmd, covar.est=covar.est, mle=mle,
+                 cmd=cmd, init=init, covar.est=covar.est, mle=mle,
                  monitor=mon)
   result <- adfit(result)
   return(invisible(result))
