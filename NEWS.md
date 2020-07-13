@@ -2,7 +2,7 @@
 adnuts 1.0.1.9000  
 ------------------------------------------------------------------------
 
-* Rework metric options to allow user to access ADMB 13.0's new
+* Rework metric options to allow user to access ADMB 12.2's new
   dense mass matrix adaptation scheme. Added new section
   demonstrating this in the vignette.
 * Add more control to 'sample_admb' via 'skip_monitor',
