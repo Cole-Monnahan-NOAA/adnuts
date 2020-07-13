@@ -243,11 +243,16 @@ plot_sampler_params <- function(fit, plot=TRUE){
 #'   compiled it is contained in the model executable. If this
 #'   code does not exist adnuts will fail. The solution is to
 #'   update ADMB and recompile the model.
-.check_ADMB_version <- function(model, path=NULL, min.version=12){
+.check_ADMB_version <- function(model, path=getwd(),
+                                min.version=12, warn=TRUE){
   if(!is.null(path)){
+    if(dir.exists(path)){
     wd <- getwd()
     on.exit(setwd(wd))
     setwd(path)
+    } else {
+      stop("Invalid path, folder does not exist")
+    }
   }
   ## Run the model to get the version info
   test <- try(system(paste(model, '-version'), intern=TRUE), silent=TRUE)
@@ -262,6 +267,9 @@ plot_sampler_params <- function(fit, plot=TRUE){
   if(v < min.version)
     stop(paste(model,"compiled with old version of ADMB. Version >12.0 required, found:\n", v,
                "\nadnuts is incompatible with this version. Update ADMB and try again"))
+  if(v < 12.2 & warn){
+    warning("This version contains bugs in the NUTS code. Consider updating ADMB to version at least 12.2")
+  }
   return(invisible(v))
 }
 
