@@ -260,7 +260,7 @@ plot_sampler_params <- function(fit, plot=TRUE){
     return(0)
   }
   if(v < min.version)
-    stop(paste(model,"compiled with old version of ADMB. Version >12.0 required, found:\n", test[3],
+    stop(paste(model,"compiled with old version of ADMB. Version >12.0 required, found:\n", v,
                "\nadnuts is incompatible with this version. Update ADMB and try again"))
   return(invisible(v))
 }
