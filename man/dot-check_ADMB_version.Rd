@@ -5,7 +5,7 @@
 \title{Check that the  model is compiled with the right version
 of ADMB which is 12.0 or later}
 \usage{
-.check_ADMB_version(model, path = NULL, min.version = 12)
+.check_ADMB_version(model, path = getwd(), min.version = 12, warn = TRUE)
 }
 \arguments{
 \item{model}{Model name without file extension}
