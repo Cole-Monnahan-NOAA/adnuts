@@ -93,10 +93,9 @@ pairs_admb <- function(fit, order=NULL,
     if(!is.numeric(pars[1])){
       warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
     } else {
+      ## Get slowest or fastest parameter names
       ind <- order(ess, decreasing=(order=='fast'))
       par.names <- par.names[ind]
-      ess <- ess[ind]
-      Rhat <- Rhat[ind]
     }
   }
   ## if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
@@ -113,34 +112,39 @@ pairs_admb <- function(fit, order=NULL,
       pars <- par.names[1:NCOL(posterior)]
     }
   } else if(is.numeric(pars[1])){
-    ## Index can be used instead of character names
+    ## Index can be used instead of character names. Note this
+    ## can be sorted from above
     pars <- par.names[pars]
   }
+  ## Now pars is character and possibly sorted by fast/slow
   pars.bad <- match(x=pars, table=names(posterior))
   if(any(is.na(pars.bad))){
     warning("Some par names did not match -- dropped")
     print(pars.bad)
     pars <- pars[!is.na(pars.bad)]
   }
-  ## Converts character to index
+  ## Converts character to index which is used throughout to
+  ## subset when looping
   pars.ind <- match(x=pars, table=names(posterior))
-  pars <- names(posterior)[pars.ind]
   n <- length(pars.ind)
+  n.mle <- nrow(mle$cor)
   if(n==1) stop("This function is only meaningful for >1 parameter")
-  posterior <- posterior[,pars.ind]
-  ess <- ess[pars.ind]
-  Rhat <- Rhat[pars.ind]
   if(is.null(ymult)) ymult <- rep(1.3, n)
   ## If no limits given, calculate the max range of the posterior samples and
-  ## parameter confidence interval
+  ## parameter confidence interval.
   if(is.null(limits)){
     limits <- list()
     for(i in 1:n){
-      limit.temp <- mle$est[pars.ind[i]]+c(-1,1)*1.96*mle$se[pars.ind[i]]
+      if(pars.ind[i]<=n.mle){
+        limit.temp <- mle$est[pars.ind[i]] +
+          c(-1,1)*1.96*mle$se[pars.ind[i]]
+      } else {
+        limit.temp <- c(NA,NA)
+      }
       ## multiplier for the ranges, adjusts the whitespace around the
       ## plots
-      min.temp <- min(posterior[,i], limit.temp[1])
-      max.temp <- max(posterior[,i], limit.temp[2])
+      min.temp <- min(posterior[,pars.ind[i]], limit.temp[1], na.rm=TRUE)
+      max.temp <- max(posterior[,pars.ind[i]], limit.temp[2], na.rm=TRUE)
       margin <- .15*(max.temp-min.temp)
       limits[[i]] <- c(min.temp-margin, max.temp+margin)
     }
@@ -162,25 +166,27 @@ pairs_admb <- function(fit, order=NULL,
   ## combinations
   for(row in 1:n){
     for(col in 1:n){
+      ii <- pars.ind[row]
+      jj <- pars.ind[col]
       ## Diagonal, so add user choice
       if(row==col){
         if(diag=="hist"){
-          h <- hist(posterior[,row], plot=F)
+          h <- hist(posterior[,ii], plot=F)
           ## Annoyingling you can't pass NULL to xlim in hist. So
           ## have to split up for two cases depending on limits.
           if(is.null(limits)){
-            hist(posterior[,row], axes=F, freq=FALSE, ann=F,
+            hist(posterior[,ii], axes=F, freq=FALSE, ann=F,
                  ylim=c(0, ymult[row]*max(h$density)),
                  col=gray(.8), border=gray(.5))
           } else {
             ## Else use the user provided limits
-            hist(posterior[,row], axes=F, freq=FALSE, ann=F,
+            hist(posterior[,ii], axes=F, freq=FALSE, ann=F,
                  ylim=c(0, ymult[row]*max(h$density)),
                  col=gray(.8), border=gray(.5), xlim=limits[[row]])
           }
           temp.box()
         } else if(diag=="acf") {
-          acf(posterior[,row], axes=F, ann=F, ylim=acf.ylim)
+          acf(posterior[,ii], axes=F, ann=F, ylim=acf.ylim)
           temp.box()
         } else if(diag=="trace") {
           ## Trace plots for each chain separately
@@ -188,37 +194,37 @@ pairs_admb <- function(fit, order=NULL,
           plot(x=0, y=0,  type="n", axes=FALSE,
                ann=FALSE, ylim=limits[[row]], xlim=xlim)
           for(ll in unique(chains)){
-            lines(posterior[chains==ll,row], col=chaincols[ll], lwd=.1)
+            lines(posterior[chains==ll,ii], col=chaincols[ll], lwd=.1)
           }
           temp.box()
         }
         ## Add ESS and Rhat info to diagonal
         if(!is.null(ess) & !is.null(Rhat) & add.monitor)
-          mtext(paste0('ESS=', round(ess[row], 0), " Rhat=", format(round(Rhat[row],2),nsmall=2)),
+          mtext(paste0('ESS=', round(ess[ii], 0), " Rhat=", format(round(Rhat[ii],2),nsmall=2)),
                 cex=.8*label.cex, line=-1)
       }
       ## If lower triangle and covariance known, add scatterplot
       if(row>col){
         par(xaxs="r", yaxs="r")
-        plot(x=posterior[,col], y=posterior[,row], axes=FALSE, ann=FALSE,
+        plot(x=posterior[,jj], y=posterior[,ii], axes=FALSE, ann=FALSE,
              pch=mypch, cex=ptcex, col=mycol, xlim=limits[[col]],
              ylim=limits[[row]], ...)
         ## replot divegences on top so they are always visible
-        points(x=posterior[which(divs==1),col], y=posterior[which(divs==1),row],
+        points(x=posterior[which(divs==1),jj], y=posterior[which(divs==1),ii],
                pch=mypch, cex=divcex, col='green')
-        p1 <- pars.ind[row]; p2 <- pars.ind[col]
-        if(!is.na(p1) & !is.na(p2)){
+        ## can only add MLE stuff if not lp__ parameter which
+        ## doesn'th ave one
+        if(ii<=n.mle & jj <=n.mle){
           ## Add bivariate 95% normal levels from MLE
-          points(x=mle$est[p2], y=mle$est[p1],
+          points(x=mle$est[jj], y=mle$est[ii],
                  pch=16, cex=.5, col='red')
           ## Get points of a bivariate normal 95% confidence contour
           if(!requireNamespace("ellipse", quietly=TRUE)){
             warning("ellipse package needs to be installed to show ellipses")
-          }
-          else {
-            ellipse.temp <- ellipse(x=mle$cor[p2, p1],
-                                    scale=mle$se[c(p2, p1)],
-                                    centre= mle$est[c(p2, p1)], npoints=1000,
+          } else {
+            ellipse.temp <- ellipse(x=mle$cor[jj, ii],
+                                    scale=mle$se[c(jj, ii)],
+                                    centre= mle$est[c(jj, ii)], npoints=1000,
                                     level=.95)
             lines(ellipse.temp , lwd=.5, lty=1, col="red")
           }
@@ -229,7 +235,7 @@ pairs_admb <- function(fit, order=NULL,
       if(row<col){
         ## If upper triangle add text showing the empirical correlation
         plot(0,0,type="n", xlim=c(0,1), ylim=c(0,1), axes=F,ann=F)
-        temp.cor <- round(cor(posterior[,c(row,col)])[1,2],2)
+        temp.cor <- round(cor(posterior[,c(ii,jj)])[1,2],2)
         ## Set a minimum limit for this, so they're still
         ## visible, but still a function of correlation. This
         ## might need to be dynamic with n.
@@ -255,7 +261,7 @@ pairs_admb <- function(fit, order=NULL,
       if(row==1) mtext(pars[col], line=ifelse(col %% 2 ==1, .1, 1.1),
                        cex=label.cex)
       if(col==n)
-        mtext(pars[row], side=4, line=ifelse(row %% 2 ==1, 0, 1), cex=label.cex)
+        mtext(pars[ii], side=4, line=ifelse(row %% 2 ==1, 0, 1), cex=label.cex)
     }
   }
 }
