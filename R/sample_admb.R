@@ -164,7 +164,11 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     ff <- file.path(path, paste("./",model,sep=""))
   }
   if(!file.exists(ff)) stop(paste('File', ff, 'not found. Check \'path\' and \'model\' arguments'))
-  .check_ADMB_version(model=model, path=path)
+  v <- .check_ADMB_version(model=model, path=path, warn= algorithm=='NUTS')
+  if(v<=12.0 & !skip_unbounded) {
+    warning(paste('Version', v, 'of ADMB is incompatible with skip_unbounded=FALSE, ignoring'))
+    skip_unbounded <- TRUE
+  }
   ## Update control with defaults
   control <- .update_control(control)
   if(is.null(warmup)) warmup <- floor(iter/2)
@@ -236,11 +240,6 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     warning(paste("Variable chain lengths, truncating to minimum=", N))
   } else {
     N <- iter/thin
-  }
-  v <- .check_ADMB_version(model=model, path=path)
-  if(v<=12.0 & !skip_unbounded) {
-    warning(paste('Version', v, 'of ADMB is incompatible with skip_unbounded=FALSE, ignoring'))
-    skip_unbounded <- TRUE
   }
   samples <- array(NA, dim=c(N, chains, 1+length(par.names)),
                    dimnames=list(NULL, NULL, c(par.names,'lp__')))

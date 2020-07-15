@@ -269,9 +269,11 @@ summary(fit$monitor$n_eff)
 summary(fit$monitor$Rhat)
 ````
 
-Likewise both the model parameters and the NUTS sampler parameters can be
-extracted as a data frame. These functions have optional arguments for
-whether to include the warmup samples and log posterior column (lp__)
+The Rhat values are sufficiently close to 1 but the minimum
+effective sample size is 71 which is too few for inference so
+longer chains should be run. Both the model parameters
+and the NUTS sampler parameters can be extracted as a data
+frame. 
 
 ````{r}
 post <- extract_samples(fit)
@@ -286,14 +288,16 @@ parameters. The latter can be useful for debugging issues with parameters
 with high density near the bounds or poor mixing issues when using RWM
 chains. 
 
-The object returned by `sample_admb` can also be plugged directly into the
-ShinyStan interactive tool environment by calling the wrapper function
-`launch_shinyadmb`. See ShinyStan documentation for more information on
-this. It is designed to provide NUTS specific diagnostics, but also serves
-as a more general tool for MCMC diagnostics and thus is beneficial for RWM
-chains as well. If desired, the output samples can be converted into `mcmc`
-objects for use with the CODA R package.  For instance, CODA traceplots can
-be accessed like this:
+The object returned by `sample_admb` can also be plugged directly
+into the ShinyStan interactive tool environment by calling the
+wrapper function `launch_shinyadmb(fit)` after loading the
+`shinystan` library. See ShinyStan documentation for more
+information on this. It is designed to provide NUTS specific
+diagnostics, but also serves as a more general tool for MCMC
+diagnostics and thus is beneficial for RWM chains as well. If
+desired, the output samples can be converted into `mcmc` objects
+for use with the CODA R package.  For instance, CODA traceplots
+can be accessed like this:
 
 ```` {r, eval=FALSE, echo=TRUE}
 post <- extract_samples(fit, as.list=TRUE)
@@ -302,13 +306,14 @@ coda::traceplot(postlist)
 ````
 
 Or into `bayesplot` with a little massaging. Future versions of
-adnuts may link these more directly. But for now it can be done manually
-such as with the energy diagnostic:
+adnuts may link these more directly. But for now it can be done
+manually such as with the energy diagnostic:
 
 ```` {r, eval=FALSE, echo=TRUE}
 library(bayesplot)
 library(dplyr)
 library(tidyr)
+library(ggplot2)
 color_scheme_set("red")
 np <- extract_sampler_params(fit) %>%
   pivot_longer(-c(chain, iteration), names_to='Parameter', values_to='Value') %>%
@@ -334,23 +339,23 @@ used to quantify uncertainty. The `pairs_admb` function can be used to plot
 pairwise posterior draws vs the MLE estimate and confidence ellipses. Major
 discrepancies between the two are cause for concern. As such, this can be a
 good diagnostic tool for both frequentist and Bayesian inference. In
-particular, it often is informative to plot the slowest mixing parameters.
-
-
-
+particular, it often is informative to plot the slowest mixing parameters
+or key ones by name as follows.
 
 ```` {r fig2, fig.width=6, fig.height=4.5}
-pairs_admb(fit, pars=1:5, order='slow')
+pairs_admb(fit, pars=1:3, order='slow')
+pairs_admb(fit, pars=c('sigmaphi', 'sigmap', 'sigmayearphi'))
 ````
 
-Looking at the last row for parameter "sigmaphi" which is a hypervariance,
-the last plot shows the traces of two chains (colors), where alternative
+The last plot shows the three hypervariances of this hierarchical
+model. The diagonal shows traces of two chains (colors), where alternative
 options for argument `diag` are 'trace' (default), 'hist' for histogram,
 and 'acf' for the autocorrelation function. The remaining plots show
-pairwise posterior samples (black points) for the remaining parameters. A
-red point shows the posterior mode and an ellipse shows the 95% bivariate
-confidence region, taken from the inverse Hessian calculated by
-ADMB/. Since the log-posterior (lp__) is not a parameter there is no
+pairwise posterior samples (black points) for the remaining
+parameters. Divergences are shown as green points if they exist (none do
+here). A red point shows the posterior mode and an ellipse shows the 95%
+bivariate confidence region, taken from the inverse Hessian calculated by
+ADMB. Since the log-posterior (lp__) is not a parameter there is no
 ellipse. Note that the posterior samples and asympotic approximations for
 the two fixed effects `a` match closely, whereas for the `sigmaphi`
 hypervariance parameter there is a notable mismatch. This mismatch is not
@@ -370,24 +375,29 @@ mass matrix represents the geometry of the posterior in untransformed
 is typically hidden from the user but nonetheless is important to recognize
 when thinking about the mass matrix.
 
-ADMB has the capability to do both diagonal and dense (full matrix)
-estimation during warmup (adaptation). The initial matrix can likewise
-easily be intialized in two ways. First is a unit diagonal, and second is
-the "MLE" option, which more accurately is the covariance matrix calculated
-from inverting the Hessian at the maximum posterior density (the mode --
-informally referred to as the MLE often). I refer to this as $\Sigma$. As
-such there are 6 options for the mass matrix, summarized in the subsequent
-table. Note that options 3 and 6 were not available before version 1.2.0
-and are only available for ADMB >12.0.
+ADMB has the capability to do both diagonal and dense (full matrix, as of
+version 12.2) estimation during warmup (adaptation). The initial matrix can
+likewise easily be intialized in two ways. First is a unit diagonal, and
+second is the "MLE" option, which more accurately is the covariance matrix
+calculated from inverting the Hessian at the maximum posterior density (the
+mode -- informally referred to as the MLE often). I refer to this as
+$\Sigma$. As such there are 6 options for the mass matrix, summarized in
+the subsequent table. Note that options 3 and 6 were not available before
+`adnuts` version 1.2.0 and are only available for ADMB >= 12.2.
+
+Note that dense estimation should be considered an experimental feature.
+This option is in Stan but is rarely used. Stan users almost always use
+option 2 below (the default in `adnuts`). As more models are fit this
+advice will evolve. For now this is my best guess:
 
 | Initial<br>matrix | Adaptation | adnuts | Command<br>line | Recommended usage | 
 |----------------|-----------------|---------------|---------------------|----------------|
 | Unit  | None | `adapt_mass=FALSE`| `-mcdiag` | Rarely if ever used |
 | Unit  | Diagonal | (default) | `-mcdiag`<br>`-adapt_mass` | Use with minimal correlations, $\Sigma$ is unavailable, or $d$>1000. Often the best choice for hierarchical models | 
-| Unit  | Dense    | `adapt_mass_dense=TRUE`| `-mcdiag`<br>`-adapt_mass_dense`| Use when strong correlations but $\Sigma$ is unavailable and $d$<5000  |
-| $\Sigma$  | None | `metric='mle'`<br>`adapt_mass=FALSE`| (default) | When $\Sigma$ well approximates the posterior | 
-| $\Sigma$  | Diagonal | `metric='mle'`| `-mcdiag`<br>`-adapt_mass` | When $\Sigma$ is poor approximation but $d$>5000. 
-| $\Sigma$  | Dense |  `metric='mle'`<br>`adapt_mass_dense=TRUE`| `-adapt_mass_dense`| When $\Sigma$ is poor approximation but $d$<5000 
+| Unit  | Dense    | `adapt_mass_dense=TRUE`| `-mcdiag`<br>`-adapt_mass_dense`| Use when strong correlations but $\Sigma$ is unavailable and $d$<500  |
+| $\Sigma$  | None | `metric='mle'`<br>`adapt_mass=FALSE`| (default) | When $\Sigma$ is good and $d$<1000 | 
+| $\Sigma$  | Diagonal | `metric='mle'`| `-mcdiag`<br>`-adapt_mass` | When $\Sigma$ is OK and $d$>500. 
+| $\Sigma$  | Dense |  `metric='mle'`<br>`adapt_mass_dense=TRUE`| `-adapt_mass_dense`| When $\Sigma$ is OK but $d$<500 
 
 $d$ refers to the dimensionality (# of parameters) and this guidance is a
 very rough guess. The reason dimensionality matters is that there is a
@@ -423,23 +433,26 @@ the geometry the optimal step size changes). A second update happens later
 but is not apparent, indicating the first was sufficient. All fits with a
 dense matrix end with the same approximate step size, which is larger than
 any without it. Option 3 starts off diagonal but after updating to a dense
-matrix peforms equivalently. For the diagonal options option 1 does not
+matrix peforms equivalently. For the diagonal options, option 1 does not
 update, while option two starts at unit diagonal and aftering updating the
 diagonal performs equally well as option 5 which starts well.
 
-Furthermore, it is often hard to estimate a good dense mass matrix,
-especially in the first few phases of warmup with very few samples. In such
-cases the Cholesky decomposition of the estimated matrix may fail. Instead
-of crashing the run I coded ADMB to instead do a diagonal estimate in this
-case, and try a dense update at the next phase, repeating until warmup is
-over. Warnings are printed to the console when this happens.
+This is the behavior on a trivial model, but it is often hard to estimate a
+good dense mass matrix, especially in the first few phases of warmup with
+very few samples. In such cases the Cholesky decomposition of the estimated
+matrix may fail. Instead of crashing the run I coded ADMB to instead do a
+diagonal estimate in this case, and try a dense update at the next phase,
+repeating until warmup is over. Warnings are printed to the console when
+this happens.
 
 Which option to use in which situation is still an open question. Certainly
 for hierarchical models where $\Sigma$ is not helpful or doesn't exist,
 option 2 is likely the best. For fisheries stock assessment models which
 already rely on $\Sigma$ options 4-6 are worth exploring. 
 
-## Sampling for TMB models Previous versions of `adnuts` included explicit
+## Sampling for TMB models
+
+Previous versions of `adnuts` included explicit
 demonstrations of use for TMB models. Now, however, the package `tmbstan`
 ([@monnahan2018]) has replaced this functionality and users should
 exclusively use that package except for very rare cases. Consequently I
@@ -582,6 +595,23 @@ between regions in the posterior more easily.
 
 
 ![Effects of mass matrix on trajectories](tree_trajectories.png)
+
+## Algorithm validity
+
+It is important to validate MCMC algorithms because bugs in the code can
+cause biased inference. So to test the algorithms in ADMB I ran long chains
+on known, analytical distributions and compared sample quantiles to
+theoretical ones. As a frame of reference I added pure Monte Carlo (mc) draws
+which are IID. Shown are, in order of columns, Z~N(0,1), t4~t(df=4),
+t10~t(df=10), gamma, inverse gamma, truncated normal, a multivariate
+(bivariate) normal for 4 quantiles (rows), for 3 ADMB algorithms and Monte
+Carlo (mc) (colors). 20 independent chains were run (points).
+
+All cases are mean 0, and MC is indistinguishable from MCMC. This provides
+strong evidence that the algorithms are statistically valid and thus
+samples drawn using them are unbiased.
+
+![Validity of ADMB MCMC algorithms](validity_tests.png){width=100%}
 
 ## References
 
