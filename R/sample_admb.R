@@ -174,8 +174,6 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM')))
     stop("Invalid algorithm specified")
-  if(algorithm=='RWM' & !is.null(control))
-    warning("The control argument ignored when using RWM")
   if(is.null(init)){
     warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
   }  else if(is.function(init)){
@@ -188,7 +186,9 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   }
   ## Delete any psv files in case something goes wrong we dont use old
   ## values by accident
-  trash <- file.remove(list.files(path)[grep('.psv', x=list.files())])
+  trash <- suppressWarnings(file.remove(list.files(path)[grep('.psv', x=list.files())]))
+  trash <- suppressWarnings(file.remove(file.path(path, 'adaptation.csv'),
+                       file.path(path, 'unbounded.csv')))
   ## Run in serial
   if(!parallel){
     if(algorithm=="NUTS"){
@@ -403,8 +403,8 @@ sample_admb_nuts <- function(path, model, iter=2000,
 
   ## Run it and get results
   time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
-  if(!file.exists('adaptation.csv'))
-    stop("NUTS output files missing. Check that ADMB version >= 12.0.")
+  if(!file.exists('adaptation.csv') | !file.exists('unbounded.csv'))
+    stop(paste0("NUTS failed to run in chain ", chain, ". Check inputs."))
   sampler_params <- as.matrix(read.csv("adaptation.csv"))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
   dimnames(unbounded) <- NULL
@@ -414,7 +414,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
     ## Previous version had a bug where energy__ was stored as
     ## the log-posterior. So energy is wrong, but log-posterior
     ## is right here.
-    warning("ADMB version <= 12.0 has a bug where the energy statistic is wrong. Please consider updating")
+    ## warning("ADMB version <= 12.0 has a bug where the energy statistic is wrong. Please consider updating")
     pars[,'log-posterior'] <- sampler_params[,'energy__']
   } else {
     ## Later versions has a 7th column containing the LP and 6 is
@@ -511,6 +511,8 @@ sample_admb_rwm <-
 
     ## Run it and get results
     time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
+    if(!file.exists('unbounded.csv'))
+      stop(paste0("RWM failed to run in chain ", chain, ". Check inputs."))
     unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
     dimnames(unbounded) <- NULL
     pars <- .get_psv(model)

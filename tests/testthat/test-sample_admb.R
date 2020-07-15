@@ -55,4 +55,61 @@ test_that("reproducibility among chains", {
 })
 
 
+test_that("diagnostics and plotting", {
+  skip_on_cran()
+  inits <- function() list(1,1)
+  fit <- sample_admb('simple', path='../simple', chains=4,
+                     iter=2000, cores=1, init=inits, seeds=1,
+                     control=list(refresh=-1))
+  sp <- extract_sampler_params(fit)
+  expect_known_output(tail(sp,1), file='_expect_sp')
+  expect_known_output(tail(fit$monitor,1), file='_expect_monitor')
+  plot_sampler_params(fit, TRUE)
+  pairs_admb(fit)
+  pairs_admb(fit, pars=1:3, order='slow')
+  pairs_admb(fit, pars=1:3, order='fast')
+  pairs_admb(fit, pars=c('a', 'lp__', 'b'), add.monitor=FALSE)
+  pairs_admb(fit, add.mle=FALSE)
+  pairs_admb(fit, add.mle=FALSE, diag='hist')
+  pairs_admb(fit, add.mle=FALSE, diag='acf')
+  plot_marginals(fit)
+  plot_marginals(fit, add.monitor=FALSE)
+  plot_marginals(fit, add.mle=FALSE)
+})
 
+test_that("errors in sample_admb",{
+  skip_on_cran()
+  inits <- function() list(1,1)
+  test <- expect_error(sample_admb('simple', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=1, warmup=2000),
+                       regexp='warmup <= iter')
+  test <- expect_error(sample_admb('simple', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=-1),
+                       regexp='chains >=1')
+  test <- expect_error(sample_admb('simple3', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=1),
+                       regexp="Check 'path' and 'model'")
+  test <- expect_error(sample_admb('simple', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=1,
+                                   control=list(adapt_init_buffer=-20)),
+                       regexp='NUTS failed to run')
+  test <- expect_error(sample_admb('simple', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=3,
+                                   control=list(adapt_delta=1.5)),
+                       regexp='NUTS failed to run')
+  test <- expect_error(sample_admb('simple', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=3, cores=1,
+                                   control=list(adapt_delta=1.5)),
+                       regexp='NUTS failed to run')
+  test <- expect_error(sample_admb('simple', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=1, algorithm='RWM',
+                                   admb_args='-refresh -2'),
+                       regexp='RWM failed to run')
+})

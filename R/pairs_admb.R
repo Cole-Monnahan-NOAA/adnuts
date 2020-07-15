@@ -127,7 +127,7 @@ pairs_admb <- function(fit, order=NULL,
   ## subset when looping
   pars.ind <- match(x=pars, table=names(posterior))
   n <- length(pars.ind)
-  n.mle <- nrow(mle$cor)
+  n.mle <- ifelse(is.null(mle), 0, nrow(mle$cor))
   if(n==1) stop("This function is only meaningful for >1 parameter")
   if(is.null(ymult)) ymult <- rep(1.3, n)
   ## If no limits given, calculate the max range of the posterior samples and

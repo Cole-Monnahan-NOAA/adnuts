@@ -25,3 +25,5 @@ admodel.*
 rwm_lp.txt
 unbounded.csv
 *adapted_metric.txt
+tests/simple_chain*
+tests/testthat/Rplots.pdf
