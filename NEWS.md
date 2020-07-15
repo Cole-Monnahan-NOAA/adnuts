@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
-adnuts 1.0.1.9000  
+adnuts 1.1.0 (2020-07-13)
 ------------------------------------------------------------------------
 
 * Rework metric options to allow user to access ADMB 12.2's new
@@ -28,6 +28,7 @@ adnuts 1.0.1.9000
   can be relative or absolute. 
 * Add check for valid version of ADMB
 * Minor bug fixes and documentation updates
+* Improve error handling and testing routines
 
 ------------------------------------------------------------------------
 adnuts 1.0.1 (2019-03-15) 
