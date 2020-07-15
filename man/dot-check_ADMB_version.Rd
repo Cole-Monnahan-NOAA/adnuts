@@ -15,6 +15,8 @@ directory. NULL value specifies working directory (default).}
 
 \item{min.version}{Minimum valid version (numeric). Defaults
 to 12.0.}
+
+\item{warn}{Boolean whether to throw warnings or not}
 }
 \value{
 Nothing, errors out if either model could not be run

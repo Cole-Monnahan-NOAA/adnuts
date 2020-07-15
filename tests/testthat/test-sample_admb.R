@@ -87,7 +87,7 @@ test_that("errors in sample_admb",{
   test <- expect_error(sample_admb('simple', path='../simple',
                                    iter=1000, init=inits,
                                    chains=-1),
-                       regexp='chains >=1')
+                       regexp='chains >= 1')
   test <- expect_error(sample_admb('simple3', path='../simple',
                                    iter=1000, init=inits,
                                    chains=1),

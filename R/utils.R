@@ -235,6 +235,7 @@ plot_sampler_params <- function(fit, plot=TRUE){
 #'   directory. NULL value specifies working directory (default).
 #' @param min.version Minimum valid version (numeric). Defaults
 #'   to 12.0.
+#' @param warn Boolean whether to throw warnings or not
 #' @return Nothing, errors out if either model could not be run
 #'   or the version is incompatible. If compatible nothing
 #'   happens.

@@ -219,7 +219,7 @@ parameters.
 
 ### Parallel sampling
 
-Parallel sampling is done by default as of version 1.2.0. It is done by
+Parallel sampling is done by default as of version 1.1.0. It is done by
 parallelizing multiple chains, not calculations within a chain. The
 `snowfall` package is used. `n.cores` chains will be run by making
 temporary copies of the directory `path` (which contain the model
@@ -383,7 +383,7 @@ calculated from inverting the Hessian at the maximum posterior density (the
 mode -- informally referred to as the MLE often). I refer to this as
 $\Sigma$. As such there are 6 options for the mass matrix, summarized in
 the subsequent table. Note that options 3 and 6 were not available before
-`adnuts` version 1.2.0 and are only available for ADMB >= 12.2.
+`adnuts` version 1.1.0 and are only available for ADMB >= 12.2.
 
 Note that dense estimation should be considered an experimental feature.
 This option is in Stan but is rarely used. Stan users almost always use
