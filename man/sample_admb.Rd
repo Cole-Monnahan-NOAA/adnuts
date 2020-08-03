@@ -20,6 +20,7 @@ sample_admb(
   cores = NULL,
   control = NULL,
   skip_optimization = TRUE,
+  algorithm = "NUTS",
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
   admb_args = NULL,
@@ -56,8 +57,9 @@ samples from merged chains.}
 \item{duration}{The number of minutes after which the model
 will quit running.}
 
-\item{parallel}{A boolean for whether to use parallel
-cores. The package snowfall is used if TRUE.}
+\item{parallel}{A deprecated argument, use cores=1 for serial
+execution or cores>1 for parallel (default is to parallel
+with cores equal to the available-1)}
 
 \item{cores}{The number of cores to use for parallel
 execution.}
@@ -69,6 +71,13 @@ further use.}
 running MCMC. This is rarely need as it is better to run it
 once before to get the covariance matrix, or the estimates
 are not needed with adaptive NUTS.}
+
+\item{algorithm}{The algorithm to use."NUTS" is the default
+and recommended one, but "RWM" for the random walk
+Metropolis sampler and "HMC" for the static HMC sampler are
+available. HMC is deprecated but may be of use in special
+situations. These algorithms require different arguments;
+see their help files for more information.}
 
 \item{skip_monitor}{Whether to skip calculating diagnostics
 (effective sample size, Rhat) via the \code{rstan::monitor}
