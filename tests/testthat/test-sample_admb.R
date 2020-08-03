@@ -30,6 +30,16 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
   inits <- function() list(1,1)
   test <- expect_warning(sample_nuts('simple', path='../simple',
                                      iter=1000, init=inits,
+                                  extra.args='-test',
+                                     chains=1, warmup=500),
+                         regexp='extra.args is deprecated')
+  test <- expect_warning(sample_rwm('simple', path='../simple',
+                                     iter=1000, init=inits,
+                                     extra.args='-test',
+                                     chains=1, warmup=500),
+                         regexp='extra.args is deprecated')
+    test <- expect_warning(sample_nuts('simple', path='../simple',
+                                     iter=1000, init=inits,
                                      parallel=TRUE,
                                      chains=1, warmup=500),
                          regexp='parallel is deprecated')
