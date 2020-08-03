@@ -385,7 +385,9 @@ calculated from inverting the Hessian at the maximum posterior density (the
 mode -- informally referred to as the MLE often). I refer to this as
 $\Sigma$. As such there are 6 options for the mass matrix, summarized in
 the subsequent table. Note that options 3 and 6 were not available before
-`adnuts` version 1.1.0 and are only available for ADMB >= 12.2.
+`adnuts` version 1.1.0 and are only available for ADMB >=
+12.2. Also not the differences in default behavior when running from
+`sample_nuts` vs. the command line.
 
 Note that dense estimation should be considered an experimental feature.
 This option is in Stan but is rarely used. Stan users almost always use
@@ -397,8 +399,8 @@ advice will evolve. For now this is my best guess:
 | Unit  | None | `adapt_mass=FALSE`| `-mcdiag` | Rarely if ever used |
 | Unit  | Diagonal | (default) | `-mcdiag`<br>`-adapt_mass` | Use with minimal correlations, $\Sigma$ is unavailable, or $d$>1000. Often the best choice for hierarchical models | 
 | Unit  | Dense    | `adapt_mass_dense=TRUE`| `-mcdiag`<br>`-adapt_mass_dense`| Use when strong correlations but $\Sigma$ is unavailable and $d$<500  |
-| $\Sigma$  | None | `metric='mle'`<br>`adapt_mass=FALSE`| (default) | When $\Sigma$ is good and $d$<1000 | 
-| $\Sigma$  | Diagonal | `metric='mle'`| `-mcdiag`<br>`-adapt_mass` | When $\Sigma$ is OK and $d$>500. 
+| $\Sigma$  | None | `metric='mle'| (default) | When $\Sigma$ is good and $d$<1000 | 
+| $\Sigma$  | Diagonal | `metric='mle'`<br`adapt_mass=TRUE`| `-mcdiag`<br>`-adapt_mass` | When $\Sigma$ is OK and $d$>500. 
 | $\Sigma$  | Dense |  `metric='mle'`<br>`adapt_mass_dense=TRUE`| `-adapt_mass_dense`| When $\Sigma$ is OK but $d$<500 
 
 $d$ refers to the dimensionality (# of parameters) and this guidance is a

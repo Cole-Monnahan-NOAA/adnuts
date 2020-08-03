@@ -412,15 +412,15 @@ check_identifiable <- function(model, path=getwd()){
   default <- list(adapt_delta=0.8, metric='unit', stepsize=NULL,
                   adapt_mass=TRUE, adapt_mass_dense=FALSE,
                   max_treedepth=12)
-  ## ## Special case if user is doing mle they probably don't want
-  ## ## mass adaptation turned on. They have to override it by
-  ## ## setting TRUE for either adaptation option
-  ## if(is.character(control$metric)| is.matrix(control$metric)){
-  ##   if(is.null(control$adapt_mass) &
-  ##      is.null(control$adapt_mass_dense)){
-  ##     default$adapt_mass <- default$adapt_mass_dense <- FALSE
-  ##   }
-  ## }
+  ## Special case if user is doing mle they probably don't want
+  ## mass adaptation turned on. They have to override it by
+  ## setting TRUE for either adaptation option
+  if(is.character(control$metric)| is.matrix(control$metric)){
+    if(is.null(control$adapt_mass) &
+       is.null(control$adapt_mass_dense)){
+      default$adapt_mass <- default$adapt_mass_dense <- FALSE
+    }
+  }
   new <- default
   if(!is.null(control))
     for(i in names(control))  new[[i]] <- control[[i]]
