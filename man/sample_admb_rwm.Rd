@@ -41,22 +41,14 @@ recommended to initialize multiple chains from dispersed
 points. A of NULL signifies to use the starting values
 present in the model (i.e., \code{obj$par}) for all chains.}
 
-\item{chain}{Chain number, for printing purposes only.}
-
-\item{seed}{Random seed to use.}
-
 \item{control}{A list to control the sampler. See details for
 further use.}
-
-\item{verbose}{Boolean for whether to print ADMB output to console.}
 
 \item{duration}{The number of minutes after which the model
 will quit running.}
 
-\item{extra.args}{Deprecated, use \code{admb_args} instead}
-
-\item{admb_args}{Character string of extra command line argument to
-pass to ADMB.}
+\item{admb_args}{A character string which gets passed to the
+command line, allowing finer control}
 
 \item{skip_optimization}{Whether to run the optimizer before
 running MCMC. This is rarely need as it is better to run it

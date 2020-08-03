@@ -107,15 +107,8 @@ and loosely follows package \code{rstan}. The step size can be
 }
 }
 \section{Warning}{
- The user is responsible for specifying the
-  model properly (priors, starting values, desired parameters
-  fixed, etc.), as well as assessing the convergence and
-  validity of the resulting samples (e.g., through the
-  \code{coda} package), or with function
-  \code{\link{launch_shinytmb}} before making
-  inference. Specifically, priors must be specified in the
-  template file for each parameter. Unspecified priors will be
-  implicitly uniform.
+ This is deprecated and will cease to exist
+  in future releases
 }
 
 \examples{

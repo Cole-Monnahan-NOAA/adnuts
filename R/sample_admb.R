@@ -1,4 +1,51 @@
-#' Bayesian inference of an ADMB model using the no-U-turn sampler.
+
+
+#' @rdname wrappers
+#' @export
+sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
+                        seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
+                        parallel=FALSE, cores=NULL, control=NULL,
+                        skip_optimization=TRUE,
+                        skip_monitor=FALSE, skip_unbounded=TRUE,
+                        admb_args=NULL, ...){
+  ## Argument checking and processing
+  if (!missing(parallel)) {
+    warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
+            call. = FALSE)
+  }
+  .sample_admb(model=model, path=getwd(), iter=2000, init=init, chains=chains, warmup=warmup,
+              seeds=seeds, thin=thin, mceval=mceval, duration=duration,
+              cores=cores, control=control,
+              algorithm="NUTS", skip_optimization=skip_optimization,
+              skip_monitor=skip_monitor, skip_unbounded=skip_unbounded,
+              admb_args=admb_args, ...)
+}
+
+#' @rdname wrappers
+#' @export
+sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
+                        seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
+                        parallel=FALSE, cores=NULL, control=NULL,
+                        skip_optimization=TRUE,
+                        skip_monitor=FALSE, skip_unbounded=TRUE,
+                        admb_args=NULL, ...){
+  ## Argument checking and processing
+  if (!missing(parallel)) {
+    warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
+            call. = FALSE)
+  }
+  .sample_admb(model=model, path=getwd(), iter=2000, init=init, chains=chains, warmup=warmup,
+              seeds=seeds, thin=thin, mceval=mceval, duration=duration,
+              cores=cores, control=control,
+              algorithm="RWM", skip_optimization=skip_optimization,
+              skip_monitor=skip_monitor, skip_unbounded=skip_unbounded,
+              admb_args=admb_args, ...)
+}
+
+
+
+#' Bayesian inference of an ADMB model using the no-U-turn
+#' sampler (NUTS) or random walk Metropolis (RWM) algorithms.
 #'
 #' Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
 #' using an MCMC algorithm. This function generates posterior samples from
@@ -43,6 +90,7 @@
 #'   documentation and this vignette.
 #'
 #' @author Cole Monnahan
+#' @name wrappers
 #' @param model Name of model (i.e., model.tpl)
 #' @param path Path to model executable. Defaults to working
 #'   directory. Often best to have model files in a separate
@@ -106,7 +154,6 @@
 #'   inference. Specifically, priors must be specified in the
 #'   template file for each parameter. Unspecified priors will be
 #'   implicitly uniform.
-#' @export
 #' @examples
 #' \dontrun{
 #' ## This is the packaged simple regression model
@@ -129,18 +176,47 @@
 #' setwd(oldwd)
 #' }
 #'
+NULL
+
+#' Deprecated version of wrapper function. Use sample_nuts or
+#' sample_rwm instead.
+#'
+#' @inheritParams wrappers
+#' @section Warning: This is deprecated and will cease to exist
+#'   in future releases
 sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
+                        seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
+                        parallel=FALSE, cores=NULL, control=NULL,
+                        skip_optimization=TRUE,
+                        skip_monitor=FALSE, skip_unbounded=TRUE,
+                        admb_args=NULL, ...){
+  ## Argument checking and processing
+  if (!missing(parallel)) {
+    warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
+            call. = FALSE)
+  }
+  warning("Function sample_admb is deprecated, use sample_nuts or sample_rwm instead",
+          call. = FALSE)
+  .sample_admb(model=model, path=getwd(), iter=2000, init=init, chains=chains, warmup=warmup,
+              seeds=seeds, thin=thin, mceval=mceval, duration=duration,
+              cores=cores, control=control,
+              algorithm="NUTS", skip_optimization=skip_optimization,
+              skip_monitor=skip_monitor, skip_unbounded=skip_unbounded,
+              admb_args=admb_args, ...)
+}
+
+
+#' Hidden wrapper function for sampling from ADMB models
+#'
+#' @inheritParams wrappers
+#'
+.sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
                         algorithm="NUTS", skip_optimization=TRUE,
                         skip_monitor=FALSE, skip_unbounded=TRUE,
                         admb_args=NULL,
                         ...){
-  ## Argument checking and processing
-  if (!missing(parallel)) {
-    warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
-            call. = FALSE)
-  }
   if(is.null(cores)) cores <- parallel::detectCores()-1
   cores.max  <- parallel::detectCores()
   if(cores > cores.max) {
@@ -305,7 +381,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 #'
 #' A low level function to run a single chain. Unlikely to be used by a
 #' user, instead prefer \code{\link{sample_admb}}
-#' @inheritParams sample_admb
+#' @inheritParams wrappers
 #' @param seed Random seed to use.
 #' @param chain Chain number, for printing purposes only.
 #' @param admb_args Character string of extra command line argument to
@@ -443,7 +519,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
 #'
 #' A low level function to run a single chain. Unlikely to be used by a
 #' user, instead prefer \code{\link{sample_admb}}
-#' @inheritParams sample_admb_nuts
+#' @inheritParams wrappers
 #' @seealso \code{\link{sample_admb}}
 sample_admb_rwm <-
   function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),

@@ -2,7 +2,8 @@
 % Please edit documentation in R/sample_admb.R
 \name{sample_admb}
 \alias{sample_admb}
-\title{Bayesian inference of an ADMB model using the no-U-turn sampler.}
+\title{Deprecated version of wrapper function. Use sample_nuts or
+sample_rwm instead.}
 \usage{
 sample_admb(
   model,
@@ -18,7 +19,6 @@ sample_admb(
   parallel = FALSE,
   cores = NULL,
   control = NULL,
-  algorithm = "NUTS",
   skip_optimization = TRUE,
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
@@ -65,13 +65,6 @@ execution.}
 \item{control}{A list to control the sampler. See details for
 further use.}
 
-\item{algorithm}{The algorithm to use."NUTS" is the default
-and recommended one, but "RWM" for the random walk
-Metropolis sampler and "HMC" for the static HMC sampler are
-available. HMC is deprecated but may be of use in special
-situations. These algorithms require different arguments;
-see their help files for more information.}
-
 \item{skip_optimization}{Whether to run the optimizer before
 running MCMC. This is rarely need as it is better to run it
 once before to get the covariance matrix, or the estimates
@@ -99,84 +92,11 @@ algorithm. See help files for the samplers for further
 arguments.}
 }
 \description{
-Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
-using an MCMC algorithm. This function generates posterior samples from
-which inference can be made. Adaptation schemes are used so
-specifying tuning parameters is not necessary, and parallel
-execution reduces overall run time.
-}
-\details{
-This function implements algorithm 6 of Hoffman and Gelman (2014),
-and loosely follows package \code{rstan}. The step size can be
-  adapted or specified manually. The metric (i.e., mass matrix) can be
-  unit diagonal, adapted diagonal (default and recommended), a dense
-  matrix specified by the user, or an adapted dense matrix.
- Further control of algorithms can be
-  specified with the \code{control} argument.  Elements are:
-\describe{
-\item{adapt_delta}{The target acceptance rate. D}
-\item{metric}{The mass metric to use. Options are: "unit" for a unit diagonal
-  matrix; \code{NULL} to estimate a diagonal matrix during warmup; a matrix
-  to be used directly (in untransformed space).}
-\item{adapt_delta}{Whether adaptation of step size is turned on.}
-\item{adapt_mass}{Whether adaptation of mass matrix is turned
-  on. Currently only allowed for diagonal metric.}
-\item{adapt_mass_dense}{Whether dense adaptation of mass
-  matrix is turned on.}
-\item{max_treedepth}{Maximum treedepth for the NUTS algorithm.}
-\item{stepsize}{The stepsize for the NUTS algorithm. If \code{NULL} it
-  will be adapted during warmup.}
-\item{adapt_init_buffer}{The initial buffer size during mass matrix
-  adaptation where sample information is not used (default
-  50)}
-\item{adapt_term_buffer}{The terminal buffer size (default 75)
-  during mass
-  matrix adpatation (final fast phase)}
-\item{adapt_window}{The initial size of the mass matrix
-  adaptation window, which gets doubled each time thereafter.}
-\item{refresh}{The rate at which to refresh progress to the
-  console. Defaults to even 10%. A value of 0 turns off
-  progress updates.}
-}
-The adaptation scheme (step size and mass matrix) is based heavily on those by the
-  software Stan, and more details can be found in that
-  documentation and this vignette.
+Deprecated version of wrapper function. Use sample_nuts or
+sample_rwm instead.
 }
 \section{Warning}{
- The user is responsible for specifying the
-  model properly (priors, starting values, desired parameters
-  fixed, etc.), as well as assessing the convergence and
-  validity of the resulting samples (e.g., through the
-  \code{coda} package), or with function
-  \code{\link{launch_shinytmb}} before making
-  inference. Specifically, priors must be specified in the
-  template file for each parameter. Unspecified priors will be
-  implicitly uniform.
+ This is deprecated and will cease to exist
+  in future releases
 }
 
-\examples{
-\dontrun{
-## This is the packaged simple regression model
-path.simple <- system.file('examples', 'simple', package='adnuts')
-## It is best to have your ADMB files in a separate folder and provide that
-## path, so make a copy of the model folder locally.
-path <- 'simple'
-dir.create(path)
-trash <- file.copy(from=list.files(path.simple, full.names=TRUE), to=path)
-## Compile and run model
-oldwd <- getwd()
-setwd(path)
-system('admb simple.tpl')
-system('simple')
-setwd('..')
-init <- function() rnorm(2)
-## Run NUTS with defaults
-fit <- sample_admb(model='simple', init=init, path=path)
-unlink(path, TRUE) # cleanup folder
-setwd(oldwd)
-}
-
-}
-\author{
-Cole Monnahan
-}
