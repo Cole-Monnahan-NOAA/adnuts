@@ -16,13 +16,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
                              seed=NULL, duration=NULL,
                              control=NULL,
                              skip_optimization=TRUE,
-                             verbose=TRUE, admb_args=admb_args, extra.args=NULL){
-
-  if (!missing(extra.args)) {
-    warning("Argument extra.args is deprecated, use admb_args instead",
-            call. = FALSE)
-    admb_args <- extra.args
-  }
+                             verbose=TRUE, admb_args=admb_args){
 
   wd.old <- getwd(); on.exit(setwd(wd.old))
   setwd(path)
@@ -145,14 +139,8 @@ sample_admb_nuts <- function(path, model, iter=2000,
 sample_admb_rwm <-
   function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL,  chain=1, seed=NULL, control=NULL,
-           verbose=TRUE, duration=NULL, extra.args=NULL,
+           verbose=TRUE, duration=NULL,
            admb_args=NULL, skip_optimization=TRUE){
-
-    if (!missing(extra.args)) {
-      warning("Argument extra.args is deprecated, use admb_args instead",
-              call. = FALSE)
-      admb_args <- extra.args
-    }
 
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(path)

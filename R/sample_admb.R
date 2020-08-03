@@ -158,8 +158,8 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   models to save space.
 #' @param admb_args A character string which gets passed to the
 #'   command line, allowing finer control
-#' @param extra.args (Deprecated, use a \code{admb_args}
-#'   instead).
+#' @param extra.args Deprecated, use a \code{admb_args}
+#'   instead.
 #' @param ... Further arguments to be passed to the
 #'   algorithm. See help files for the samplers for further
 #'   arguments.
