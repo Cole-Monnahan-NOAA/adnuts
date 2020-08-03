@@ -176,7 +176,7 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #' setwd('..')
 #' init <- function() rnorm(2)
 #' ## Run NUTS with defaults
-#' fit <- sample_admb(model='simple', init=init, path=path)
+#' fit <- sample_nuts(model='simple', init=init, path=path)
 #' unlink(path, TRUE) # cleanup folder
 #' setwd(oldwd)
 #' }
@@ -388,7 +388,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 #' Run a single NUTS chain for an ADMB model
 #'
 #' A low level function to run a single chain. Unlikely to be used by a
-#' user, instead prefer \code{\link{sample_admb}}
+#' user, instead prefer \code{\link{sample_nuts}}
 #' @inheritParams wrappers
 #' @param seed Random seed to use.
 #' @param chain Chain number, for printing purposes only.
@@ -396,7 +396,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 #' pass to ADMB.
 #' @param extra.args Deprecated, use \code{admb_args} instead
 #' @param verbose Boolean for whether to print ADMB output to console.
-#' @seealso \code{\link{sample_admb}}
+#' @seealso \code{\link{sample_nuts}}
 sample_admb_nuts <- function(path, model, iter=2000,
                              init=NULL, chain=1,
                              thin=1, warmup=NULL,
@@ -526,9 +526,9 @@ sample_admb_nuts <- function(path, model, iter=2000,
 #' Run a single random walk Metropolis chain for an ADMB model
 #'
 #' A low level function to run a single chain. Unlikely to be used by a
-#' user, instead prefer \code{\link{sample_admb}}
+#' user, instead prefer \code{\link{sample_rwm}}
 #' @inheritParams wrappers
-#' @seealso \code{\link{sample_admb}}
+#' @seealso \code{\link{sample_rwm}}
 sample_admb_rwm <-
   function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
            init=NULL,  chain=1, seed=NULL, control=NULL,
