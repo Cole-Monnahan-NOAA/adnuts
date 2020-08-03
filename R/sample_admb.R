@@ -13,7 +13,7 @@ sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
             call. = FALSE)
   }
-  .sample_admb(model=model, path=getwd(), iter=2000, init=init, chains=chains, warmup=warmup,
+  .sample_admb(model=model, path=path, iter=2000, init=init, chains=chains, warmup=warmup,
               seeds=seeds, thin=thin, mceval=mceval, duration=duration,
               cores=cores, control=control,
               algorithm="NUTS", skip_optimization=skip_optimization,
@@ -34,7 +34,7 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
             call. = FALSE)
   }
-  .sample_admb(model=model, path=getwd(), iter=2000, init=init, chains=chains, warmup=warmup,
+  .sample_admb(model=model, path=path, iter=2000, init=init, chains=chains, warmup=warmup,
               seeds=seeds, thin=thin, mceval=mceval, duration=duration,
               cores=cores, control=control,
               algorithm="RWM", skip_optimization=skip_optimization,
@@ -197,7 +197,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   }
   warning("Function sample_admb is deprecated, use sample_nuts or sample_rwm instead",
           call. = FALSE)
-  .sample_admb(model=model, path=getwd(), iter=2000, init=init, chains=chains, warmup=warmup,
+  .sample_admb(model=model, path=path, iter=2000, init=init, chains=chains, warmup=warmup,
               seeds=seeds, thin=thin, mceval=mceval, duration=duration,
               cores=cores, control=control,
               algorithm="NUTS", skip_optimization=skip_optimization,
