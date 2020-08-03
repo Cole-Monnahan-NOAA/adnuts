@@ -254,10 +254,11 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     skip_unbounded <- TRUE
   }
   ## Update control with defaults
-  control <- .update_control(control)
   if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM')))
     stop("Invalid algorithm specified")
+  if(algorithm=='NUTS')
+    control <- .update_control(control)
   if(is.null(init)){
     warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
   }  else if(is.function(init)){
@@ -543,8 +544,12 @@ sample_admb_rwm <-
 
     wd.old <- getwd(); on.exit(setwd(wd.old))
     setwd(path)
-    ## Now contains all required NUTS arguments
-    control <- .update_control(control)
+    ## Only refresh is used by RWM
+    if(any(names(control) !='refresh'))
+      warning("Only refresh control argument is used, ignoring: ",
+              paste(names(control)[names(control)!='refresh'],
+                    collapse=', '))
+    refresh <- control$refresh
     metric <- 'mle' ## only one allowed
     stopifnot(iter >= 1)
     stopifnot(warmup <= iter)
