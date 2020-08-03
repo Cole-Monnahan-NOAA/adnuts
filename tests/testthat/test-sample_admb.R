@@ -22,7 +22,7 @@ test_that("simple example works", {
                       file='_expect_nuts_mle')
 })
 
-test_that("reproducibility among chains", {
+test_that("reproducibility of algorithms", {
   skip_on_cran()
   ## Check reproducibility given same init and seeds
   inits.fn <- function() list(c(0,0))
@@ -47,11 +47,18 @@ test_that("reproducibility among chains", {
                       seeds=rep(123,chains), init=inits.fn, cores=1,
                       control=list(metric=diag(2)), admb_args=' -refresh 0'))
   expect_identical(unique(fit4$samples[400,,3]), -13.2107)
-  ## Should match fit 4 since same settings
+  ## Should match fits 1 and 4 since same settings
   fit5 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
                       seeds=rep(123,chains), init=inits.fn, cores=1,
                       control=list(metric='unit'), admb_args=' -refresh 0')
   expect_identical(unique(fit5$samples[400,,3]), -13.2107)
+  ## Uses no adaptation so should be consistent between ADMB versions whereas
+  ## the other ones would not be.
+  fit6 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
+                      seeds=rep(123,chains), init=inits.fn, cores=1,
+                      control=list(metric='unit', stepsize=.1, adapt_mass=FALSE),
+                      admb_args=' -refresh 0')
+  expect_identical(unique(fit6$samples[400,,3]), -11.6495)
 })
 
 
@@ -77,9 +84,28 @@ test_that("diagnostics and plotting", {
   plot_marginals(fit, add.mle=FALSE)
 })
 
-test_that("errors in sample_nuts",{
+test_that("warnings and errors in sample_nuts",{
   skip_on_cran()
   inits <- function() list(1,1)
+  test <- expect_warning(sample_nuts('simple', path='../simple',
+                                     iter=1000, init=inits,
+                                     parallel=TRUE,
+                                     chains=1, warmup=500),
+                         regexp='parallel is deprecated')
+  test <- expect_warning(sample_rwm('simple', path='../simple',
+                                     iter=1000, init=inits,
+                                     parallel=TRUE,
+                                     chains=1, warmup=500),
+                         regexp='parallel is deprecated')
+  test <- expect_warning(sample_admb('simple', path='../simple',
+                                    iter=1000, init=inits,
+                                    parallel=TRUE,
+                                    chains=1, warmup=500),
+                         regexp='parallel is deprecated')
+  test <- expect_warning(sample_admb('simple', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=1, warmup=500),
+                       regexp='sample_admb is deprecated')
   test <- expect_error(sample_nuts('simple', path='../simple',
                                    iter=1000, init=inits,
                                    chains=1, warmup=2000),

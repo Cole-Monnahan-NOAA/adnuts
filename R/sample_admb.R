@@ -13,12 +13,14 @@ sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
             call. = FALSE)
   }
-  .sample_admb(model=model, path=path, iter=2000, init=init, chains=chains, warmup=warmup,
-              seeds=seeds, thin=thin, mceval=mceval, duration=duration,
-              cores=cores, control=control,
-              algorithm="NUTS", skip_optimization=skip_optimization,
-              skip_monitor=skip_monitor, skip_unbounded=skip_unbounded,
-              admb_args=admb_args, ...)
+  .sample_admb(model=model, path=path, iter=iter, init=init,
+               chains=chains, warmup=warmup, seeds=seeds,
+               thin=thin, mceval=mceval, duration=duration,
+               cores=cores, control=control, algorithm="NUTS",
+               skip_optimization=skip_optimization,
+               skip_monitor=skip_monitor,
+               skip_unbounded=skip_unbounded,
+               admb_args=admb_args, ...)
 }
 
 #' @rdname wrappers
@@ -34,12 +36,14 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
             call. = FALSE)
   }
-  .sample_admb(model=model, path=path, iter=2000, init=init, chains=chains, warmup=warmup,
-              seeds=seeds, thin=thin, mceval=mceval, duration=duration,
-              cores=cores, control=control,
-              algorithm="RWM", skip_optimization=skip_optimization,
-              skip_monitor=skip_monitor, skip_unbounded=skip_unbounded,
-              admb_args=admb_args, ...)
+  .sample_admb(model=model, path=path, iter=iter, init=init,
+               chains=chains, warmup=warmup, seeds=seeds,
+               thin=thin, mceval=mceval, duration=duration,
+               cores=cores, control=control, algorithm="RWM",
+               skip_optimization=skip_optimization,
+               skip_monitor=skip_monitor,
+               skip_unbounded=skip_unbounded,
+               admb_args=admb_args, ...)
 }
 
 
@@ -112,8 +116,9 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   will quit running.
 #' @param algorithm Which algorithm to use, either "NUTS" or
 #'   "RWM".
-#' @param parallel A boolean for whether to use parallel
-#'   cores. The package snowfall is used if TRUE.
+#' @param parallel A deprecated argument, use cores=1 for serial
+#'   execution or cores>1 for parallel (default is to parallel
+#'   with cores equal to the available-1)
 #' @param cores The number of cores to use for parallel
 #'   execution.
 #' @param control A list to control the sampler. See details for
@@ -184,10 +189,11 @@ NULL
 #' @inheritParams wrappers
 #' @section Warning: This is deprecated and will cease to exist
 #'   in future releases
+#' @export
 sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
-                        skip_optimization=TRUE,
+                        skip_optimization=TRUE, algorithm='NUTS',
                         skip_monitor=FALSE, skip_unbounded=TRUE,
                         admb_args=NULL, ...){
   ## Argument checking and processing
@@ -197,12 +203,14 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   }
   warning("Function sample_admb is deprecated, use sample_nuts or sample_rwm instead",
           call. = FALSE)
-  .sample_admb(model=model, path=path, iter=2000, init=init, chains=chains, warmup=warmup,
-              seeds=seeds, thin=thin, mceval=mceval, duration=duration,
-              cores=cores, control=control,
-              algorithm="NUTS", skip_optimization=skip_optimization,
-              skip_monitor=skip_monitor, skip_unbounded=skip_unbounded,
-              admb_args=admb_args, ...)
+  .sample_admb(model=model, path=path, iter=iter, init=init,
+               chains=chains, warmup=warmup, seeds=seeds,
+               thin=thin, mceval=mceval, duration=duration,
+               cores=cores, control=control, algorithm=algorithm,
+               skip_optimization=skip_optimization,
+               skip_monitor=skip_monitor,
+               skip_unbounded=skip_unbounded,
+               admb_args=admb_args, ...)
 }
 
 
