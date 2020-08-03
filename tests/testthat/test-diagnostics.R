@@ -1,0 +1,21 @@
+test_that("diagnostics and plotting", {
+  skip_on_cran()
+  inits <- function() list(1,1)
+  fit <- sample_nuts('simple', path='../simple', chains=4,
+                     iter=2000, cores=1, init=inits, seeds=1,
+                     control=list(refresh=-1))
+  sp <- extract_sampler_params(fit)
+  expect_known_output(tail(sp,1), file='_expect_sp')
+  expect_known_output(tail(fit$monitor,1), file='_expect_monitor')
+  plot_sampler_params(fit, TRUE)
+  pairs_admb(fit)
+  pairs_admb(fit, pars=1:3, order='slow')
+  pairs_admb(fit, pars=1:3, order='fast')
+  pairs_admb(fit, pars=c('a', 'lp__', 'b'), add.monitor=FALSE)
+  pairs_admb(fit, add.mle=FALSE)
+  pairs_admb(fit, add.mle=FALSE, diag='hist')
+  pairs_admb(fit, add.mle=FALSE, diag='acf')
+  plot_marginals(fit)
+  plot_marginals(fit, add.monitor=FALSE)
+  plot_marginals(fit, add.mle=FALSE)
+})
