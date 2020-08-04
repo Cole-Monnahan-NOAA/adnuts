@@ -7,7 +7,7 @@ sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                         parallel=FALSE, cores=NULL, control=NULL,
                         skip_optimization=TRUE,
                         skip_monitor=FALSE, skip_unbounded=TRUE,
-                        admb_args=NULL, extra.args=NULL, ...){
+                        admb_args=NULL, extra.args=NULL){
   ## Argument checking and processing
   if (!missing(parallel)) {
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
@@ -26,7 +26,7 @@ sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                skip_optimization=skip_optimization,
                skip_monitor=skip_monitor,
                skip_unbounded=skip_unbounded,
-               admb_args=admb_args, ...)
+               admb_args=admb_args)
 }
 
 #' @rdname wrappers
@@ -36,7 +36,7 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
                         parallel=FALSE, cores=NULL, control=NULL,
                         skip_optimization=TRUE,
                         skip_monitor=FALSE, skip_unbounded=TRUE,
-                        admb_args=NULL, extra.args=NULL, ...){
+                        admb_args=NULL, extra.args=NULL){
   ## Argument checking and processing
   if (!missing(parallel)) {
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
@@ -54,7 +54,7 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
                skip_optimization=skip_optimization,
                skip_monitor=skip_monitor,
                skip_unbounded=skip_unbounded,
-               admb_args=admb_args, ...)
+               admb_args=admb_args)
 }
 
 
@@ -62,11 +62,19 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #' Bayesian inference of an ADMB model using the no-U-turn
 #' sampler (NUTS) or random walk Metropolis (RWM) algorithms.
 #'
-#' Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
-#' using an MCMC algorithm. This function generates posterior samples from
-#' which inference can be made. Adaptation schemes are used so
-#' specifying tuning parameters is not necessary, and parallel
-#' execution reduces overall run time.
+#' Draw Bayesian posterior samples from an AD Model Builder
+#' (ADMB) model using an MCMC algorithm. `sample_nuts` generates
+#' posterior samples from which inference can be made. Adaptation
+#' schemes are used with NUTS so specifying tuning parameters is
+#' not necessary, and parallel execution reduces overall run
+#' time.
+#'
+#' The RWM algorithm provides no new functionality not available
+#' from previous versions of ADMB. However, `sample_rwm` has an
+#' improved console output, is setup for parallel execution, and
+#' a smooth workflow for dianostics. Note that the algorithms'
+#' code lies in the ADMB source code, and 'adnuts' provides a
+#' wrapper for it. See vignette for more information.
 #'
 #' @details This function implements algorithm 6 of Hoffman and Gelman (2014),
 #' and loosely follows package \code{rstan}. The step size can be
@@ -125,8 +133,6 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   samples from merged chains.
 #' @param duration The number of minutes after which the model
 #'   will quit running.
-#' @param algorithm Which algorithm to use, either "NUTS" or
-#'   "RWM".
 #' @param parallel A deprecated argument, use cores=1 for serial
 #'   execution or cores>1 for parallel (default is to parallel
 #'   with cores equal to the available-1)
@@ -134,12 +140,6 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   execution.
 #' @param control A list to control the sampler. See details for
 #'   further use.
-#' @param algorithm The algorithm to use."NUTS" is the default
-#'   and recommended one, but "RWM" for the random walk
-#'   Metropolis sampler and "HMC" for the static HMC sampler are
-#'   available. HMC is deprecated but may be of use in special
-#'   situations. These algorithms require different arguments;
-#'   see their help files for more information.
 #' @param skip_optimization Whether to run the optimizer before
 #'   running MCMC. This is rarely need as it is better to run it
 #'   once before to get the covariance matrix, or the estimates
@@ -160,9 +160,6 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   command line, allowing finer control
 #' @param extra.args Deprecated, use a \code{admb_args}
 #'   instead.
-#' @param ... Further arguments to be passed to the
-#'   algorithm. See help files for the samplers for further
-#'   arguments.
 #' @section Warning: The user is responsible for specifying the
 #'   model properly (priors, starting values, desired parameters
 #'   fixed, etc.), as well as assessing the convergence and
@@ -200,6 +197,7 @@ NULL
 #' sample_rwm instead.
 #'
 #' @inheritParams wrappers
+#' @param algorithm The algorithm to use, one of "NUTS" or "RWM"
 #' @section Warning: This is deprecated and will cease to exist
 #'   in future releases
 #' @export
@@ -208,7 +206,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                         parallel=FALSE, cores=NULL, control=NULL,
                         skip_optimization=TRUE, algorithm='NUTS',
                         skip_monitor=FALSE, skip_unbounded=TRUE,
-                        admb_args=NULL, ...){
+                        admb_args=NULL){
   ## Argument checking and processing
   if (!missing(parallel)) {
     warning("Argument parallel is deprecated, set cores=1 for serial, and cores>1 for parallel.",
@@ -223,21 +221,21 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                skip_optimization=skip_optimization,
                skip_monitor=skip_monitor,
                skip_unbounded=skip_unbounded,
-               admb_args=admb_args, ...)
+               admb_args=admb_args)
 }
 
 
 #' Hidden wrapper function for sampling from ADMB models
 #'
 #' @inheritParams wrappers
+#' @param algorithm The algorithm to use, one of "NUTS" or "RWM"
 #'
 .sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
                         algorithm="NUTS", skip_optimization=TRUE,
                         skip_monitor=FALSE, skip_unbounded=TRUE,
-                        admb_args=NULL,
-                        ...){
+                        admb_args=NULL){
   if(is.null(cores)) cores <- parallel::detectCores()-1
   cores.max  <- parallel::detectCores()
   if(cores > cores.max) {
@@ -297,8 +295,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                          iter=iter, init=init[[i]], chain=i,
                          seed=seeds[i], thin=thin,
                          control=control, admb_args=admb_args,
-                         skip_optimization=skip_optimization,
-                         ...))
+                         skip_optimization=skip_optimization))
     } else {
       mcmc.out <- lapply(1:chains, function(i)
         sample_admb_rwm(path=path, model=model, warmup=warmup, duration=duration,
@@ -306,7 +303,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                         seed=seeds[i], thin=thin,
                         control=control,
                         skip_optimization=skip_optimization,
-                        admb_args=admb_args, ...))
+                        admb_args=admb_args))
     }
     ## Parallel execution
   } else {
@@ -324,7 +321,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                            seed=seeds[i], thin=thin,
                            control=control,
                            skip_optimization=skip_optimization,
-                           admb_args=admb_args, ...))
+                           admb_args=admb_args))
   }
     warmup <- mcmc.out[[1]]$warmup
     mle <- .read_mle_fit(model=model, path=path)

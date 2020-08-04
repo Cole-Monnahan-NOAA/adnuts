@@ -72,12 +72,7 @@ running MCMC. This is rarely need as it is better to run it
 once before to get the covariance matrix, or the estimates
 are not needed with adaptive NUTS.}
 
-\item{algorithm}{The algorithm to use."NUTS" is the default
-and recommended one, but "RWM" for the random walk
-Metropolis sampler and "HMC" for the static HMC sampler are
-available. HMC is deprecated but may be of use in special
-situations. These algorithms require different arguments;
-see their help files for more information.}
+\item{algorithm}{The algorithm to use, one of "NUTS" or "RWM"}
 
 \item{skip_monitor}{Whether to skip calculating diagnostics
 (effective sample size, Rhat) via the \code{rstan::monitor}

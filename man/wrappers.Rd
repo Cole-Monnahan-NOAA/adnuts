@@ -25,6 +25,7 @@ sample_nuts(
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
   admb_args = NULL,
+  extra.args = NULL,
   ...
 )
 
@@ -46,6 +47,7 @@ sample_rwm(
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
   admb_args = NULL,
+  extra.args = NULL,
   ...
 )
 }
@@ -111,25 +113,29 @@ models to save space.}
 \item{admb_args}{A character string which gets passed to the
 command line, allowing finer control}
 
+\item{extra.args}{Deprecated, use a \code{admb_args}
+instead.}
+
 \item{...}{Further arguments to be passed to the
 algorithm. See help files for the samplers for further
 arguments.}
-
-\item{algorithm}{The algorithm to use."NUTS" is the default
-and recommended one, but "RWM" for the random walk
-Metropolis sampler and "HMC" for the static HMC sampler are
-available. HMC is deprecated but may be of use in special
-situations. These algorithms require different arguments;
-see their help files for more information.}
 }
 \description{
-Draw Bayesian posterior samples from an AD Model Builder (ADMB) model
-using an MCMC algorithm. This function generates posterior samples from
-which inference can be made. Adaptation schemes are used so
-specifying tuning parameters is not necessary, and parallel
-execution reduces overall run time.
+Draw Bayesian posterior samples from an AD Model Builder
+(ADMB) model using an MCMC algorithm. `sample_nuts` generates
+posterior samples from which inference can be made. Adaptation
+schemes are used with NUTS so specifying tuning parameters is
+not necessary, and parallel execution reduces overall run
+time.
 }
 \details{
+The RWM algorithm provides no new functionality not available
+from previous versions of ADMB. However, `sample_rwm` has an
+improved console output, is setup for parallel execution, and
+a smooth workflow for dianostics. Note that the algorithms'
+code lies in the ADMB source code, and 'adnuts' provides a
+wrapper for it. See vignette for more information.
+
 This function implements algorithm 6 of Hoffman and Gelman (2014),
 and loosely follows package \code{rstan}. The step size can be
   adapted or specified manually. The metric (i.e., mass matrix) can be

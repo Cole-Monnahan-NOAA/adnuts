@@ -66,12 +66,7 @@ execution.}
 \item{control}{A list to control the sampler. See details for
 further use.}
 
-\item{algorithm}{The algorithm to use."NUTS" is the default
-and recommended one, but "RWM" for the random walk
-Metropolis sampler and "HMC" for the static HMC sampler are
-available. HMC is deprecated but may be of use in special
-situations. These algorithms require different arguments;
-see their help files for more information.}
+\item{algorithm}{The algorithm to use, one of "NUTS" or "RWM"}
 
 \item{skip_optimization}{Whether to run the optimizer before
 running MCMC. This is rarely need as it is better to run it
