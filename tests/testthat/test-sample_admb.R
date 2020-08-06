@@ -1,11 +1,20 @@
+
+## Note these were tested with ADMB 12.2 on 8/3/2020
 test_that("simple example works", {
   skip_on_cran()
+  skip_on_travis()
   inits.fn <- function() list(c(0,0))
   oldwd <- getwd()
   fit <- sample_rwm('simple', path='../simple', chains=1,
                      seeds=1, init=inits.fn,
                      skip_optimization=FALSE,
                      control=list(refresh=-1), skip_monitor=TRUE)
+  expect_known_output(extract_samples(fit)[1000,],
+                      file='_expect_simple_rwm')
+  fit <- sample_admb('simple', path='../simple', chains=1,
+                    seeds=1, init=inits.fn, algorithm='RWM',
+                    skip_optimization=FALSE,
+                    control=list(refresh=-1), skip_monitor=TRUE)
   expect_known_output(extract_samples(fit)[1000,],
                       file='_expect_simple_rwm')
   fit <- sample_nuts('simple', path='../simple', chains=1,
@@ -16,6 +25,12 @@ test_that("simple example works", {
                       file='_expect_nuts')
   fit <- sample_nuts('simple', path='../simple', chains=1,
                      seeds=1, init=inits.fn,
+                     control=list(metric='mle', refresh=-1),
+                     skip_monitor = TRUE)
+  expect_known_output(extract_samples(fit)[1000,],
+                      file='_expect_nuts_mle')
+  fit <- sample_admb('simple', path='../simple', chains=1,
+                     seeds=1, init=inits.fn, algorithm='NUTS',
                      control=list(metric='mle', refresh=-1),
                      skip_monitor = TRUE)
   expect_known_output(extract_samples(fit)[1000,],
@@ -71,6 +86,14 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
                                    iter=1000, init=inits,
                                    chains=1, warmup=2000),
                        regexp='warmup <= iter')
+  test <- expect_error(sample_nuts('simple', path='../simple',
+                                   iter=1000, init=inits, algorithm='NUTS',
+                                   chains=1, warmup=2000),
+                       regexp='unused argument \\(algorithm')
+  test <- expect_error(sample_rwm('simple', path='../simple',
+                                   iter=1000, init=inits, algorithm='RWM',
+                                   chains=1, warmup=2000),
+                       regexp='unused argument \\(algorithm')
   test <- expect_error(sample_nuts('simple', path='../simple',
                                    iter=1000, init=inits,
                                    chains=-1),

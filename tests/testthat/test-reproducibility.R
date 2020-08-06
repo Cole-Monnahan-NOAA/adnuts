@@ -1,5 +1,6 @@
 test_that("reproducibility of algorithms", {
   skip_on_cran()
+  skip_on_travis()
   ## Check reproducibility given same init and seeds
   inits.fn <- function() list(c(0,0))
   oldwd <- getwd()

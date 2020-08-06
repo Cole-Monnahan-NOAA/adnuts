@@ -1,5 +1,6 @@
 test_that("diagnostics and plotting", {
   skip_on_cran()
+  skip_on_travis()
   inits <- function() list(1,1)
   fit <- sample_nuts('simple', path='../simple', chains=4,
                      iter=2000, cores=1, init=inits, seeds=1,
