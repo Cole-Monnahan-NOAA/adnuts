@@ -38,6 +38,7 @@
 #' @param laplace Whether to use the Laplace approximation if some
 #'   parameters are declared as random. Default is to turn off this
 #'   functionality and integrate across all parameters with MCMC.
+#' @param ... Further arguments to be passed to samplers
 #' @return A list containing the samples, and properties of the sampler
 #'   useful for diagnosing behavior and efficiency.
 #' @seealso \code{\link{extract_samples}} to extract samples and

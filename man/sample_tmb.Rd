@@ -74,9 +74,7 @@ functionality and integrate across all parameters with MCMC.}
 \item{control}{A list to control the sampler. See details for
 further use.}
 
-\item{...}{Further arguments to be passed to the
-algorithm. See help files for the samplers for further
-arguments.}
+\item{...}{Further arguments to be passed to samplers}
 }
 \value{
 A list containing the samples, and properties of the sampler

@@ -22,8 +22,7 @@
   skip_optimization = TRUE,
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
-  admb_args = NULL,
-  ...
+  admb_args = NULL
 )
 }
 \arguments{
@@ -89,10 +88,6 @@ models to save space.}
 
 \item{admb_args}{A character string which gets passed to the
 command line, allowing finer control}
-
-\item{...}{Further arguments to be passed to the
-algorithm. See help files for the samplers for further
-arguments.}
 }
 \description{
 Hidden wrapper function for sampling from ADMB models

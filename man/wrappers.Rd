@@ -25,8 +25,7 @@ sample_nuts(
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
   admb_args = NULL,
-  extra.args = NULL,
-  ...
+  extra.args = NULL
 )
 
 sample_rwm(
@@ -47,8 +46,7 @@ sample_rwm(
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
   admb_args = NULL,
-  extra.args = NULL,
-  ...
+  extra.args = NULL
 )
 }
 \arguments{
@@ -115,10 +113,6 @@ command line, allowing finer control}
 
 \item{extra.args}{Deprecated, use a \code{admb_args}
 instead.}
-
-\item{...}{Further arguments to be passed to the
-algorithm. See help files for the samplers for further
-arguments.}
 }
 \description{
 Draw Bayesian posterior samples from an AD Model Builder
