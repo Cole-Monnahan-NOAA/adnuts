@@ -42,6 +42,7 @@ test_that("simple example works", {
 
 test_that("warnings and errors in sample_nuts and sample_rwm",{
   skip_on_cran()
+  skip_on_travis()
   inits <- function() list(1,1)
   test <- expect_warning(sample_nuts('simple', path='../simple',
                                      iter=1000, init=inits,
