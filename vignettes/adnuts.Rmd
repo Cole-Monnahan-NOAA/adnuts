@@ -100,7 +100,7 @@ accustomed to running millions of iterations with a high thinning
 rate. **Do not do that!**. The key thing to understand is that NUTS runs as
 long as it needs to get nearly independent samples. Consult the Stan
 documentation for advice on a workflow for NUTS models (e.g., [this
-guide](http://mc-stan.org/users/documentation/case-studies/rstan_workflow.html))
+guide](https://mc-stan.org/users/documentation/case-studies/rstan_workflow.html))
 
 
 For poorly-constructed or over-parameterized models, the NUTS algorithm

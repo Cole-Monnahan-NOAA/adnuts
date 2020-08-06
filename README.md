@@ -29,7 +29,7 @@ to get posterior samples (post warmup and thinning) into a data frame for
 inference, while 'launch_shinyadmb' can be used for interactive diagnostics
 based on 'ShinyStan'.
 
-A brief [demonstration file](https://github.com/colemonnahan/adnuts/blob/master/inst/demo.R) is
+A brief [demonstration file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo.R) is
 provided to help get you started, and there is also a user guide:
 `vignette('adnuts')` for more detailed information.
 
