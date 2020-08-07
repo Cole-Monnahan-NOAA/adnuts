@@ -1,4 +1,4 @@
-### A very quick demonstration of no-U-turn sampling in ADMB and TMB.
+### A very quick demonstration of no-U-turn sampling in ADMB
 library(adnuts)
 
 ### ----------- ADMB example
