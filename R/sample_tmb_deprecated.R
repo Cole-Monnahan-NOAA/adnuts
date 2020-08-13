@@ -46,6 +46,7 @@
 #'   is a wrapper for the \code{\link[shinystan]{launch_shinystan}} function.
 #' @inheritParams sample_admb
 #' @inheritSection sample_admb Warning
+#' @export
 #' @examples
 #' ## Build a fake TMB object with objective & gradient functions and some
 #' ## other flags
@@ -76,8 +77,8 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
                        cores=NULL, path=NULL, algorithm="NUTS",
                        laplace=FALSE, control=NULL, ...){
   .Deprecated("tmbstan", package='tmbstan',
-     msg='Use tmbstan::tmbstan instead, this function is no longer under development/maintenance')
-  control <- .update_control(control)
+     msg='Use tmbstan::tmbstan instead, sample_tmb is deprecated and no longer under development/maintenance')
+  control <- .update_control_tmb(control)
   ## Argument checking.
   if(is.null(init)){
     if(chains>1) warning('Using same starting values for each chain -- strongly recommended to use dispersed inits')
@@ -235,7 +236,7 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
                           chain=1, thin=1, seed=NULL, control=NULL){
   ## Now contains all required NUTS arguments
   if(!is.null(seed)) set.seed(seed)
-  control <- .update_control(control)
+  control <- .update_control_tmb(control)
   eps <- control$stepsize
   init <- as.vector(unlist(init))
   npar <- length(init)
@@ -612,7 +613,7 @@ sample_tmb_rwm <- function(iter, fn, init, alpha=1, chain=1,
                          warmup=floor(iter/2), thin=1,
                          seed=NULL, control=NULL){
   if(!is.null(seed)) set.seed(seed)
-  control <- .update_control(control)
+  control <- .update_control_tmb(control)
   lp <- accepted <- rep(0, length=iter)
   init <- as.vector(unlist(init))
   n.params <- length(init)
@@ -839,7 +840,7 @@ sample_tmb_hmc <-
            chain=1,thin=1, control=NULL){
   warning("NUTS should be prefered to sHMC except in rare, specific cases")
   if(!is.null(seed)) set.seed(seed)
-  control <- .update_control(control)
+  control <- .update_control_tmb(control)
   metric <- control$metric
   adapt_delta <- control$adapt_delta
   ## If using covariance matrix and Cholesky decomposition, redefine
@@ -956,4 +957,26 @@ sample_tmb_hmc <-
   .print.mcmc.timing(time.warmup=time.warmup, time.total=time.total)
   return(list(par=theta.out, sampler_params=sampler_params,
               time.total=time.total, time.warmup=time.warmup, warmup=warmup/thin))
+}
+
+
+## Update the control list.
+##
+## @param control A list passed from \code{sample_tmb}.
+## @return A list with default control elements updated by those supplied
+##   in \code{control}
+.update_control_tmb <- function(control){
+  default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
+                  adapt_mass=TRUE, max_treedepth=12, w1=75, w2=50, w3=25)
+  if(is.matrix(control$metric) & !is.null(control$adapt_mass)){
+    if(control$adapt_mass==TRUE){
+      warning("Mass matrix adaptation disabled if metric is a matrix")
+    }
+    control$adapt_mass <- FALSE
+  }
+  new <- default
+  if(!is.null(control))
+    for(i in names(control))  new[[i]] <- control[[i]]
+  if(is.matrix(new$metric)) new$adapt_mass <- FALSE
+  return(new)
 }

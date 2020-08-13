@@ -405,7 +405,7 @@ check_identifiable <- function(model, path=getwd()){
 
 ## Update the control list.
 ##
-## @param control A list passed from \code{sample_tmb}.
+## @param control A list passed from a sampling function
 ## @return A list with default control elements updated by those supplied
 ##   in \code{control}
 .update_control <- function(control){
