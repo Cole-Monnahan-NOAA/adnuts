@@ -198,14 +198,17 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
   ## message("... Calculating ESS and Rhat")
   ## temp <- (rstan::monitor(samples, warmup=warmup, probs=.5, print=FALSE))
   ## Rhat <- temp[,6]; ess <- temp[,5]
+  message('Calculating ESS and Rhat...')
+  mon <- rstan::monitor(samples, warmup, print=FALSE)
   sampler_params <- lapply(mcmc.out, function(x) x$sampler_params)
   time.warmup <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.warmup)))
   time.total <- unlist(lapply(mcmc.out, function(x) as.numeric(x$time.total)))
   result <- list(samples=samples, sampler_params=sampler_params,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
-                 model=obj$env$DLL, covar.est=covar.est)#, Rhat=Rhat, ess=ess)
+                 model=obj$env$DLL, covar.est=covar.est, monitor=mon)
   if(algorithm=="NUTS") result$max_treedepth <- mcmc.out[[1]]$max_treedepth
+  result <- adfit(result)
   return(invisible(result))
 }
 
