@@ -2,6 +2,8 @@
 adnuts 1.1.0.9000
 ------------------------------------------------------------------------
 
+* Fix small bug with mceval=TRUE for newest verison of stock synthesis
+
 * Fix `sample_tmb` to work again for short-term use
 
 ------------------------------------------------------------------------
