@@ -375,7 +375,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   write.table(unbounded, file='unbounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
   if(mceval){
     message("... Running -mceval on merged chains")
-    system(paste(model, "-mceval -noest -nohess"), ignore.stdout=FALSE)
+    system(paste(model, "-mceval"), ignore.stdout=FALSE)
   }
   covar.est <- cov(unbounded)
   if(!skip_monitor){
