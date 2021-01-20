@@ -228,8 +228,9 @@ plot_sampler_params <- function(fit, plot=TRUE){
 
 #' Check that the file can be found
 #'
-#' @param model
-#' @param path
+#' @param model Model name without file extension
+#' @param path Path to model folder, defaults to working
+#'
 .check_model_path <- function(model, path){
   stopifnot(is.character(path))
   stopifnot(is.character(model))

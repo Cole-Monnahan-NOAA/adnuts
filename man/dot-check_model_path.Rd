@@ -6,6 +6,11 @@
 \usage{
 .check_model_path(model, path)
 }
+\arguments{
+\item{model}{Model name without file extension}
+
+\item{path}{Path to model folder, defaults to working}
+}
 \description{
 Check that the file can be found
 }
