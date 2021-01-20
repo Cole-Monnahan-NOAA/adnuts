@@ -33,10 +33,16 @@ sample_admb_nuts <- function(path, model, iter=2000,
   adapt_delta <- control$adapt_delta
 
   ## Build the command to run the model
-  if(skip_optimization){
-    cmd <- paste(model,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
+  if (.Platform$OS.type=="windows") {
+    model2 <- model
   } else {
-    cmd <- paste(model,"-hbf -nuts -mcmc ",iter)
+    model2 <- paste0("./", model)
+  }
+
+  if(skip_optimization){
+    cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
+  } else {
+    cmd <- paste(model2,"-hbf -nuts -mcmc ",iter)
   }
   cmd <- paste(cmd, "-warmup", warmup, "-chain", chain)
   if(!is.null(seed)) cmd <- paste(cmd, "-mcseed", seed)

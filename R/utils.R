@@ -226,6 +226,23 @@ plot_sampler_params <- function(fit, plot=TRUE){
   return(invisible(g))
 }
 
+#' Check that the file can be found
+#'
+#' @param model
+#' @param path
+.check_model_path <- function(model, path){
+  stopifnot(is.character(path))
+  stopifnot(is.character(model))
+  if(!dir.exists(path))
+    stop('Folder ', path, ' does not exist. Check argument \'path\'')
+  if (.Platform$OS.type=="windows") {
+    ff <- file.path(path, paste(model,".exe",sep=""))
+  } else {
+    ff <- file.path(path, paste("./",model,sep=""))
+  }
+  if(!file.exists(ff))
+    stop('File ', ff, ' not found in specified folder. Check \'model\' argument')
+}
 
 #' Check that the  model is compiled with the right version
 #' of ADMB which is 12.0 or later
@@ -256,6 +273,9 @@ plot_sampler_params <- function(fit, plot=TRUE){
     }
   }
   ## Run the model to get the version info
+  if (!.Platform$OS.type=="windows") {
+    model <- paste0("./", model)
+  }
   test <- try(system(paste(model, '-version'), intern=TRUE), silent=TRUE)
   if (inherits(test,"try-error"))
     stop(paste0("Could not detect version of ", model, ". Check executable and path"))

@@ -114,7 +114,9 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'
 #' @author Cole Monnahan
 #' @name wrappers
-#' @param model Name of model (i.e., model.tpl)
+#' @param model Name of model (i.e., model.tpl). For non-Windows
+#'   systems this will automatically be converted to './model'
+#'   internally.
 #' @param path Path to model executable. Defaults to working
 #'   directory. Often best to have model files in a separate
 #'   subdirectory, particularly for parallel.
@@ -158,8 +160,7 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   models to save space.
 #' @param admb_args A character string which gets passed to the
 #'   command line, allowing finer control
-#' @param extra.args Deprecated, use a \code{admb_args}
-#'   instead.
+#' @param extra.args Deprecated, use a \code{admb_args} instead.
 #' @section Warning: The user is responsible for specifying the
 #'   model properly (priors, starting values, desired parameters
 #'   fixed, etc.), as well as assessing the convergence and
@@ -252,20 +253,16 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   stopifnot(thin >=1); stopifnot(chains >= 1)
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
   if(iter < 1 | !is.numeric(iter)) stop("iter must be > 1")
+
   ## Catch path and model name errors early
-  stopifnot(is.character(path)); stopifnot(is.character(model))
-  if(!dir.exists(path)) stop(paste('Folder', path, 'does not exist. Check argument \'path\''))
-  if (.Platform$OS.type=="windows") {
-    ff <- file.path(path, paste(model,".exe",sep=""))
-  } else {
-    ff <- file.path(path, paste("./",model,sep=""))
-  }
-  if(!file.exists(ff)) stop(paste('File', ff, 'not found. Check \'path\' and \'model\' arguments'))
-  v <- .check_ADMB_version(model=model, path=path, warn= algorithm=='NUTS')
+  .check_model_path(model=model, path=path)
+  ## Check verison; warnings only meaningful for NUTS at the moment.
+  v <- .check_ADMB_version(model=model, path=path, warn= (algorithm=='NUTS'))
   if(v<=12.0 & !skip_unbounded) {
     warning(paste('Version', v, 'of ADMB is incompatible with skip_unbounded=FALSE, ignoring'))
     skip_unbounded <- TRUE
   }
+
   ## Update control with defaults
   if(is.null(warmup)) warmup <- floor(iter/2)
   if(!(algorithm %in% c('NUTS', 'RWM')))

@@ -99,10 +99,14 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
                                    iter=1000, init=inits,
                                    chains=-1),
                        regexp='chains >= 1')
+  test <- expect_error(sample_nuts('simple', path='../simple55',
+                                   iter=1000, init=inits,
+                                   chains=1),
+                       regexp="does not exist. Check argument \'path\'")
   test <- expect_error(sample_nuts('simple3', path='../simple',
                                    iter=1000, init=inits,
                                    chains=1),
-                       regexp="Check 'path' and 'model'")
+                       regexp="not found in specified folder")
   test <- expect_error(sample_nuts('simple', path='../simple',
                                    iter=1000, init=inits,
                                    chains=1,

@@ -50,7 +50,9 @@ sample_rwm(
 )
 }
 \arguments{
-\item{model}{Name of model (i.e., model.tpl)}
+\item{model}{Name of model (i.e., model.tpl). For non-Windows
+systems this will automatically be converted to './model'
+internally.}
 
 \item{path}{Path to model executable. Defaults to working
 directory. Often best to have model files in a separate
@@ -111,8 +113,7 @@ models to save space.}
 \item{admb_args}{A character string which gets passed to the
 command line, allowing finer control}
 
-\item{extra.args}{Deprecated, use a \code{admb_args}
-instead.}
+\item{extra.args}{Deprecated, use a \code{admb_args} instead.}
 }
 \description{
 Draw Bayesian posterior samples from an AD Model Builder
