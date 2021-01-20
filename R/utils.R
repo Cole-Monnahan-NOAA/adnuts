@@ -234,14 +234,15 @@ plot_sampler_params <- function(fit, plot=TRUE){
   stopifnot(is.character(path))
   stopifnot(is.character(model))
   if(!dir.exists(path))
-    stop('Folder ', path, ' does not exist. Check argument \'path\'')
+    stop('Folder ', path,
+         ' does not exist. Check argument \'path\' and working directory')
   if (.Platform$OS.type=="windows") {
     ff <- file.path(path, paste(model,".exe",sep=""))
   } else {
     ff <- file.path(path, paste("./",model,sep=""))
   }
   if(!file.exists(ff))
-    stop('File ', ff, ' not found in specified folder. Check \'model\' argument')
+    stop('File ', model, ' not found in specified folder. Check \'model\' argument')
 }
 
 #' Check that the  model is compiled with the right version
@@ -263,15 +264,12 @@ plot_sampler_params <- function(fit, plot=TRUE){
 #'   update ADMB and recompile the model.
 .check_ADMB_version <- function(model, path=getwd(),
                                 min.version=12, warn=TRUE){
-  if(!is.null(path)){
-    if(dir.exists(path)){
-    wd <- getwd()
-    on.exit(setwd(wd))
-    setwd(path)
-    } else {
-      stop("Invalid path, folder does not exist")
-    }
-  }
+  ## Check for file existing
+  .check_model_path(model=model, path=path)
+  wd <- getwd()
+  on.exit(setwd(wd))
+  setwd(path)
+
   ## Run the model to get the version info
   if (!.Platform$OS.type=="windows") {
     model <- paste0("./", model)
