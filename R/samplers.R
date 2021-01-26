@@ -101,7 +101,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   ## Run it and get results
   time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
   if(!file.exists('adaptation.csv') | !file.exists('unbounded.csv'))
-    stop(paste0("NUTS failed to run in chain ", chain, ". Check inputs."))
+    stop(paste0("NUTS failed to run. Command attempted was:\n", cmd))
   sampler_params <- as.matrix(read.csv("adaptation.csv"))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
   dimnames(unbounded) <- NULL
@@ -213,7 +213,7 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
   ## Run it and get results
   time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
   if(!file.exists('unbounded.csv'))
-    stop(paste0("RWM failed to run in chain ", chain, ". Check inputs."))
+    stop(paste0("RWM failed to run. Command attempted was:\n", cmd))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
   dimnames(unbounded) <- NULL
   pars <- .get_psv(model)
