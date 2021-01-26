@@ -11,8 +11,8 @@ test_that("simple example works", {
                      control=list(refresh=-1), skip_monitor=TRUE)
   expect_known_output(extract_samples(fit)[1000,],
                       file='_expect_simple_rwm')
-  fit <- sample_admb('simple', path='../simple', chains=1,
-                    seeds=1, init=inits.fn, algorithm='RWM',
+  fit <- sample_rwm('simple', path='../simple', chains=1,
+                    seeds=1, init=inits.fn,
                     skip_optimization=FALSE,
                     control=list(refresh=-1), skip_monitor=TRUE)
   expect_known_output(extract_samples(fit)[1000,],
@@ -29,8 +29,8 @@ test_that("simple example works", {
                      skip_monitor = TRUE)
   expect_known_output(extract_samples(fit)[1000,],
                       file='_expect_nuts_mle')
-  fit <- sample_admb('simple', path='../simple', chains=1,
-                     seeds=1, init=inits.fn, algorithm='NUTS',
+  fit <- sample_nuts('simple', path='../simple', chains=1,
+                     seeds=1, init=inits.fn,
                      control=list(metric='mle', refresh=-1),
                      skip_monitor = TRUE)
   expect_known_output(extract_samples(fit)[1000,],
@@ -74,7 +74,7 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
                                      chains=1, warmup=500,
                                      control=list(metric=diag(2))),
                          regexp='admodel.cov overwritten')
-  test <- expect_warning(sample_admb('simple', path='../simple',
+  test <- expect_warning(sample_rwm('simple', path='../simple',
                                     iter=1000, init=inits,
                                     parallel=TRUE,
                                     chains=1, warmup=500),
@@ -99,10 +99,14 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
                                    iter=1000, init=inits,
                                    chains=-1),
                        regexp='chains >= 1')
+  test <- expect_error(sample_nuts('simple', path='../simple55',
+                                   iter=1000, init=inits,
+                                   chains=1),
+                       regexp="does not exist. Check argument \'path\'")
   test <- expect_error(sample_nuts('simple3', path='../simple',
                                    iter=1000, init=inits,
                                    chains=1),
-                       regexp="Check 'path' and 'model'")
+                       regexp="not found in specified folder")
   test <- expect_error(sample_nuts('simple', path='../simple',
                                    iter=1000, init=inits,
                                    chains=1,

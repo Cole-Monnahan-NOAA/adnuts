@@ -27,7 +27,9 @@ sample_admb(
 )
 }
 \arguments{
-\item{model}{Name of model (i.e., model.tpl)}
+\item{model}{Name of model (i.e., model.tpl). For non-Windows
+systems this will automatically be converted to './model'
+internally.}
 
 \item{path}{Path to model executable. Defaults to working
 directory. Often best to have model files in a separate

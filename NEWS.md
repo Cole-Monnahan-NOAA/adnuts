@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 adnuts 1.1.0.9000
 ------------------------------------------------------------------------
-
+* Fix bugs in model names for MacOS (use ./model insted of model internally)
 * Fix small bug with mceval=TRUE for newest verison of stock synthesis
 
 * Fix `sample_tmb` to work again for short-term use
