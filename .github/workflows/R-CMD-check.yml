@@ -47,7 +47,10 @@ jobs:
       - name: Compile model and run
         run: |
           pwd
-          cd tests/simple & pwd & ls
+          ls
+          cd tests/simple
+          pwd
+          ls
           admb simple.tpl
 
       - name: Query dependencies
