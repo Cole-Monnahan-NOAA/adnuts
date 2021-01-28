@@ -8,6 +8,7 @@ if(!.Platform$OS.type=='windows'){
   if(!file.exists('../simple/simple_unix'))
     stop("Failed to copy Unix executable b/c not found")
   file.copy('../simple/simple_unix', to='../simple/simple')
+  system('sudo chmod a+x simple') # give permission
   system('./simple -nox')
 } else {
   if(!file.exists('../simple/simple_windows.exe'))
