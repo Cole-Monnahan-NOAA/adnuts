@@ -33,12 +33,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   adapt_delta <- control$adapt_delta
 
   ## Build the command to run the model
-  if (.Platform$OS.type=="windows") {
-    model2 <- model
-  } else {
-    model2 <- paste0("./", model)
-  }
-
+  model2 <- .update_model(model)
   if(skip_optimization){
     cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
   } else {
@@ -163,18 +158,13 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
   if(is.null(warmup)) stop("Must provide warmup")
   if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
-  ## Build the command to run the model
-  if (.Platform$OS.type=="windows") {
-    model2 <- model
-  } else {
-    model2 <- paste0("./", model)
-  }
 
   ## Build the command to run the model
+  model2 <- .update_model(model)
   if(skip_optimization){
-    cmd <- paste(model,"-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
+    cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
   } else {
-    cmd <- paste(model,"-rwm -mcmc ",iter)
+    cmd <- paste(model2,"-rwm -mcmc ",iter)
   }
 
   cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
