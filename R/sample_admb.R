@@ -252,6 +252,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     message(paste("Recommend using chains < cores=", cores))
   stopifnot(thin >=1); stopifnot(chains >= 1)
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
+  if(length(seeds) != chains) stop("Length of seeds must match chains")
   if(iter < 1 | !is.numeric(iter)) stop("iter must be > 1")
 
   ## Catch path and model name errors early

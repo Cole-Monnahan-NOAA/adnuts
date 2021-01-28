@@ -127,4 +127,8 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
                                    chains=1,
                                    admb_args='-refresh -2'),
                        regexp='RWM failed to run')
+  test <- expect_error(sample_rwm('simple', path='../simple',
+                                   iter=1000, init=inits,
+                                   chains=3, seeds=1),
+                       regexp='Length of seeds must match chains')
 })
