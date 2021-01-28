@@ -47,8 +47,7 @@ jobs:
 
       - name: Build simple model
 
-	run: |
-	echo $PATH
+	run: echo $PATH
      	#admb -?
         shell: bash
 
