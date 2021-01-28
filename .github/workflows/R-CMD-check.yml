@@ -47,8 +47,8 @@ jobs:
       - name: Compile model and run
         run: |
           pwd
-          $GITHUB_WORKSPACE
-          cd home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple & admb simple.tpl
+          ls
+          cd tests/simple & admb simple.tpl
 
       - name: Query dependencies
         run: |
