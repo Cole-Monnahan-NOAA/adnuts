@@ -50,13 +50,15 @@ jobs:
           sudo unzip admb-12.2-linux.zip -d /usr/local/bin
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
+	  pwd
           
-      - name: Build simple model
-        run: |
-	  pwd 
-	  cd home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple
-	  admb simple.tpl
-	  ./simple
+      # - name: Build simple model
+      #   run: |
+      # 	  #where admb
+      #     pwd 
+      # 	 # cd home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple
+      # 	  admb simple.tpl
+      # 	  ./simple
 
 
       - name: Query dependencies
