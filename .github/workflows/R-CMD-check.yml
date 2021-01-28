@@ -49,8 +49,6 @@ jobs:
       # 	/usr/local/bin/admb-12.2/bin/admb/admb.cmd -?
       # 	shell: cmd
 	
-
-
       - name: Query dependencies
         run: |
           install.packages('remotes')
