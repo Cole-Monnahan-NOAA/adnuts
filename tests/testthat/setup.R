@@ -3,11 +3,6 @@
 ## out. Only temporary and really bad form.
 oldwd <- getwd()
 message(oldwd)
-setwd('/usr/local/bin/admb-12.2/bin/admb/')
-system('where admb')
-system('admb home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple/simple.tpl')
-setwd('home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple')
-system('sudo chmod a+x simple') # give permission
 system('./simple -nox')
 ## if(!.Platform$OS.type=='windows'){
 ##   ## Swap out the Win executable for unix one
