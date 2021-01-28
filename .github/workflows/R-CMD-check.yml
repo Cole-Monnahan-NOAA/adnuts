@@ -45,8 +45,7 @@ jobs:
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
 
       - name: Build simple model
-	run: |
-	cd /usr/local/bin/admb-12.2/bin/admb
+	run: cd /usr/local/bin/admb-12.2/bin/admb
 	
 
 
