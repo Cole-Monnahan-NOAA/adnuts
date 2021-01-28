@@ -6,6 +6,7 @@ test_that("diagnostics and plotting", {
                      iter=2000, cores=1, init=inits, seeds=1:4,
                      skip_optimization=FALSE,
                      control=list(refresh=-1))
+  message(str(fit))
   sp <- extract_sampler_params(fit)
   expect_known_output(tail(sp,1), file='_expect_sp')
   expect_known_output(tail(fit$monitor,1), file='_expect_monitor')
