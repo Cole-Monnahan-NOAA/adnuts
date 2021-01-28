@@ -4,8 +4,8 @@
 oldwd <- getwd()
 message(oldwd)
 setwd('../simple')
-system('where admb')
-system('admb simple')
+## system('where admb')
+## system('admb simple')
 system('sudo chmod a+x simple') # give permission
 system('./simple -nox')
 ## if(!.Platform$OS.type=='windows'){
