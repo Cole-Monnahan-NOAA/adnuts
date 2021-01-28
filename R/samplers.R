@@ -150,6 +150,8 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
             paste(names(control)[names(control)!='refresh'],
                   collapse=', '), call.=FALSE)
   refresh <- control$refresh
+  if(!is.null(refresh) & !is.numeric(refresh))
+    stop("Invalid refresh value ", refresh)
   metric <- 'mle' ## only one allowed
   stopifnot(iter >= 1)
   stopifnot(warmup <= iter)
@@ -198,6 +200,7 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
     cmd <- paste(cmd, "-mcpin init.pin")
     write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
   }
+  if(!is.null(refresh)) cmd <- paste(cmd, "-refresh", refresh)
   if(!is.null(admb_args)) cmd <- paste(cmd, admb_args)
 
   ## Run it and get results

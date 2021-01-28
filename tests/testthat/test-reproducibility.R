@@ -6,10 +6,10 @@ test_that("reproducibility of algorithms", {
   oldwd <- getwd()
   chains <- 1
   fit <- sample_rwm('simple', path='../simple', chains=chains,
-                     iter=400, cores=1,
-                     seeds=rep(45,chains), init=inits.fn,
-                     skip_optimization=FALSE,
-                     admb_args=' -refresh 0')
+                    iter=400, cores=1,
+                    seeds=rep(45,chains), init=inits.fn,
+                    skip_optimization=FALSE,
+                    control=list(refresh=-1))
   expect_identical(unique(fit$samples[400,,3]), -16.0439)
   ## These correspond to the 6 options in the metric table in the
   ## vignette.

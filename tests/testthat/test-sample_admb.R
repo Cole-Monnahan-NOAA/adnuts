@@ -46,23 +46,27 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
   inits <- function() list(1,1)
   test <- expect_warning(sample_nuts('simple', path='../simple',
                                      iter=1000, init=inits,
-                                  extra.args='-test',
+                                     extra.args='-test',
+                                     control=list(refresh=-1),
                                      chains=1, warmup=500),
                          regexp='extra.args is deprecated')
   test <- expect_warning(sample_rwm('simple', path='../simple',
-                                     iter=1000, init=inits,
-                                     extra.args='-test',
-                                     chains=1, warmup=500),
+                                    iter=1000, init=inits,
+                                    extra.args='-test',
+                                    control=list(refresh=-1),
+                                    chains=1, warmup=500),
                          regexp='extra.args is deprecated')
-    test <- expect_warning(sample_nuts('simple', path='../simple',
+  test <- expect_warning(sample_nuts('simple', path='../simple',
                                      iter=1000, init=inits,
                                      parallel=TRUE,
+                                     control=list(refresh=-1),
                                      chains=1, warmup=500),
                          regexp='parallel is deprecated')
   test <- expect_warning(sample_rwm('simple', path='../simple',
-                                     iter=1000, init=inits,
-                                     parallel=TRUE,
-                                     chains=1, warmup=500),
+                                    iter=1000, init=inits,
+                                    parallel=TRUE,
+                                    control=list(refresh=-1),
+                                    chains=1, warmup=500),
                          regexp='parallel is deprecated')
   test <- expect_warning(sample_rwm('simple', path='../simple',
                                     iter=1000, init=inits,
@@ -72,19 +76,22 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
   test <- expect_warning(sample_nuts('simple', path='../simple',
                                      iter=1000, init=inits,
                                      chains=1, warmup=500,
-                                     control=list(metric=diag(2))),
+                                     control=list(refresh=-1, metric=diag(2))),
                          regexp='admodel.cov overwritten')
   test <- expect_warning(sample_rwm('simple', path='../simple',
                                     iter=1000, init=inits,
                                     parallel=TRUE,
+                                    control=list(refresh=-1),
                                     chains=1, warmup=500),
                          regexp='parallel is deprecated')
   test <- expect_warning(sample_admb('simple', path='../simple',
-                                   iter=1000, init=inits,
-                                   chains=1, warmup=500),
+                                     iter=1000, init=inits,
+                                     control=list(refresh=-1),
+                                     chains=1, warmup=500),
                        regexp='sample_admb is deprecated')
   test <- expect_error(sample_nuts('simple', path='../simple',
                                    iter=1000, init=inits,
+                                   control=list(refresh=-1),
                                    chains=1, warmup=2000),
                        regexp='warmup <= iter')
   test <- expect_error(sample_nuts('simple', path='../simple',
@@ -127,6 +134,11 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
                                    chains=1,
                                    admb_args='-refresh -2'),
                        regexp='RWM failed to run')
+  test <- expect_error(sample_rwm('simple', path='../simple',
+                                  iter=1000, init=inits,
+                                  chains=1,
+                                  control=list(refresh='a')),
+                                  regexp='Invalid refresh value')
   test <- expect_error(sample_rwm('simple', path='../simple',
                                    iter=1000, init=inits,
                                    chains=3, seeds=1),
