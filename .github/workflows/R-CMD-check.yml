@@ -45,7 +45,9 @@ jobs:
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
 
       - name: Build simple model
-	run: /usr/local/bin/admb-12.2/bin/admb  home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple.tpl
+	run: |
+	cd /usr/local/bin/admb-12.2/bin/admb
+	
 
 
       # - name: Query dependencies
