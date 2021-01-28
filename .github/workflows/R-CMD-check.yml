@@ -46,12 +46,7 @@ jobs:
 
       - name: Compile model and run
         run: |
-          setwd('/usr/local/bin/admb-12.2/bin/admb/')
-          system('where admb')
-          system('admb home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple/simple.tpl')
-          setwd('home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple')
-          system('sudo chmod a+x simple')
-        shell: Rscript {0}
+          cd home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple & admb simple.tpl
 
       - name: Query dependencies
         run: |
