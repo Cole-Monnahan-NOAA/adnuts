@@ -226,6 +226,25 @@ plot_sampler_params <- function(fit, plot=TRUE){
   return(invisible(g))
 }
 
+#' Check that the file can be found
+#'
+#' @param model Model name without file extension
+#' @param path Path to model folder, defaults to working
+#'
+.check_model_path <- function(model, path){
+  stopifnot(is.character(path))
+  stopifnot(is.character(model))
+  if(!dir.exists(path))
+    stop('Folder ', path,
+         ' does not exist. Check argument \'path\' and working directory')
+  if (.Platform$OS.type=="windows") {
+    ff <- file.path(path, paste(model,".exe",sep=""))
+  } else {
+    ff <- file.path(path, paste("./",model,sep=""))
+  }
+  if(!file.exists(ff))
+    stop('File ', model, ' not found in specified folder. Check \'model\' argument')
+}
 
 #' Check that the  model is compiled with the right version
 #' of ADMB which is 12.0 or later
@@ -246,16 +265,16 @@ plot_sampler_params <- function(fit, plot=TRUE){
 #'   update ADMB and recompile the model.
 .check_ADMB_version <- function(model, path=getwd(),
                                 min.version=12, warn=TRUE){
-  if(!is.null(path)){
-    if(dir.exists(path)){
-    wd <- getwd()
-    on.exit(setwd(wd))
-    setwd(path)
-    } else {
-      stop("Invalid path, folder does not exist")
-    }
-  }
+  ## Check for file existing
+  .check_model_path(model=model, path=path)
+  wd <- getwd()
+  on.exit(setwd(wd))
+  setwd(path)
+
   ## Run the model to get the version info
+  if (!.Platform$OS.type=="windows") {
+    model <- paste0("./", model)
+  }
   test <- try(system(paste(model, '-version'), intern=TRUE), silent=TRUE)
   if (inherits(test,"try-error"))
     stop(paste0("Could not detect version of ", model, ". Check executable and path"))
@@ -405,7 +424,7 @@ check_identifiable <- function(model, path=getwd()){
 
 ## Update the control list.
 ##
-## @param control A list passed from \code{sample_tmb}.
+## @param control A list passed from a sampling function
 ## @return A list with default control elements updated by those supplied
 ##   in \code{control}
 .update_control <- function(control){
