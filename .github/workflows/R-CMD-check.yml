@@ -43,8 +43,6 @@ jobs:
           sudo unzip admb-12.2-linux.zip -d /usr/local/bin
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
-	  echo $GITHUB_PATH
-          
 
       - name: Build simple model
 	run: /usr/local/bin/admb-12.2/bin/admb  home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple.tpl
