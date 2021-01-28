@@ -44,7 +44,7 @@ jobs:
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
 
-     - name: Compile model and run
+      - name: Compile model and run
         run: |
           setwd('/usr/local/bin/admb-12.2/bin/admb/')
           system('where admb')
