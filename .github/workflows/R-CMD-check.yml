@@ -47,9 +47,6 @@ jobs:
 
       - name: Build simple model
         run: echo $PATH
-	# cd home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple
-      	#  admb simple.tpl
-      	#  ./simple
         shell: bash
 
 
