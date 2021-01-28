@@ -53,8 +53,8 @@ jobs:
           
       - name: Build simple model
         run: |
-	  cd "/home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple"
-	  echo ls 
+	  pwd 
+	  cd home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple
 	  admb simple.tpl
 	  ./simple
 
