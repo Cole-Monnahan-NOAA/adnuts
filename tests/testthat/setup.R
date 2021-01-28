@@ -2,6 +2,7 @@
 ## For now I'm providing copies of executables and just swapping
 ## out. Only temporary and really bad form.
 oldwd <- getwd()
+message(oldwd)
 setwd('../simple')
 if(!.Platform$OS.type=='windows'){
   ## Swap out the Win executable for unix one
@@ -17,4 +18,5 @@ if(!.Platform$OS.type=='windows'){
             '../simple/simple.exe')
   system("simple -nox")
 }
+print(list.files())
 setwd(oldwd)
