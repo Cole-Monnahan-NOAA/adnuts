@@ -7,6 +7,13 @@ on: [push, pull_request]
 name: R-CMD-check
 
 jobs:
+
+  build-admb:
+    runs-on: ubuntu-20.04
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+          
+
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
@@ -26,6 +33,9 @@ jobs:
       RSPM: ${{ matrix.config.rspm }}
 
     steps:
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+
       - uses: actions/checkout@v2
 
       - uses: r-lib/actions/setup-r@master
@@ -33,6 +43,20 @@ jobs:
           r-version: ${{ matrix.config.r }}
 
       - uses: r-lib/actions/setup-pandoc@master
+
+      - name: Get admb and put in path
+        run: |
+          wget https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-linux.zip
+          sudo unzip admb-12.2-linux.zip -d /usr/local/bin
+          sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
+          echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
+          
+      - name: Build simple model
+        run: |
+	  cd /home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple
+	  admb simple.tpl
+	  ./simple
+
 
       - name: Query dependencies
         run: |
