@@ -46,7 +46,8 @@ jobs:
           
 
       - name: Build simple model
-	run: admb home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple/simple.tpl
+	# run: admb home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple/simple.tpl
+	run: admb -?
         shell: bash
 
 
