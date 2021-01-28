@@ -46,9 +46,9 @@ jobs:
           
 
       - name: Build simple model
-
-	run: echo $PATH
-     	#admb -?
+	run:
+	  working-directory home/runner/work/adnuts/adnuts/check/adnuts.Rcheck/tests/simple
+	  admb simple.tpl
         shell: bash
 
       # - name: Query dependencies
