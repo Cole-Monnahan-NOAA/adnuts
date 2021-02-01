@@ -1,9 +1,7 @@
 test_that("reproducibility of algorithms", {
   skip_on_cran()
-  skip_on_travis()
   ## Check reproducibility given same init and seeds
   inits.fn <- function() list(c(0,0))
-  oldwd <- getwd()
   chains <- 1
   fit <- sample_rwm('simple', path='../simple', chains=chains,
                     iter=400, cores=1,
@@ -53,16 +51,16 @@ test_that("reproducibility of algorithms", {
                       control=list(refresh=-1, metric=diag(2)),
                       cores=1))
   expect_identical(unique(fit7$samples[400,,3]), -12.9319)
-  fit8 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
-                      seeds=seeds, init=inits.fn,
-                      control=list(refresh=-1, metric=diag(2), adapt_mass=TRUE),
-                      cores=1))
-  expect_identical(unique(fit8$samples[400,,3]), -13.2107)
-  fit9 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
-                      seeds=seeds, init=inits.fn,
-                      control=list(refresh=-1, metric=diag(2), adapt_mass_dense=TRUE),
-                      cores=1))
-  expect_identical(unique(fit9$samples[400,,3]), -14.2902)
+  # fit8 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
+  #                     seeds=seeds, init=inits.fn,
+  #                     control=list(refresh=-1, metric=diag(2), adapt_mass=TRUE),
+  #                     cores=1))
+  # expect_identical(unique(fit8$samples[400,,3]), -13.2107)
+  # fit9 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
+  #                     seeds=seeds, init=inits.fn,
+  #                     control=list(refresh=-1, metric=diag(2), adapt_mass_dense=TRUE),
+  #                     cores=1))
+  # expect_identical(unique(fit9$samples[400,,3]), -14.2902)
   ## All of these test might fail if changes to the adaptation
   ## schemes (stepsize or mass matrix) are done in the ADMB
   ## source. So one last tests which uses no adaptation so should

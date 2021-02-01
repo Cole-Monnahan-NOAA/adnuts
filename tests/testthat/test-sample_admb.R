@@ -2,9 +2,7 @@
 ## Note these were tested with ADMB 12.2 on 8/3/2020
 test_that("simple example works", {
   skip_on_cran()
-  skip_on_travis()
   inits.fn <- function() list(c(0,0))
-  oldwd <- getwd()
   fit <- sample_rwm('simple', path='../simple', chains=1,
                      seeds=1, init=inits.fn,
                      skip_optimization=FALSE,
