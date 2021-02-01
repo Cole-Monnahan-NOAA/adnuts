@@ -51,6 +51,10 @@ jobs:
           admb simple.tpl
           ./simple -nox
           ./simple -version
+          echo 0 > init.pin
+          echo 0 >> init.pin
+          ./simple -hbf -nuts -mcmc  400 -warmup 200 -chain 1 -mcseed 123 -max_treedepth 12 -adapt_delta 0.8 -hyeps 0.1 -refresh -1 -mcpin init.pin
+          cat adaptation.csv
 
       - name: Query dependencies
         run: |
