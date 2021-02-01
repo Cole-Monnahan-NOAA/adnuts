@@ -44,15 +44,11 @@ jobs:
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           rm admb-12.2-linux.zip
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
-
-      - name: Compile model and run
-        run: |
-          cd tests/simple
-          admb simple.tpl
-          echo 0 > init.pin
-          echo 0 >> init.pin
-          ./simple -maxfn 0 -phase 1000 -nuts -mcmc  400 -warmup 200 -chain 1 -mcseed 123 -max_treedepth 12 -adapt_delta 0.8 -refresh -1 -mcdiag -mcpin init.pin
-          cat adaptation.csv
+#
+#       - name: Compile model and run
+#         run: |
+#           cd tests/simple
+#           admb simple.tpl
 
       - name: Query dependencies
         run: |

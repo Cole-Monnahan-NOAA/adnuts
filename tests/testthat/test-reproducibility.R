@@ -1,5 +1,9 @@
 test_that("reproducibility of algorithms", {
   skip_on_cran()
+  ## due to compiler differnces these wont match between platforms, so useful only for testing that
+  ## new releases of ADMB don't break something unexpectedly
+  skip_on_ci()
+
   ## Check reproducibility given same init and seeds
   inits.fn <- function() list(c(0,0))
   chains <- 1
