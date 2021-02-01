@@ -1,6 +1,6 @@
 test_that("reproducibility of algorithms", {
   skip_on_cran()
-  ## due to compiler differnces these wont match between platforms, so useful only for testing that
+  ## due to compiler differences these wont match between platforms, so useful only for testing that
   ## new releases of ADMB don't break something unexpectedly
   skip_on_ci()
 
