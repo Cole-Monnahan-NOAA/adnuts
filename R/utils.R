@@ -237,13 +237,25 @@ plot_sampler_params <- function(fit, plot=TRUE){
   if(!dir.exists(path))
     stop('Folder ', path,
          ' does not exist. Check argument \'path\' and working directory')
-  if (.Platform$OS.type=="windows") {
-    ff <- file.path(path, paste(model,".exe",sep=""))
-  } else {
-    ff <- file.path(path, paste("./",model,sep=""))
-  }
+  model2 <- .update_model(model)
+  ff <- file.path(path, model2)
   if(!file.exists(ff))
-    stop('File ', model, ' not found in specified folder. Check \'model\' argument')
+    stop('File ', model2, ' not found in specified folder. Check \'model\' argument')
+}
+
+#' Convert model name depending on system
+#'
+#' @param model Model name without file extension
+#' @return Updated model name to use with system call
+#'
+.update_model <- function(model){
+  stopifnot(is.character(model))
+  if (.Platform$OS.type=="windows"){
+    model2 <- paste0(model,".exe")
+  } else {
+    model2 <- paste0("./",model)
+  }
+  model2
 }
 
 #' Check that the  model is compiled with the right version
@@ -272,10 +284,8 @@ plot_sampler_params <- function(fit, plot=TRUE){
   setwd(path)
 
   ## Run the model to get the version info
-  if (!.Platform$OS.type=="windows") {
-    model <- paste0("./", model)
-  }
-  test <- try(system(paste(model, '-version'), intern=TRUE), silent=TRUE)
+  model2 <- .update_model(model)
+  test <- try(system(paste(model2, '-version'), intern=TRUE), silent=TRUE)
   if (inherits(test,"try-error"))
     stop(paste0("Could not detect version of ", model, ". Check executable and path"))
   ## v <- as.numeric(gsub('ADMB-', '', strsplit(test[3], ' ')[[1]][1]))

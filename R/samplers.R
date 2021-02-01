@@ -33,12 +33,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   adapt_delta <- control$adapt_delta
 
   ## Build the command to run the model
-  if (.Platform$OS.type=="windows") {
-    model2 <- model
-  } else {
-    model2 <- paste0("./", model)
-  }
-
+  model2 <- .update_model(model)
   if(skip_optimization){
     cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
   } else {
@@ -155,6 +150,8 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
             paste(names(control)[names(control)!='refresh'],
                   collapse=', '), call.=FALSE)
   refresh <- control$refresh
+  if(!is.null(refresh) & !is.numeric(refresh))
+    stop("Invalid refresh value ", refresh)
   metric <- 'mle' ## only one allowed
   stopifnot(iter >= 1)
   stopifnot(warmup <= iter)
@@ -163,18 +160,13 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
   if(is.null(warmup)) stop("Must provide warmup")
   if(thin < 1 | thin > iter) stop("Thin must be >1 and < iter")
 
-  ## Build the command to run the model
-  if (.Platform$OS.type=="windows") {
-    model2 <- model
-  } else {
-    model2 <- paste0("./", model)
-  }
 
   ## Build the command to run the model
+  model2 <- .update_model(model)
   if(skip_optimization){
-    cmd <- paste(model,"-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
+    cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
   } else {
-    cmd <- paste(model,"-rwm -mcmc ",iter)
+    cmd <- paste(model2,"-rwm -mcmc ",iter)
   }
 
   cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
@@ -208,6 +200,7 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
     cmd <- paste(cmd, "-mcpin init.pin")
     write.table(file="init.pin", x=unlist(init), row.names=F, col.names=F)
   }
+  if(!is.null(refresh)) cmd <- paste(cmd, "-refresh", refresh)
   if(!is.null(admb_args)) cmd <- paste(cmd, admb_args)
 
   ## Run it and get results
