@@ -1,6 +1,10 @@
-test_that("reproducibility of algorithms", {
+test_that("reproducibility of algorithms between versions", {
   skip_on_cran()
-  skip_on_travis()
+  ## due to compiler differences these wont match between
+  ## platforms, so useful only for testing that new releases of
+  ## ADMB don't break something unexpectedly
+  skip_on_ci()
+
   ## Check reproducibility given same init and seeds
   inits.fn <- function() list(c(0,0))
   oldwd <- getwd()
