@@ -1,22 +1,17 @@
 
-## For now I'm providing copies of executables and just swapping
-## out. Only temporary and really bad form.
+## Setup executable whether testing locally (Windows) or through CI (linux 18.04).
 oldwd <- getwd()
-message(oldwd)
-system('./simple -nox')
-## if(!.Platform$OS.type=='windows'){
-##   ## Swap out the Win executable for unix one
-##   if(!file.exists('../simple/simple_unix'))
-##     stop("Failed to copy Unix executable b/c not found")
-##   file.copy('../simple/simple_unix', to='../simple/simple')
-##   system('sudo chmod a+x simple') # give permission
-##   system('./simple -nox')
-## } else {
-##   if(!file.exists('../simple/simple_windows.exe'))
-##     stop("Failed to copy Windows executable b/c not found")
-##   file.copy('../simple/simple_windows.exe',
-##            '../simple/simple.exe')
-##   system("simple -nox")
-## }
-print(list.files())
+setwd('../simple')
+system("admb simple")
+system('simple')
 setwd(oldwd)
+## Clean up files to pass checks locally
+if(requireNamespace('withr')){
+  withr::defer({
+    files <- list.files('../simple', full.names = TRUE)
+    ignore <- file.remove(files[-grep('.dat|.tpl', x=files)])
+    unlink("../simple_chain_1", TRUE)
+    unlink("../simple_chain_2", TRUE)
+    unlink("../simple_chain_3", TRUE)
+  }, teardown_env())
+}
