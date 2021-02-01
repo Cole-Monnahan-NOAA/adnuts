@@ -13,22 +13,23 @@ test_that("reproducibility of algorithms", {
   ## vignette.
   seeds <- rep(123,chains)
   ## Initialize with diagonal for first three
-  # fit1 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
-  #                     seeds=seeds, init=inits.fn,
-  #                     control=list(refresh=-1, adapt_mass=FALSE),
-  #                     cores=1)
-  # expect_identical(unique(fit1$samples[400,,3]), -12.9319)
-  # fit2 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
-  #                     seeds=seeds, init=inits.fn,
-  #                     control=list(refresh=-1),
-  #                     cores=1)
-  # expect_identical(unique(fit2$samples[400,,3]), -13.2107)
-  # fit3 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
-  #                     seeds=seeds, init=inits.fn,
-  #                     control=list(refresh=-1, adapt_mass_dense=TRUE),
-  #                     cores=1)
+  ignore <- file.remove('../simple/admodel.cov') # dont need this
+  fit1 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
+                      seeds=seeds, init=inits.fn,
+                      control=list(refresh=-1, adapt_mass=FALSE),
+                      cores=1)
+  expect_identical(unique(fit1$samples[400,,3]), -12.9319)
+  fit2 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
+                      seeds=seeds, init=inits.fn,
+                      control=list(refresh=-1),
+                      cores=1)
+  expect_identical(unique(fit2$samples[400,,3]), -13.2107)
+  fit3 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
+                      seeds=seeds, init=inits.fn,
+                      control=list(refresh=-1, adapt_mass_dense=TRUE),
+                      cores=1)
  # expect_identical(unique(fit3$samples[400,,3]), -14.2902)
-  ## Next three initialize from MLE
+  ## Next three initialize from MLE, need to rerun model to get these
   fit4 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
                       seeds=seeds, init=inits.fn,
                       skip_optimization=FALSE,
@@ -46,29 +47,31 @@ test_that("reproducibility of algorithms", {
                       cores=1)
   expect_identical(unique(fit6$samples[400,,3]), -12.4441)
   ## In addition test passing a user matrix, here unit diag
-  # fit7 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
-  #                     seeds=seeds, init=inits.fn,
-  #                     control=list(refresh=-1, metric=diag(2)),
-  #                     cores=1))
-  # expect_identical(unique(fit7$samples[400,,3]), -12.9319)
-  # fit8 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
-  #                     seeds=seeds, init=inits.fn,
-  #                     control=list(refresh=-1, metric=diag(2), adapt_mass=TRUE),
-  #                     cores=1))
-  # expect_identical(unique(fit8$samples[400,,3]), -13.2107)
-  # fit9 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
-  #                     seeds=seeds, init=inits.fn,
-  #                     control=list(refresh=-1, metric=diag(2), adapt_mass_dense=TRUE),
-  #                     cores=1))
-  # expect_identical(unique(fit9$samples[400,,3]), -14.2902)
+  fit7 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
+                      seeds=seeds, init=inits.fn,
+                      control=list(refresh=-1, metric=diag(2)),
+                      cores=1))
+  expect_identical(unique(fit7$samples[400,,3]), -12.9319)
+  fit8 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
+                      seeds=seeds, init=inits.fn,
+                      control=list(refresh=-1, metric=diag(2), adapt_mass=TRUE),
+                      cores=1))
+  expect_identical(unique(fit8$samples[400,,3]), -13.2107)
+  fit9 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
+                      seeds=seeds, init=inits.fn,
+                      control=list(refresh=-1, metric=diag(2), adapt_mass_dense=TRUE),
+                      cores=1))
+  expect_identical(unique(fit9$samples[400,,3]), -14.2902)
   ## All of these test might fail if changes to the adaptation
   ## schemes (stepsize or mass matrix) are done in the ADMB
   ## source. So one last tests which uses no adaptation so should
-  ## be consistent between ADMB versions
-  # fit10 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
-  #                     seeds=seeds, init=inits.fn,
-  #                     skip_optimization = FALSE,
-  #                     control=list(refresh=-1, metric='mle', stepsize=.1),
-  #                     cores=1)
-  # expect_identical(unique(fit10$samples[400,,3]), -11.6495)
+  ## be consistent between ADMB versions. Also need to reoptimize
+  ## since I overwrite the admodel.cov file above
+  fit10 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
+                      seeds=seeds, init=inits.fn,
+                      skip_optimization = FALSE,
+                      control=list(refresh=-1, metric='mle', stepsize=.1),
+                      cores=1)
+  expect_identical(unique(fit10$samples[400,,3]), -13.6047)
+
 })
