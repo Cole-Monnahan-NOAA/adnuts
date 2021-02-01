@@ -3,7 +3,8 @@ test_that("diagnostics and plotting", {
   skip_on_travis()
   inits <- function() list(1,1)
   fit <- sample_nuts('simple', path='../simple', chains=4,
-                     iter=2000, cores=1, init=inits, seeds=1,
+                     iter=2000, cores=1, init=inits, seeds=1:4,
+                     skip_optimization=FALSE,
                      control=list(refresh=-1))
   sp <- extract_sampler_params(fit)
   expect_known_output(tail(sp,1), file='_expect_sp')
