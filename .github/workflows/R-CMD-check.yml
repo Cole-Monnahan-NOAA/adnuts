@@ -48,7 +48,8 @@ jobs:
         run: |
           cd tests/simple
           admb simple.tpl
-          simple -nox
+          ./simple -nox
+          ./simple -version
 
       - name: Query dependencies
         run: |
