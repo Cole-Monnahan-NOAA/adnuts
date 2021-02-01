@@ -13,21 +13,21 @@ test_that("reproducibility of algorithms", {
   ## vignette.
   seeds <- rep(123,chains)
   ## Initialize with diagonal for first three
-  fit1 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
-                      seeds=seeds, init=inits.fn,
-                      control=list(refresh=-1, adapt_mass=FALSE),
-                      cores=1)
-  expect_identical(unique(fit1$samples[400,,3]), -12.9319)
-  fit2 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
-                      seeds=seeds, init=inits.fn,
-                      control=list(refresh=-1),
-                      cores=1)
-  expect_identical(unique(fit2$samples[400,,3]), -13.2107)
-  fit3 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
-                      seeds=seeds, init=inits.fn,
-                      control=list(refresh=-1, adapt_mass_dense=TRUE),
-                      cores=1)
-  expect_identical(unique(fit3$samples[400,,3]), -14.2902)
+  # fit1 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
+  #                     seeds=seeds, init=inits.fn,
+  #                     control=list(refresh=-1, adapt_mass=FALSE),
+  #                     cores=1)
+  # expect_identical(unique(fit1$samples[400,,3]), -12.9319)
+  # fit2 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
+  #                     seeds=seeds, init=inits.fn,
+  #                     control=list(refresh=-1),
+  #                     cores=1)
+  # expect_identical(unique(fit2$samples[400,,3]), -13.2107)
+  # fit3 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
+  #                     seeds=seeds, init=inits.fn,
+  #                     control=list(refresh=-1, adapt_mass_dense=TRUE),
+  #                     cores=1)
+ # expect_identical(unique(fit3$samples[400,,3]), -14.2902)
   ## Next three initialize from MLE
   fit4 <- sample_nuts('simple', path='../simple', chains=chains, iter=400,
                       seeds=seeds, init=inits.fn,
@@ -46,11 +46,11 @@ test_that("reproducibility of algorithms", {
                       cores=1)
   expect_identical(unique(fit6$samples[400,,3]), -12.4441)
   ## In addition test passing a user matrix, here unit diag
-  fit7 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
-                      seeds=seeds, init=inits.fn,
-                      control=list(refresh=-1, metric=diag(2)),
-                      cores=1))
-  expect_identical(unique(fit7$samples[400,,3]), -12.9319)
+  # fit7 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
+  #                     seeds=seeds, init=inits.fn,
+  #                     control=list(refresh=-1, metric=diag(2)),
+  #                     cores=1))
+  # expect_identical(unique(fit7$samples[400,,3]), -12.9319)
   # fit8 <- suppressWarnings(sample_nuts('simple', path='../simple', chains=chains, iter=400,
   #                     seeds=seeds, init=inits.fn,
   #                     control=list(refresh=-1, metric=diag(2), adapt_mass=TRUE),
