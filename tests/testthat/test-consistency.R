@@ -19,7 +19,7 @@ test_that("consistency of algorithms within platform", {
                     seeds=rep(45,chains), init=inits.fn,
                     skip_monitor=TRUE,
                     control=list(refresh=-1))
-  expect_identical(myequal(fit$samples[iter,,3]), TRUE)
+  expect_identical(myequal(fit), TRUE)
   ## These correspond to the 6 options in the metric table in the
   ## vignette.
   seeds <- rep(123,chains)
