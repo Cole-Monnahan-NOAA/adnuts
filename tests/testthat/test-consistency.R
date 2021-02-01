@@ -12,7 +12,7 @@ test_that("consistency of algorithms within platform", {
   iter <- 2000  # slightly longer ones to detect subtle divergences
   myequal <- function(fit) length(unique(fit$samples[iter,,3]))==1
 
-  test <- sample_rwm('simple', path='../simple', iter=10, inits=inits.fn,
+  test <- sample_rwm('simple', path='../simple', iter=10, init=inits.fn,
                      skip_optimization=FALSE, chains=1)
   fit <- sample_rwm('simple', path='../simple', chains=chains,
                     iter=iter*10, cores=cores,
