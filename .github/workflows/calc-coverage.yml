@@ -38,7 +38,8 @@ jobs:
           rm admb-12.2-linux.zip
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
 
-      - name: Query dependencies
+
+- name: Query dependencies
         run: |
           install.packages('remotes')
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
