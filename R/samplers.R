@@ -33,7 +33,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   adapt_delta <- control$adapt_delta
 
   ## Build the command to run the model
-  model2 <- .update_model(model)
+  model2 <- model#.update_model(model)
   if(skip_optimization){
     cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
   } else {
