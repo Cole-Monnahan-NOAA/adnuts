@@ -2,7 +2,7 @@
 
 master: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg?branch=master)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check)
 
-dev: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check) [![codecov](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts/branch/dev/graph/badge.svg)](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts)
+dev: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg?branch=dev)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check) [![codecov](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts/branch/dev/graph/badge.svg)](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts)
 
 
 The aim of 'adnuts' (pronounced A-D NUTS like A-D MB) is to provide
