@@ -37,14 +37,16 @@ jobs:
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           rm admb-12.2-linux.zip
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
+
 #
 #       - name: Compile model and run
 #         run: |
 #           cd tests/simple
 #           admb simple.tpl
-       - name: Query dependencies
+
+      - name: Query dependencies
         run: |
-          install.packages('remotes')
+         install.packages('remotes')
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
