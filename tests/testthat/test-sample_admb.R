@@ -36,11 +36,23 @@ test_that("simple example works", {
 })
 
 
+test_that("parallel works",{
+  skip_on_cran()
+  inits.fn <- function() list(c(0,0))
+  fit <- sample_nuts('simple', path='../simple', chains=3,
+                     seeds=1:3, init=inits.fn, iter=1000,
+                     control=list(refresh=-1),
+                     skip_monitor = TRUE)
+  ## expect_equal(extract_samples(fit)[1500,2], 3.483071)
+  fit <- sample_rwm('simple', path='../simple', chains=3,
+                     seeds=1:3, init=inits.fn, iter=1000,
+                     control=list(refresh=-1),
+                     skip_monitor = TRUE)
+})
 
 
 test_that("warnings and errors in sample_nuts and sample_rwm",{
   skip_on_cran()
-  skip_on_travis()
   inits <- function() list(1,1)
   test <- expect_warning(sample_nuts('simple', path='../simple',
                                      iter=1000, init=inits,
