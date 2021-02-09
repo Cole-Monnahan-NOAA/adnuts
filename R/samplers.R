@@ -162,11 +162,10 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
 
 
   ## Build the command to run the model
-  model2 <- .update_model(model)
   if(skip_optimization){
-    cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
+    cmd <- paste("-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
   } else {
-    cmd <- paste(model2,"-rwm -mcmc ",iter)
+    cmd <- paste("-rwm -mcmc ",iter)
   }
 
   cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
@@ -203,8 +202,27 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
   if(!is.null(refresh)) cmd <- paste(cmd, "-refresh", refresh)
   if(!is.null(admb_args)) cmd <- paste(cmd, admb_args)
 
+
   ## Run it and get results
-  time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
+  model2 <- .update_model(model)
+  console <- adnuts:::.check_console_printing()
+  progress <- NULL
+  if(console){
+    ## Normal case
+    time <- system.time(system2(model2, cmd, stdout=''))[3]
+  } else {
+    ## RStudio won't print output so capture it and print at
+    ## end. Better than nothing
+    fn <- 'mcmc_progress.txt'
+    if(file.exists(fn)) file.remove(fn)
+    time <- system.time(system2(model2, cmd, stdout=fn))[3]
+    if(file.exists(fn)){
+      progress <- readLines('mcmc_progress.txt')
+      cat(progress, sep='\n')
+    } else {
+      warning("Progress output file not found. Try troubleshooting in serial model")
+    }
+  }
   if(!file.exists('unbounded.csv'))
     stop(paste0("RWM failed to run. Command attempted was:\n", cmd))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
@@ -220,7 +238,8 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
   warmup <- warmup/thin
   return(list(samples=pars, sampler_params=NULL, time.total=time.total,
               time.warmup=time.warmup, warmup=warmup,  model=model,
-              par.names=par.names, cmd=cmd, unbounded=unbounded))
+              par.names=par.names, cmd=cmd, unbounded=unbounded,
+              progress=progress))
 }
 
 

@@ -73,6 +73,23 @@ print.adfit <- function(x, ...){
 }
 
 
+#' Check if the session is interactive or Rstudio which has
+#' implications for parallel output
+#'
+#' @param cores
+#' @details When using RStudio and RGui, the parallel output does
+#'   not show on the console. As a workaround it is captured in
+#'   each cluster into a file and then read in and printed.
+#' @return Boolean whether output should be printed to console
+#'   progressively, or saved and printed at the end.
+#'
+.check_console_printing <- function(cores=NULL){
+  ## If not using parallel always print to console
+  if (identical(Sys.getenv("RSTUDIO"), "1"))
+    return(FALSE)
+  else
+    return(TRUE)
+}
 
 #' Plot marginal distributions for a fitted model
 #'

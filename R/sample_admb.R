@@ -232,11 +232,11 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 #' @param algorithm The algorithm to use, one of "NUTS" or "RWM"
 #'
 .sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
-                        seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
-                        parallel=FALSE, cores=NULL, control=NULL,
-                        algorithm="NUTS", skip_optimization=TRUE,
-                        skip_monitor=FALSE, skip_unbounded=TRUE,
-                        admb_args=NULL){
+                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
+                         parallel=FALSE, cores=NULL, control=NULL,
+                         algorithm="NUTS", skip_optimization=TRUE,
+                         skip_monitor=FALSE, skip_unbounded=TRUE,
+                         admb_args=NULL){
   if(is.null(cores)) cores <- parallel::detectCores()-1
   cores.max  <- parallel::detectCores()
   if(cores > cores.max) {
@@ -284,7 +284,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   ## values by accident
   trash <- suppressWarnings(file.remove(list.files(path)[grep('.psv', x=list.files())]))
   trash <- suppressWarnings(file.remove(file.path(path, 'adaptation.csv'),
-                       file.path(path, 'unbounded.csv')))
+                                        file.path(path, 'unbounded.csv')))
   ## Run in serial
   if(!parallel){
     if(algorithm=="NUTS"){
@@ -305,9 +305,16 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     }
     ## Parallel execution
   } else {
+    console <- adnuts:::.check_console_printing()
+    if(console)
+      message("\n\nStarting parallel chains. Output to console is inconsistent between consoles.\n",
+              "I recommend the R terminal which updates live, while the GUI does not\n\n")
+    else
+      message("\n\nStarting parallel chains. RStudio detected so output will display at conclusion. \n",
+              "For live updates try using Rterm. See help file for more info on console output\n\n")
     snowfall::sfStop()
     snowfall::sfInit(parallel=TRUE, cpus=cores)
-    ## errors out with empty workspace
+     ## errors out with empty workspace
     if(length(ls(envir=globalenv()))>0)
       snowfall::sfExportAll()
     on.exit(snowfall::sfStop())
@@ -320,17 +327,22 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                            control=control,
                            skip_optimization=skip_optimization,
                            admb_args=admb_args))
-  }
-    warmup <- mcmc.out[[1]]$warmup
-    mle <- .read_mle_fit(model=model, path=path)
-    if(is.null(mle)){
-      par.names <- dimnames(mcmc.out[[1]]$samples)[[2]]
-      par.names <- par.names[-length(par.names)]
-    } else {
-      par.names <- mle$par.names
+    if(!is.null(mcmc.out[[1]]$progress)){
+      trash <- lapply(mcmc.out, function(x) writeLines(x$progress))
     }
-    iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
-    if(any(iters!=iter/thin)){
+  }
+
+  ## Build output list
+  warmup <- mcmc.out[[1]]$warmup
+  mle <- .read_mle_fit(model=model, path=path)
+  if(is.null(mle)){
+    par.names <- dimnames(mcmc.out[[1]]$samples)[[2]]
+    par.names <- par.names[-length(par.names)]
+  } else {
+    par.names <- mle$par.names
+  }
+  iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
+  if(any(iters!=iter/thin)){
     N <- min(iters)
     warning(paste("Variable chain lengths, truncating to minimum=", N))
   } else {
