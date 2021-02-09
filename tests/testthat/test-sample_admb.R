@@ -38,6 +38,7 @@ test_that("simple example works", {
 
 test_that("parallel works",{
   skip_on_cran()
+  message("Starting parallel tests")
   inits.fn <- function() list(c(0,0))
   fit <- sample_nuts('simple', path='../simple', chains=3,
                      seeds=1:3, init=inits.fn, iter=1000,

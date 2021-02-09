@@ -3,7 +3,7 @@
 oldwd <- getwd()
 setwd('../simple')
 system("admb simple")
-system('simple')
+system('./simple')
 setwd(oldwd)
 ## Clean up files to pass checks locally
 if(requireNamespace('withr')){
