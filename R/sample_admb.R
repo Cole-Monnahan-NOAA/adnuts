@@ -424,6 +424,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                  cmd=cmd, init=init, covar.est=covar.est, mle=mle,
                  monitor=mon)
   result <- adfit(result)
+  print(result)
   return(invisible(result))
 }
 
