@@ -1,7 +1,19 @@
 ------------------------------------------------------------------------
 adnuts 1.1.0.9000
 ------------------------------------------------------------------------
+
+* Add slot for par_names to adfit objects
+
+* Add method `as.data.frame` for class `adfit`
+
+* Improved and expanded testing via continuous integration
+
+* Print the ADMB command to console when it fails to run properly to help user diagnose issues
+
+* Improve console output for RStudio users. It will now print at conclusion of parallel runs.
+
 * Fix bugs in model names for MacOS (use ./model insted of model internally)
+
 * Fix small bug with mceval=TRUE for newest verison of stock synthesis
 
 * Fix `sample_tmb` to work again for short-term use
