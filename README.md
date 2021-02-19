@@ -27,12 +27,13 @@ assessments. ICES Journal of Marine Science. http://dx.doi.org/10.1093/icesjms/f
 
 
 ## Usage
-The 'sample_admb' function draws posterior samples from an ADMB model using
-an MCMC algorithm (NUTS by default). The returned fitted object contains
-samples and other information. The function 'extract_samples' can be used
-to get posterior samples (post warmup and thinning) into a data frame for
-inference, while 'launch_shinyadmb' can be used for interactive diagnostics
-based on 'ShinyStan'.
+The 'sample_rwm' and 'sample_nuts' functions draw posterior samples
+from an ADMB model using an MCMC algorithm (random walk Metropolis or
+no-U-turn sampler). The returned fitted object contains samples and
+other information. The function 'extract_samples' can be used to get
+posterior samples (post warmup and thinning) into a data frame for
+inference, while 'launch_shinyadmb' can be used for interactive
+diagnostics based on 'ShinyStan'.
 
 A brief [demonstration file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo.R) is
 provided to help get you started, and there is also a user guide:
@@ -44,10 +45,15 @@ To use the ADMB functionality you need to build your model with version
 12.0 (released December 2017) or later, otherwise this functionality is not
 available. See [the ADMB installation
 instructions](http://www.admb-project.org/docs/install/) for more
-information.
+information. ADMB 12.2 is highly recommended for it provides better
+console output, and fixes bugs and adds improved capabilities as
+compared to 12.0.
 
 The adnuts R package version 1.0.1 can be installed from CRAN:
-`install.packages('adnuts')`.
+`install.packages('adnuts')`. I recommend version 1.1.1 (released
+2021-02-19) which can be installed with
+`devtools::install_github('Cole-Monnahan-NOAA/adnuts')`
+
 
 The development version of 'adnuts' can be installed with
 `devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='dev')`
