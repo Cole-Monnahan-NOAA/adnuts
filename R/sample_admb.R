@@ -393,7 +393,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   ## done posthoc by recombining chains AFTER thinning and warmup and
   ## discarded into a single chain, written to file, then call -mceval.
   ## Merge all chains together and run mceval
-  message(paste("... Merging post-warmup chains into main folder:", path))
+  message(paste("Merging post-warmup chains into main folder:", path))
   samples2 <- do.call(rbind, lapply(1:chains, function(i)
     samples[-(1:warmup), i, -dim(samples)[3]]))
   .write_psv(fn=model, samples=samples2, model.path=path)
@@ -403,7 +403,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   setwd(path)
   write.table(unbounded, file='unbounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
   if(mceval){
-    message("... Running -mceval on merged chains")
+    message("Running -mceval on merged chains...")
     system(paste(.update_model(model), "-mceval"), ignore.stdout=FALSE)
   }
   covar.est <- cov(unbounded)
@@ -413,10 +413,12 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     message('Calculating ESS and Rhat (skip_monitor=TRUE will skip)...')
     mon <- rstan::monitor(samples, warmup, print=FALSE)
   } else {
-    message('Skipping ESS and Rhat statistics..')
+    message('Skipping ESS and Rhat statistics...')
     mon <- NULL
   }
+  par_names <- dimnames(samples)[[3]]
   result <- list(samples=samples, sampler_params=sampler_params,
+                 par_names=par_names,
                  samples_unbounded=samples.unbounded,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
@@ -424,7 +426,6 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                  cmd=cmd, init=init, covar.est=covar.est, mle=mle,
                  monitor=mon)
   result <- adfit(result)
-  print(result)
-  return(invisible(result))
+  return(result)
 }
 
