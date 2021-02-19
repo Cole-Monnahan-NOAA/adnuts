@@ -7,7 +7,7 @@ adfit <- function(x){
   stopifnot(is.list(x))
   if(is.null(x$samples)) stop("Samples missing from fit")
   if(is.null(x$algorithm)) stop("Algorithm missing from fit")
-  class(x) <- 'adfit'
+  class(x) <- c('adfit', 'list')
   x
 }
 
@@ -16,6 +16,12 @@ adfit <- function(x){
 #' @export
 is.adfit <- function(x) inherits(x, "adfit")
 
+#' Convert object of class adfit to data.frame
+#' @param x Fitted object from \code{\link{sample_rwm}}
+#' @param ... Ignored
+as.data.frame.adfit <-
+  function(x, row.names=NULL, optional=FALSE, ...)
+    extract_samples(x)
 
 #' Plot object of class adfit
 #' @param x Fitted object from \code{\link{sample_admb}}
