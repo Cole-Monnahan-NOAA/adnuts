@@ -35,6 +35,15 @@ test_that("simple example works", {
                       file='_expect_nuts_mle')
 })
 
+test_that("mceval works",{
+  skip_on_cran()
+  inits.fn <- function() list(c(0,0))
+  fit <- sample_nuts('simple', path='../simple', chains=1,
+                     seeds=1, init=inits.fn,
+                     control=list(metric='mle', refresh=-1),
+                     skip_monitor = TRUE,
+                     mceval=TRUE)
+})
 
 test_that("parallel works",{
   skip_on_cran()
