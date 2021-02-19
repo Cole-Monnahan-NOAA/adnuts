@@ -86,7 +86,12 @@ execution or cores>1 for parallel (default is to parallel
 with cores equal to the available-1)}
 
 \item{cores}{The number of cores to use for parallel
-execution.}
+execution. Default is number available in the system minus
+1. If \code{cores=1}, serial execution occurs (even if
+\code{chains>1}), otherwise parallel execution via package
+snowfall is used. For slow analyses it is recommended to set
+\code{chains}<=\code{cores} so each core needs to run only a
+single chain.}
 
 \item{control}{A list to control the sampler. See details for
 further use.}
@@ -117,19 +122,33 @@ command line, allowing finer control}
 }
 \description{
 Draw Bayesian posterior samples from an AD Model Builder
-(ADMB) model using an MCMC algorithm. `sample_nuts` generates
-posterior samples from which inference can be made. Adaptation
-schemes are used with NUTS so specifying tuning parameters is
-not necessary, and parallel execution reduces overall run
-time.
+(ADMB) model using an MCMC algorithm. `sample_nuts` and
+`sample_rwm` generates posterior samples from which inference
+can be made.
 }
 \details{
-The RWM algorithm provides no new functionality not available
-from previous versions of ADMB. However, `sample_rwm` has an
-improved console output, is setup for parallel execution, and
-a smooth workflow for dianostics. Note that the algorithms'
-code lies in the ADMB source code, and 'adnuts' provides a
-wrapper for it. See vignette for more information.
+Adaptation schemes are used with NUTS so specifying tuning
+parameters is not necessary. See vignette for options for
+adaptation of step size and mass matrix.  The RWM algorithm
+provides no new functionality not available from previous
+versions of ADMB. However, `sample_rwm` has an improved
+console output, is setup for parallel execution, and a smooth
+workflow for dianostics.
+
+Parallel chains will be run if argument `cores` is greater
+than one. This entails copying the folder, and starting a new
+R session to run that chain, which are then merged back
+together. Note that console output is inconsistent when using
+parallel, and may not show. On Windows the R terminal shows
+output live, but the GUI does not. RStudio is a special case
+and will not show live, and instead is captured and returned
+at the end. It is strongly recommended to start with serial
+execution as debugging parallel chains is very difficult.
+
+Note that the algorithm code is in the ADMB source code, and
+'adnuts' provides a wrapper for it. The command line arguments
+are returned and can be examined by the user. See vignette for
+more information.
 
 This function implements algorithm 6 of Hoffman and Gelman (2014),
 and loosely follows package \code{rstan}. The step size can be
