@@ -1,7 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^\.travis\.yml$
 ^cran-comments\.md$
-^tests/simple/simple.obj
 ^inst/examples/simple/simple.exe
 ^inst/examples/simple/simple.obj
+^\.github/

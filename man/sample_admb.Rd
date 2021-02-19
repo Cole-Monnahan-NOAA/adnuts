@@ -27,7 +27,9 @@ sample_admb(
 )
 }
 \arguments{
-\item{model}{Name of model (i.e., model.tpl)}
+\item{model}{Name of model (i.e., model.tpl). For non-Windows
+systems this will automatically be converted to './model'
+internally.}
 
 \item{path}{Path to model executable. Defaults to working
 directory. Often best to have model files in a separate
@@ -61,7 +63,12 @@ execution or cores>1 for parallel (default is to parallel
 with cores equal to the available-1)}
 
 \item{cores}{The number of cores to use for parallel
-execution.}
+execution. Default is number available in the system minus
+1. If \code{cores=1}, serial execution occurs (even if
+\code{chains>1}), otherwise parallel execution via package
+snowfall is used. For slow analyses it is recommended to set
+\code{chains}<=\code{cores} so each core needs to run only a
+single chain.}
 
 \item{control}{A list to control the sampler. See details for
 further use.}

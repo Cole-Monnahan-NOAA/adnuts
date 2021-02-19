@@ -80,4 +80,5 @@
 #' @importFrom ellipse ellipse
 #' @importFrom rstan monitor
 #' @importFrom ggplot2 ggplot aes geom_point theme_bw facet_wrap
+## #' @importFrom withr defer
 NULL

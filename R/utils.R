@@ -7,7 +7,7 @@ adfit <- function(x){
   stopifnot(is.list(x))
   if(is.null(x$samples)) stop("Samples missing from fit")
   if(is.null(x$algorithm)) stop("Algorithm missing from fit")
-  class(x) <- 'adfit'
+  class(x) <- c('adfit', 'list')
   x
 }
 
@@ -16,6 +16,24 @@ adfit <- function(x){
 #' @export
 is.adfit <- function(x) inherits(x, "adfit")
 
+
+#' Convert object of class adfit to data.frame. Calls
+#' \code{\link{extract_samples}}
+#'
+#' @param x Fitted object from \code{\link{sample_rwm}}
+#' @param row.names Ignored
+#' @param optional Ignored
+#' @param ... Ignored
+#' @return A data frame with parameters as columns and samples as
+#'   rows.
+#' @details This calls the default settings of
+#'   \code{\link{extract_samples}}, no warmup samples and no
+#'   column for the log-posterior (lp__). Use this function
+#'   directly for finer control.
+#' @export
+as.data.frame.adfit <-
+  function(x, row.names=NULL, optional=FALSE, ...)
+    extract_samples(x)
 
 #' Plot object of class adfit
 #' @param x Fitted object from \code{\link{sample_admb}}
@@ -73,6 +91,22 @@ print.adfit <- function(x, ...){
 }
 
 
+#' Check if the session is interactive or Rstudio which has
+#' implications for parallel output
+#'
+#' @details When using RStudio and RGui, the parallel output does
+#'   not show on the console. As a workaround it is captured in
+#'   each cluster into a file and then read in and printed.
+#' @return Boolean whether output should be printed to console
+#'   progressively, or saved and printed at the end.
+#'
+.check_console_printing <- function(){
+  ## If not using parallel always print to console
+  if (identical(Sys.getenv("RSTUDIO"), "1"))
+    return(FALSE)
+  else
+    return(TRUE)
+}
 
 #' Plot marginal distributions for a fitted model
 #'
@@ -226,6 +260,37 @@ plot_sampler_params <- function(fit, plot=TRUE){
   return(invisible(g))
 }
 
+#' Check that the file can be found
+#'
+#' @param model Model name without file extension
+#' @param path Path to model folder, defaults to working
+#'
+.check_model_path <- function(model, path){
+  stopifnot(is.character(path))
+  stopifnot(is.character(model))
+  if(!dir.exists(path))
+    stop('Folder ', path,
+         ' does not exist. Check argument \'path\' and working directory')
+  model2 <- .update_model(model)
+  ff <- file.path(path, model2)
+  if(!file.exists(ff))
+    stop('File ', model2, ' not found in specified folder. Check \'model\' argument')
+}
+
+#' Convert model name depending on system
+#'
+#' @param model Model name without file extension
+#' @return Updated model name to use with system call
+#'
+.update_model <- function(model){
+  stopifnot(is.character(model))
+  if (.Platform$OS.type=="windows"){
+    model2 <- paste0(model,".exe")
+  } else {
+    model2 <- paste0("./",model)
+  }
+  model2
+}
 
 #' Check that the  model is compiled with the right version
 #' of ADMB which is 12.0 or later
@@ -246,17 +311,15 @@ plot_sampler_params <- function(fit, plot=TRUE){
 #'   update ADMB and recompile the model.
 .check_ADMB_version <- function(model, path=getwd(),
                                 min.version=12, warn=TRUE){
-  if(!is.null(path)){
-    if(dir.exists(path)){
-    wd <- getwd()
-    on.exit(setwd(wd))
-    setwd(path)
-    } else {
-      stop("Invalid path, folder does not exist")
-    }
-  }
+  ## Check for file existing
+  .check_model_path(model=model, path=path)
+  wd <- getwd()
+  on.exit(setwd(wd))
+  setwd(path)
+
   ## Run the model to get the version info
-  test <- try(system(paste(model, '-version'), intern=TRUE), silent=TRUE)
+  model2 <- .update_model(model)
+  test <- try(system(paste(model2, '-version'), intern=TRUE), silent=TRUE)
   if (inherits(test,"try-error"))
     stop(paste0("Could not detect version of ", model, ". Check executable and path"))
   ## v <- as.numeric(gsub('ADMB-', '', strsplit(test[3], ' ')[[1]][1]))
@@ -405,7 +468,7 @@ check_identifiable <- function(model, path=getwd()){
 
 ## Update the control list.
 ##
-## @param control A list passed from \code{sample_tmb}.
+## @param control A list passed from a sampling function
 ## @return A list with default control elements updated by those supplied
 ##   in \code{control}
 .update_control <- function(control){
