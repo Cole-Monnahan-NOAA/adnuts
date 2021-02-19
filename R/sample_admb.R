@@ -324,7 +324,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     }
     ## Parallel execution
   } else {
-    console <- adnuts:::.check_console_printing()
+    console <- .check_console_printing()
     if(console)
       message("\n\nStarting parallel chains. Output to console is inconsistent between consoles.\n",
               "I recommend the R terminal which updates live, while the GUI does not\n\n")

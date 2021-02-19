@@ -205,7 +205,7 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
 
   ## Run it and get results
   model2 <- .update_model(model)
-  console <- adnuts:::.check_console_printing()
+  console <- .check_console_printing()
   progress <- NULL
   if(console){
     ## Normal case
