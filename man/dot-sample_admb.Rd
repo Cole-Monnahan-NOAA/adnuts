@@ -26,9 +26,13 @@
 )
 }
 \arguments{
-\item{model}{Name of model (i.e., model.tpl). For non-Windows
-systems this will automatically be converted to './model'
-internally.}
+\item{model}{Name of model (i.e., 'model' for model.tpl). For
+non-Windows systems this will automatically be converted to
+'./model' internally. For Windows, long file names are
+sometimes shortened from e.g., 'long_model_filename' to
+'LONG_~1'. This should work, but will throw warnings. Please
+shorten the model name. See
+https://en.wikipedia.org/wiki/8.3_filename.}
 
 \item{path}{Path to model executable. Defaults to working
 directory. Often best to have model files in a separate

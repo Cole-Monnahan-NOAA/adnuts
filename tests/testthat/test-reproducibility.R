@@ -4,6 +4,7 @@ test_that("reproducibility of algorithms between versions", {
   ## platforms, so useful only for testing that new releases of
   ## ADMB don't break something unexpectedly
   skip_on_ci()
+  skip_if(skip_reproducibility)
 
   ## Check reproducibility given same init and seeds
   inits.fn <- function() list(c(0,0))

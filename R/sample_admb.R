@@ -128,9 +128,13 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'
 #' @author Cole Monnahan
 #' @name wrappers
-#' @param model Name of model (i.e., model.tpl). For non-Windows
-#'   systems this will automatically be converted to './model'
-#'   internally.
+#' @param model Name of model (i.e., 'model' for model.tpl). For
+#'   non-Windows systems this will automatically be converted to
+#'   './model' internally. For Windows, long file names are
+#'   sometimes shortened from e.g., 'long_model_filename' to
+#'   'LONG_~1'. This should work, but will throw warnings. Please
+#'   shorten the model name. See
+#'   https://en.wikipedia.org/wiki/8.3_filename.
 #' @param path Path to model executable. Defaults to working
 #'   directory. Often best to have model files in a separate
 #'   subdirectory, particularly for parallel.
@@ -300,8 +304,19 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     stop("Length of init does not equal number of chains.")
   }
   ## Delete any psv files in case something goes wrong we dont use old
-  ## values by accident
-  trash <- suppressWarnings(file.remove(list.files(path)[grep('.psv', x=list.files())]))
+  ## values by accident. Also windows short names might cause
+  ## there to be two
+  ff <- list.files(path)[grep('.psv', x=list.files(path))]
+  if(length(ff)>1){
+      if(.Platform$OS.type == "windows" & length(grep("~", ff))>0){
+        warning("It appears a shortened Windows filename exists,",
+                "which occurs with long\nmodel names. Try shortening it.",
+                " See help for argument 'model'")
+      } else {
+        warning("Found more than one .psv file. Deleting: ", paste(ff, collapse=' '))
+      }
+  }
+  trash <- suppressWarnings(file.remove(file.path(path, ff)))
   trash <- suppressWarnings(file.remove(file.path(path, 'adaptation.csv'),
                                         file.path(path, 'unbounded.csv')))
   ## Run in serial
