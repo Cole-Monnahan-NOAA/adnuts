@@ -35,12 +35,34 @@ test_that("simple example works", {
                       file='_expect_nuts_mle')
 })
 
+test_that("mceval works",{
+  skip_on_cran()
+  inits.fn <- function() list(c(0,0))
+  fit <- sample_nuts('simple', path='../simple', chains=1,
+                     seeds=1, init=inits.fn,
+                     control=list(metric='mle', refresh=-1),
+                     skip_monitor = TRUE,
+                     mceval=TRUE)
+})
 
+test_that("parallel works",{
+  skip_on_cran()
+  message("Starting parallel tests")
+  inits.fn <- function() list(c(0,0))
+  fit <- sample_nuts('simple', path='../simple', chains=3,
+                     seeds=1:3, init=inits.fn, iter=1000,
+                     control=list(refresh=-1),
+                     skip_monitor = TRUE)
+  ## expect_equal(extract_samples(fit)[1500,2], 3.483071)
+  fit <- sample_rwm('simple', path='../simple', chains=3,
+                     seeds=1:3, init=inits.fn, iter=1000,
+                     control=list(refresh=-1),
+                     skip_monitor = TRUE)
+})
 
 
 test_that("warnings and errors in sample_nuts and sample_rwm",{
   skip_on_cran()
-  skip_on_travis()
   inits <- function() list(1,1)
   test <- expect_warning(sample_nuts('simple', path='../simple',
                                      iter=1000, init=inits,
@@ -141,4 +163,52 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
                                    iter=1000, init=inits,
                                    chains=3, seeds=1),
                        regexp='Length of seeds must match chains')
+})
+
+test_that("verbose option works", {
+  inits.fn <- function() list(c(0,0))
+  message("Should be no console output between here....")
+  message("Starting verbose NUTS in parallel..")
+  fit <- sample_nuts('simple', path='../simple', chains=3,
+                     seeds=1:3, init=inits.fn, iter=800,
+                     skip_monitor = TRUE, verbose=FALSE)
+  message("Starting verbose NUTS in serial..")
+  fit <- sample_nuts('simple', path='../simple', chains=1,
+                     seeds=1, init=inits.fn, iter=800,
+                     skip_monitor = TRUE, verbose=FALSE)
+  message("Starting verbose RWM in parallel..")
+  fit <- sample_rwm('simple', path='../simple', chains=3,
+                     seeds=1:3, init=inits.fn, iter=800,
+                     skip_monitor = TRUE, verbose=FALSE)
+  message("Starting verbose RWM in serial..")
+  fit <- sample_rwm('simple', path='../simple', chains=1,
+                     seeds=1, init=inits.fn, iter=800,
+                    skip_monitor = TRUE, verbose=FALSE)
+  message("... and here")
+})
+
+
+test_that("long file names work ok on Windows",{
+  skip_on_cran()
+  inits.fn <- function() list(1,1)
+  p <- '../simple_long_filename'
+  m <- 'simple_long_filename'
+  if(.Platform$OS.type=='windows'){
+    ## Should give warning
+    test <- expect_warning(sample_nuts(m, path=p, chains=3, cores=1,
+                                       seeds=1:3, init=inits.fn, iter=1000,
+                                       control=list(refresh=-1),
+                                       skip_monitor = TRUE),
+                           regexp='It appears a shortened')
+    test <- expect_warning(sample_nuts(m, path=p, chains=3, cores=3,
+                                       seeds=1:3, init=inits.fn, iter=1000,
+                                       control=list(refresh=-1),
+                                       skip_monitor = TRUE),
+                           regexp='It appears a shortened')
+  } else {
+    test <- sample_nuts(m, path=p, chains=3, cores=1,
+                        seeds=1:3, init=inits.fn, iter=1000,
+                        control=list(refresh=-1),
+                        skip_monitor = TRUE)
+  }
 })

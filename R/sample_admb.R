@@ -5,7 +5,7 @@
 sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
-                        skip_optimization=TRUE,
+                        skip_optimization=TRUE, verbose=TRUE,
                         skip_monitor=FALSE, skip_unbounded=TRUE,
                         admb_args=NULL, extra.args=NULL){
   ## Argument checking and processing
@@ -26,7 +26,7 @@ sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                skip_optimization=skip_optimization,
                skip_monitor=skip_monitor,
                skip_unbounded=skip_unbounded,
-               admb_args=admb_args)
+               admb_args=admb_args, verbose=verbose)
 }
 
 #' @rdname wrappers
@@ -34,7 +34,7 @@ sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
                         parallel=FALSE, cores=NULL, control=NULL,
-                        skip_optimization=TRUE,
+                        skip_optimization=TRUE, verbose=TRUE,
                         skip_monitor=FALSE, skip_unbounded=TRUE,
                         admb_args=NULL, extra.args=NULL){
   ## Argument checking and processing
@@ -52,7 +52,7 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
                thin=thin, mceval=mceval, duration=duration,
                cores=cores, control=control, algorithm="RWM",
                skip_optimization=skip_optimization,
-               skip_monitor=skip_monitor,
+               skip_monitor=skip_monitor, verbose=verbose,
                skip_unbounded=skip_unbounded,
                admb_args=admb_args)
 }
@@ -63,18 +63,32 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #' sampler (NUTS) or random walk Metropolis (RWM) algorithms.
 #'
 #' Draw Bayesian posterior samples from an AD Model Builder
-#' (ADMB) model using an MCMC algorithm. `sample_nuts` generates
-#' posterior samples from which inference can be made. Adaptation
-#' schemes are used with NUTS so specifying tuning parameters is
-#' not necessary, and parallel execution reduces overall run
-#' time.
+#' (ADMB) model using an MCMC algorithm. `sample_nuts` and
+#' `sample_rwm` generates posterior samples from which inference
+#' can be made.
 #'
-#' The RWM algorithm provides no new functionality not available
-#' from previous versions of ADMB. However, `sample_rwm` has an
-#' improved console output, is setup for parallel execution, and
-#' a smooth workflow for dianostics. Note that the algorithms'
-#' code lies in the ADMB source code, and 'adnuts' provides a
-#' wrapper for it. See vignette for more information.
+#' Adaptation schemes are used with NUTS so specifying tuning
+#' parameters is not necessary. See vignette for options for
+#' adaptation of step size and mass matrix.  The RWM algorithm
+#' provides no new functionality not available from previous
+#' versions of ADMB. However, `sample_rwm` has an improved
+#' console output, is setup for parallel execution, and a smooth
+#' workflow for dianostics.
+#'
+#' Parallel chains will be run if argument `cores` is greater
+#' than one. This entails copying the folder, and starting a new
+#' R session to run that chain, which are then merged back
+#' together. Note that console output is inconsistent when using
+#' parallel, and may not show. On Windows the R terminal shows
+#' output live, but the GUI does not. RStudio is a special case
+#' and will not show live, and instead is captured and returned
+#' at the end. It is strongly recommended to start with serial
+#' execution as debugging parallel chains is very difficult.
+#'
+#' Note that the algorithm code is in the ADMB source code, and
+#' 'adnuts' provides a wrapper for it. The command line arguments
+#' are returned and can be examined by the user. See vignette for
+#' more information.
 #'
 #' @details This function implements algorithm 6 of Hoffman and Gelman (2014),
 #' and loosely follows package \code{rstan}. The step size can be
@@ -114,9 +128,13 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'
 #' @author Cole Monnahan
 #' @name wrappers
-#' @param model Name of model (i.e., model.tpl). For non-Windows
-#'   systems this will automatically be converted to './model'
-#'   internally.
+#' @param model Name of model (i.e., 'model' for model.tpl). For
+#'   non-Windows systems this will automatically be converted to
+#'   './model' internally. For Windows, long file names are
+#'   sometimes shortened from e.g., 'long_model_filename' to
+#'   'LONG_~1'. This should work, but will throw warnings. Please
+#'   shorten the model name. See
+#'   https://en.wikipedia.org/wiki/8.3_filename.
 #' @param path Path to model executable. Defaults to working
 #'   directory. Often best to have model files in a separate
 #'   subdirectory, particularly for parallel.
@@ -139,7 +157,12 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   execution or cores>1 for parallel (default is to parallel
 #'   with cores equal to the available-1)
 #' @param cores The number of cores to use for parallel
-#'   execution.
+#'   execution. Default is number available in the system minus
+#'   1. If \code{cores=1}, serial execution occurs (even if
+#'   \code{chains>1}), otherwise parallel execution via package
+#'   snowfall is used. For slow analyses it is recommended to set
+#'   \code{chains}<=\code{cores} so each core needs to run only a
+#'   single chain.
 #' @param control A list to control the sampler. See details for
 #'   further use.
 #' @param skip_optimization Whether to run the optimizer before
@@ -158,6 +181,9 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   version of the posterior samples in addition to the bounded
 #'   ones. It may be advisable to set to FALSE for very large
 #'   models to save space.
+#' @param verbose Flag whether to show console output (default)
+#'   or suppress it completely except for warnings and
+#'   errors. Works for serial or parallel execution.
 #' @param admb_args A character string which gets passed to the
 #'   command line, allowing finer control
 #' @param extra.args Deprecated, use a \code{admb_args} instead.
@@ -232,11 +258,11 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 #' @param algorithm The algorithm to use, one of "NUTS" or "RWM"
 #'
 .sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
-                        seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
-                        parallel=FALSE, cores=NULL, control=NULL,
-                        algorithm="NUTS", skip_optimization=TRUE,
-                        skip_monitor=FALSE, skip_unbounded=TRUE,
-                        admb_args=NULL){
+                         seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
+                         cores=NULL, control=NULL, verbose=TRUE,
+                         algorithm="NUTS", skip_optimization=TRUE,
+                         skip_monitor=FALSE, skip_unbounded=TRUE,
+                         admb_args=NULL){
   if(is.null(cores)) cores <- parallel::detectCores()-1
   cores.max  <- parallel::detectCores()
   if(cores > cores.max) {
@@ -249,7 +275,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   if(cores<1) stop(paste("Cores must be >=1, but is", cores))
   parallel <- ifelse(cores==1 | chains ==1, FALSE, TRUE)
   if(parallel & cores < chains)
-    message(paste("Recommend using chains < cores=", cores))
+    if(verbose) message(paste("Recommend using chains < cores=", cores))
   stopifnot(thin >=1); stopifnot(chains >= 1)
   if(is.null(seeds)) seeds <- sample.int(1e7, size=chains)
   if(length(seeds) != chains) stop("Length of seeds must match chains")
@@ -271,7 +297,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   if(algorithm=='NUTS')
     control <- .update_control(control)
   if(is.null(init)){
-    warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
+    if(verbose) warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
   }  else if(is.function(init)){
     init <- lapply(1:chains, function(x) init())
   } else if(!is.list(init)){
@@ -281,33 +307,55 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     stop("Length of init does not equal number of chains.")
   }
   ## Delete any psv files in case something goes wrong we dont use old
-  ## values by accident
-  trash <- suppressWarnings(file.remove(list.files(path)[grep('.psv', x=list.files())]))
+  ## values by accident. Also windows short names might cause
+  ## there to be two
+  ff <- list.files(path)[grep('.psv', x=list.files(path))]
+  if(length(ff)>1){
+      if(.Platform$OS.type == "windows" & length(grep("~", ff))>0){
+        warning("It appears a shortened Windows filename exists,",
+                "which occurs with long\nmodel names. Try shortening it.",
+                " See help for argument 'model'")
+      } else {
+        warning("Found more than one .psv file. Deleting: ", paste(ff, collapse=' '))
+      }
+  }
+  trash <- suppressWarnings(file.remove(file.path(path, ff)))
   trash <- suppressWarnings(file.remove(file.path(path, 'adaptation.csv'),
-                       file.path(path, 'unbounded.csv')))
+                                        file.path(path, 'unbounded.csv')))
   ## Run in serial
   if(!parallel){
     if(algorithm=="NUTS"){
       mcmc.out <- lapply(1:chains, function(i)
         sample_admb_nuts(path=path, model=model, warmup=warmup, duration=duration,
                          iter=iter, init=init[[i]], chain=i,
-                         seed=seeds[i], thin=thin,
+                         seed=seeds[i], thin=thin, verbose=verbose,
                          control=control, admb_args=admb_args,
-                         skip_optimization=skip_optimization))
+                         skip_optimization=skip_optimization,
+                         parallel=parallel))
     } else {
       mcmc.out <- lapply(1:chains, function(i)
         sample_admb_rwm(path=path, model=model, warmup=warmup, duration=duration,
                         iter=iter, init=init[[i]], chain=i,
                         seed=seeds[i], thin=thin,
-                        control=control,
+                        control=control, verbose=verbose,
                         skip_optimization=skip_optimization,
-                        admb_args=admb_args))
+                        admb_args=admb_args,
+                        parallel=parallel))
     }
     ## Parallel execution
   } else {
+    console <- .check_console_printing(parallel)
     snowfall::sfStop()
     snowfall::sfInit(parallel=TRUE, cpus=cores)
-    ## errors out with empty workspace
+    if(verbose){
+      if(console)
+        message("Parallel output to console is inconsistent between consoles.\n",
+                "For live updates try using Rterm. See help for info on console output")
+      else
+        message("RStudio detected so output will display at conclusion. \n",
+                "For live updates try using Rterm. See help for info on console output")
+    }
+     ## errors out with empty workspace
     if(length(ls(envir=globalenv()))>0)
       snowfall::sfExportAll()
     on.exit(snowfall::sfStop())
@@ -317,20 +365,26 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                            algorithm=algorithm,
                            iter=iter, init=init[[i]], warmup=warmup,
                            seed=seeds[i], thin=thin,
-                           control=control,
+                           control=control, verbose=verbose,
                            skip_optimization=skip_optimization,
-                           admb_args=admb_args))
-  }
-    warmup <- mcmc.out[[1]]$warmup
-    mle <- .read_mle_fit(model=model, path=path)
-    if(is.null(mle)){
-      par.names <- dimnames(mcmc.out[[1]]$samples)[[2]]
-      par.names <- par.names[-length(par.names)]
-    } else {
-      par.names <- mle$par.names
+                           admb_args=admb_args,
+                           parallel=TRUE))
+    if(!console & !is.null(mcmc.out[[1]]$progress)){
+      trash <- lapply(mcmc.out, function(x) writeLines(x$progress))
     }
-    iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
-    if(any(iters!=iter/thin)){
+  }
+
+  ## Build output list
+  warmup <- mcmc.out[[1]]$warmup
+  mle <- .read_mle_fit(model=model, path=path)
+  if(is.null(mle)){
+    par.names <- dimnames(mcmc.out[[1]]$samples)[[2]]
+    par.names <- par.names[-length(par.names)]
+  } else {
+    par.names <- mle$par.names
+  }
+  iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
+  if(any(iters!=iter/thin)){
     N <- min(iters)
     warning(paste("Variable chain lengths, truncating to minimum=", N))
   } else {
@@ -362,7 +416,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   ## done posthoc by recombining chains AFTER thinning and warmup and
   ## discarded into a single chain, written to file, then call -mceval.
   ## Merge all chains together and run mceval
-  message(paste("... Merging post-warmup chains into main folder:", path))
+  if(verbose) message(paste("Merging post-warmup chains into main folder:", path))
   samples2 <- do.call(rbind, lapply(1:chains, function(i)
     samples[-(1:warmup), i, -dim(samples)[3]]))
   .write_psv(fn=model, samples=samples2, model.path=path)
@@ -372,20 +426,22 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   setwd(path)
   write.table(unbounded, file='unbounded.csv', sep=",", col.names=FALSE, row.names=FALSE)
   if(mceval){
-    message("... Running -mceval on merged chains")
+    if(verbose) message("Running -mceval on merged chains...")
     system(paste(.update_model(model), "-mceval"), ignore.stdout=FALSE)
   }
   covar.est <- cov(unbounded)
   if(!skip_monitor){
     if(!requireNamespace("rstan", quietly = TRUE))
       stop("Package 'rstan' is required to calculate diagnostics.\n Install it and try again, or set skip_monitor=FALSE.")
-    message('Calculating ESS and Rhat (skip_monitor=TRUE will skip)...')
+    if(verbose) message('Calculating ESS and Rhat (skip_monitor=TRUE will skip)...')
     mon <- rstan::monitor(samples, warmup, print=FALSE)
   } else {
-    message('Skipping ESS and Rhat statistics..')
+    if(verbose) message('Skipping ESS and Rhat statistics...')
     mon <- NULL
   }
+  par_names <- dimnames(samples)[[3]]
   result <- list(samples=samples, sampler_params=sampler_params,
+                 par_names=par_names,
                  samples_unbounded=samples.unbounded,
                  time.warmup=time.warmup, time.total=time.total,
                  algorithm=algorithm, warmup=warmup,
@@ -393,6 +449,6 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                  cmd=cmd, init=init, covar.est=covar.est, mle=mle,
                  monitor=mon)
   result <- adfit(result)
-  return(invisible(result))
+  return(result)
 }
 

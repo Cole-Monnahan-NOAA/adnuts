@@ -12,11 +12,12 @@
 ## #' @seealso \code{\link{sample_nuts}}
 sample_admb_nuts <- function(path, model, iter=2000,
                              init=NULL, chain=1,
-                             thin=1, warmup=NULL,
+                             thin=1, warmup=ceiling(iter/2),
                              seed=NULL, duration=NULL,
                              control=NULL,
                              skip_optimization=TRUE,
-                             verbose=TRUE, admb_args=admb_args){
+                             verbose=TRUE, admb_args=NULL,
+                             parallel){
 
   wd.old <- getwd(); on.exit(setwd(wd.old))
   setwd(path)
@@ -94,7 +95,26 @@ sample_admb_nuts <- function(path, model, iter=2000,
   if(!is.null(admb_args)) cmd <- paste(cmd, admb_args)
 
   ## Run it and get results
-  time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
+  model2 <- .update_model(model)
+  console <- .check_console_printing(parallel)
+  progress <- NULL
+  if(console){
+    ## Normal case
+    time <- system.time(system2(model2, cmd, stdout=ifelse(verbose, '', FALSE)))[3]
+  } else {
+    ## RStudio won't print output so capture it and print at
+    ## end. Better than nothing
+    fn <- 'mcmc_progress.txt'
+    if(file.exists(fn)) file.remove(fn)
+    time <- system.time(system2(model2, cmd, stdout=ifelse(verbose, fn, FALSE)))[3]
+    if(file.exists(fn)){
+      progress <- readLines('mcmc_progress.txt')
+      ## trash <- suppressWarnings(file.remove('mcmc_progress.txt'))
+    } else {
+      warning("Progress output file not found. Try troubleshooting in serial model")
+    }
+  }
+
   if(!file.exists('adaptation.csv') | !file.exists('unbounded.csv'))
     stop(paste0("NUTS failed to run. Command attempted was:\n", cmd))
   sampler_params <- as.matrix(read.csv("adaptation.csv"))
@@ -127,7 +147,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
               time.total=time.total, time.warmup=time.warmup,
               warmup=warmup, max_treedepth=max_td,
               model=model, par.names=par.names, cmd=cmd,
-              unbounded=unbounded))
+              unbounded=unbounded, progress=progress))
 }
 
 
@@ -140,7 +160,9 @@ sample_admb_nuts <- function(path, model, iter=2000,
 sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/2),
                             init=NULL,  chain=1, seed=NULL, control=NULL,
                             verbose=TRUE, duration=NULL,
-                            admb_args=NULL, skip_optimization=TRUE){
+                            admb_args=NULL,
+                            skip_optimization=TRUE,
+                            parallel=FALSE){
 
   wd.old <- getwd(); on.exit(setwd(wd.old))
   setwd(path)
@@ -162,11 +184,10 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
 
 
   ## Build the command to run the model
-  model2 <- .update_model(model)
   if(skip_optimization){
-    cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
+    cmd <- paste("-nox -nohess -maxfn 0 -phase 1000 -rwm -mcmc ",iter)
   } else {
-    cmd <- paste(model2,"-rwm -mcmc ",iter)
+    cmd <- paste("-rwm -mcmc ",iter)
   }
 
   cmd <- paste(cmd, "-mcscale", warmup, "-chain", chain)
@@ -203,8 +224,28 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
   if(!is.null(refresh)) cmd <- paste(cmd, "-refresh", refresh)
   if(!is.null(admb_args)) cmd <- paste(cmd, admb_args)
 
+
   ## Run it and get results
-  time <- system.time(system(cmd, ignore.stdout=!verbose))[3]
+  model2 <- .update_model(model)
+  console <- .check_console_printing(parallel)
+  progress <- NULL
+  if(console){
+    ## Normal case
+    time <- system.time(system2(model2, cmd, stdout=ifelse(verbose, '', FALSE)))[3]
+  } else {
+    ## RStudio won't print output so capture it and print at
+    ## end. Better than nothing
+    fn <- 'mcmc_progress.txt'
+    if(file.exists(fn)) file.remove(fn)
+    time <- system.time(system2(model2, cmd, stdout=ifelse(verbose, fn, FALSE)))[3]
+    if(file.exists(fn)){
+      progress <- readLines('mcmc_progress.txt')
+      ## trash <- suppressWarnings(file.remove('mcmc_progress.txt'))
+    } else {
+      warning("Progress output file not found. Try troubleshooting in serial model")
+    }
+  }
+
   if(!file.exists('unbounded.csv'))
     stop(paste0("RWM failed to run. Command attempted was:\n", cmd))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))
@@ -220,7 +261,8 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
   warmup <- warmup/thin
   return(list(samples=pars, sampler_params=NULL, time.total=time.total,
               time.warmup=time.warmup, warmup=warmup,  model=model,
-              par.names=par.names, cmd=cmd, unbounded=unbounded))
+              par.names=par.names, cmd=cmd, unbounded=unbounded,
+              progress=progress))
 }
 
 
