@@ -454,20 +454,6 @@ for hierarchical models where $\Sigma$ is not helpful or doesn't exist,
 option 2 is likely the best. For fisheries stock assessment models which
 already rely on $\Sigma$ options 4-6 are worth exploring. 
 
-## Algorithm validity
-Software bugs in the MCMC algorithms can manifest as biased sampling from
-the target distribution. This is a serious issue and one that can be hard
-to detect. One way to check this is to run the algorithms on known
-distributions and check estimated properties against the analytical. I
-checked this with normal, t with df=4 and df=10, gamma, inverse gamma,
-truncated normal, and multivariate normal. I ran long chains (1 million
-samples) with thinning rate of 10 for NUTS, and compared this to an
-equivalent set of points from IID samples. I repeated this for 20 chains
-for the RWM, NUTS with MLE metric, and adaptive NUTS. There were no signs
-of any issues so I consider this strong evidence that the algorithms are
-coded correctly. This **does not** mean that finite samples from target
-distributions are unbiased.
-
 ## Sampling for TMB models
 
 Previous versions of `adnuts` included explicit
@@ -616,20 +602,25 @@ between regions in the posterior more easily.
 
 ## Algorithm validity
 
-It is important to validate MCMC algorithms because bugs in the code can
-cause biased inference. So to test the algorithms in ADMB I ran long chains
-on known, analytical distributions and compared sample quantiles to
-theoretical ones. As a frame of reference I added pure Monte Carlo (mc) draws
-which are IID. Shown are, in order of columns, Z~N(0,1), t4~t(df=4),
-t10~t(df=10), gamma, inverse gamma, truncated normal, a multivariate
-(bivariate) normal for 4 quantiles (rows), for 3 ADMB algorithms and Monte
-Carlo (mc) (colors). 20 independent chains were run (points).
-
-All cases are mean 0, and MC is indistinguishable from MCMC. This provides
-strong evidence that the algorithms are statistically valid and thus
-samples drawn using them are unbiased.
+Software bugs in the MCMC algorithms can manifest as biased sampling from
+the target distribution. This is a serious issue and one that can be hard
+to detect. One way to check this is to run the algorithms on known
+distributions and check estimated properties against the analytical. I
+checked this with normal, t with df=4 and df=10, gamma, inverse gamma,
+truncated normal, and multivariate normal. I ran long chains (1 million
+samples) with thinning rate of 10 for NUTS, and compared this to an
+equivalent set of points from RWM and IID samples from Monte Carlo samples
+(e.g., `rnorm`). Long chains and thining ensured no residual
+autocorrelation. I repeated this for 20 chains for the RWM, NUTS with MLE
+metric, adaptive NUTS, and Monte Carlo (mc). Results are plotted as
+relative error of different probalities (via `pnorm` etc.).
 
 ![Validity of ADMB MCMC algorithms](validity_tests.png){width=100%}
+
+All cases are mean 0, and MC is indistinguishable from MCMC. This provides
+strong evidence that the algorithms are coded correctly. This **does not**
+mean that finite samples from target distributions are unbiased.
+
 
 ## References
 

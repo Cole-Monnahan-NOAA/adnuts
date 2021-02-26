@@ -35,9 +35,10 @@ posterior samples (post warmup and thinning) into a data frame for
 inference, while 'launch_shinyadmb' can be used for interactive
 diagnostics based on 'ShinyStan'.
 
-A brief [demonstration file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo.R) is
-provided to help get you started, and there is also a user guide:
-`vignette('adnuts')` for more detailed information.
+A brief [demonstration
+file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo.R)
+is the best place to help get you started, and there is also a
+user guide: `vignette('adnuts')` for more detailed information.
 
 ## Installation
 
@@ -47,13 +48,31 @@ available. See [the ADMB installation
 instructions](http://www.admb-project.org/docs/install/) for more
 information. ADMB 12.2 is highly recommended for it provides better
 console output, and fixes bugs and adds improved capabilities as
-compared to 12.0.
+compared to 12.0. You can check the ADMB version of a compiled
+model from the command line with a command `model.exe -version`
+which prints the version among other things.
 
 The adnuts R package version 1.0.1 can be installed from CRAN:
-`install.packages('adnuts')`. I recommend version 1.1.1 (released
-2021-02-19) which can be installed with
-`devtools::install_github('Cole-Monnahan-NOAA/adnuts')`
+`install.packages('adnuts')`. However, I recommend version 1.1.1
+(released 2021-02-19) which can be installed with
+`devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='1.1.1')`
 
 
 The development version of 'adnuts' can be installed with
 `devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='dev')`
+
+## Known issues
+Windows users may experience issues if their model name is too
+long. In some cases the OS will rename the output files using a
+"short" version. You'll see files like "MODEL~1.par". The package
+tries to handle this but it is **highly recommended** to simply
+shorten your filename. So instead of 'model_filename_2021.tpl'
+use e.g. 'model_21'.
+
+Analyses are reproducible by setting the same initial values and
+a seed in `sample_rwm` or `sample_nuts` (passed to ADMB as
+'-mcseed'). However, they may not be entirely consistent across
+OS platforms. The chains will start the same but may eventually
+diverge. This is likely due to miniscule differences in the
+gradient and log-posterior calculations between systems and
+compilers.
