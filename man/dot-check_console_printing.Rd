@@ -5,11 +5,15 @@
 \title{Check if the session is interactive or Rstudio which has
 implications for parallel output}
 \usage{
-.check_console_printing()
+.check_console_printing(parallel)
+}
+\arguments{
+\item{parallel}{Boolean whether chain is executed in parallel
+mode or not.}
 }
 \value{
 Boolean whether output should be printed to console
-  progressively, or saved and printed at the end.
+  progressively, or saved to file and printed at the end.
 }
 \description{
 Check if the session is interactive or Rstudio which has

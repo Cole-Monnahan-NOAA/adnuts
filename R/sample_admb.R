@@ -256,7 +256,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
 #'
 .sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warmup=NULL,
                          seeds=NULL, thin=1, mceval=FALSE, duration=NULL,
-                         parallel=FALSE, cores=NULL, control=NULL,
+                         cores=NULL, control=NULL,
                          algorithm="NUTS", skip_optimization=TRUE,
                          skip_monitor=FALSE, skip_unbounded=TRUE,
                          admb_args=NULL){
@@ -327,7 +327,8 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                          iter=iter, init=init[[i]], chain=i,
                          seed=seeds[i], thin=thin,
                          control=control, admb_args=admb_args,
-                         skip_optimization=skip_optimization))
+                         skip_optimization=skip_optimization,
+                         parallel=parallel))
     } else {
       mcmc.out <- lapply(1:chains, function(i)
         sample_admb_rwm(path=path, model=model, warmup=warmup, duration=duration,
@@ -335,19 +336,20 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                         seed=seeds[i], thin=thin,
                         control=control,
                         skip_optimization=skip_optimization,
-                        admb_args=admb_args))
+                        admb_args=admb_args,
+                        parallel=parallel))
     }
     ## Parallel execution
   } else {
-    console <- .check_console_printing()
-    if(console)
-      message("\n\nStarting parallel chains. Output to console is inconsistent between consoles.\n",
-              "I recommend the R terminal which updates live, while the GUI does not\n\n")
-    else
-      message("\n\nStarting parallel chains. RStudio detected so output will display at conclusion. \n",
-              "For live updates try using Rterm. See help file for more info on console output\n\n")
+    console <- .check_console_printing(parallel)
     snowfall::sfStop()
     snowfall::sfInit(parallel=TRUE, cpus=cores)
+    if(console)
+      message("Parallel output to console is inconsistent between consoles.\n",
+              "For live updates try using Rterm. See help for info on console output")
+    else
+      message("RStudio detected so output will display at conclusion. \n",
+              "For live updates try using Rterm. See help for info on console output")
      ## errors out with empty workspace
     if(length(ls(envir=globalenv()))>0)
       snowfall::sfExportAll()
@@ -360,8 +362,9 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
                            seed=seeds[i], thin=thin,
                            control=control,
                            skip_optimization=skip_optimization,
-                           admb_args=admb_args))
-    if(!is.null(mcmc.out[[1]]$progress)){
+                           admb_args=admb_args,
+                           parallel=TRUE))
+    if(!console & !is.null(mcmc.out[[1]]$progress)){
       trash <- lapply(mcmc.out, function(x) writeLines(x$progress))
     }
   }

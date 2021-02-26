@@ -15,7 +15,6 @@
   thin = 1,
   mceval = FALSE,
   duration = NULL,
-  parallel = FALSE,
   cores = NULL,
   control = NULL,
   algorithm = "NUTS",
@@ -60,10 +59,6 @@ samples from merged chains.}
 
 \item{duration}{The number of minutes after which the model
 will quit running.}
-
-\item{parallel}{A deprecated argument, use cores=1 for serial
-execution or cores>1 for parallel (default is to parallel
-with cores equal to the available-1)}
 
 \item{cores}{The number of cores to use for parallel
 execution. Default is number available in the system minus

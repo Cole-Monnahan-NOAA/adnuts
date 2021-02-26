@@ -98,9 +98,12 @@ print.adfit <- function(x, ...){
 #'   not show on the console. As a workaround it is captured in
 #'   each cluster into a file and then read in and printed.
 #' @return Boolean whether output should be printed to console
-#'   progressively, or saved and printed at the end.
+#'   progressively, or saved to file and printed at the end.
+#' @param parallel Boolean whether chain is executed in parallel
+#'   mode or not.
 #'
-.check_console_printing <- function(){
+.check_console_printing <- function(parallel){
+  if(!parallel) return(TRUE)
   ## If not using parallel always print to console
   if (identical(Sys.getenv("RSTUDIO"), "1"))
     return(FALSE)

@@ -14,7 +14,7 @@ trash <- file.copy(from=list.files(path.simple, full.names=TRUE), to=path)
 setwd(path)
 ## If admb is not in the PATH this line will fail and you need to manually compile the model.
 system('admb simple.tpl')
-system('simple')  # do not need a .hes or .cov file to run!
+system('simple')
 setwd('..')
 
 ## 3 options to specify inits: list, NULL (uses MLE), or a function that
