@@ -17,6 +17,7 @@
   duration = NULL,
   cores = NULL,
   control = NULL,
+  verbose = TRUE,
   algorithm = "NUTS",
   skip_optimization = TRUE,
   skip_monitor = FALSE,
@@ -70,6 +71,10 @@ single chain.}
 
 \item{control}{A list to control the sampler. See details for
 further use.}
+
+\item{verbose}{Flag whether to show console output (default)
+or suppress it completely except for warnings and
+errors. Works for serial or parallel execution.}
 
 \item{algorithm}{The algorithm to use, one of "NUTS" or "RWM"}
 

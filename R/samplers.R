@@ -100,13 +100,13 @@ sample_admb_nuts <- function(path, model, iter=2000,
   progress <- NULL
   if(console){
     ## Normal case
-    time <- system.time(system2(model2, cmd, stdout=''))[3]
+    time <- system.time(system2(model2, cmd, stdout=ifelse(verbose, '', FALSE)))[3]
   } else {
     ## RStudio won't print output so capture it and print at
     ## end. Better than nothing
     fn <- 'mcmc_progress.txt'
     if(file.exists(fn)) file.remove(fn)
-    time <- system.time(system2(model2, cmd, stdout=fn))[3]
+    time <- system.time(system2(model2, cmd, stdout=ifelse(verbose, fn, FALSE)))[3]
     if(file.exists(fn)){
       progress <- readLines('mcmc_progress.txt')
       ## trash <- suppressWarnings(file.remove('mcmc_progress.txt'))
@@ -231,13 +231,13 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
   progress <- NULL
   if(console){
     ## Normal case
-    time <- system.time(system2(model2, cmd, stdout=''))[3]
+    time <- system.time(system2(model2, cmd, stdout=ifelse(verbose, '', FALSE)))[3]
   } else {
     ## RStudio won't print output so capture it and print at
     ## end. Better than nothing
     fn <- 'mcmc_progress.txt'
     if(file.exists(fn)) file.remove(fn)
-    time <- system.time(system2(model2, cmd, stdout=fn))[3]
+    time <- system.time(system2(model2, cmd, stdout=ifelse(verbose, fn, FALSE)))[3]
     if(file.exists(fn)){
       progress <- readLines('mcmc_progress.txt')
       ## trash <- suppressWarnings(file.remove('mcmc_progress.txt'))
@@ -245,6 +245,7 @@ sample_admb_rwm <- function(path, model, iter=2000, thin=1, warmup=ceiling(iter/
       warning("Progress output file not found. Try troubleshooting in serial model")
     }
   }
+
   if(!file.exists('unbounded.csv'))
     stop(paste0("RWM failed to run. Command attempted was:\n", cmd))
   unbounded <- as.matrix(read.csv("unbounded.csv", header=FALSE))

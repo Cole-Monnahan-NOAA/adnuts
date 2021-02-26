@@ -22,6 +22,7 @@ sample_nuts(
   cores = NULL,
   control = NULL,
   skip_optimization = TRUE,
+  verbose = TRUE,
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
   admb_args = NULL,
@@ -43,6 +44,7 @@ sample_rwm(
   cores = NULL,
   control = NULL,
   skip_optimization = TRUE,
+  verbose = TRUE,
   skip_monitor = FALSE,
   skip_unbounded = TRUE,
   admb_args = NULL,
@@ -104,6 +106,10 @@ further use.}
 running MCMC. This is rarely need as it is better to run it
 once before to get the covariance matrix, or the estimates
 are not needed with adaptive NUTS.}
+
+\item{verbose}{Flag whether to show console output (default)
+or suppress it completely except for warnings and
+errors. Works for serial or parallel execution.}
 
 \item{skip_monitor}{Whether to skip calculating diagnostics
 (effective sample size, Rhat) via the \code{rstan::monitor}
