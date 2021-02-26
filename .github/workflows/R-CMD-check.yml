@@ -45,6 +45,7 @@ jobs:
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           rm admb-12.2-windows.zip
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
+        shell: bash
 
       - name: Get admb and put in path (MacOS)
         if: runner.os == 'macOS'
@@ -54,15 +55,17 @@ jobs:
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           rm admb-12.2-macos.zip
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
+        shell: bash
 
       - name: Get admb and put in path (Linux)
-        if: runner.os == 'Linux'
-        run: |
+          if: runner.os == 'Linux'
+         run: |
           wget https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-linux.zip
           sudo unzip admb-12.2-linux.zip -d /usr/local/bin
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           rm admb-12.2-linux.zip
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
+        shell: bash
 
      - name: Compile model and run
        run: |
