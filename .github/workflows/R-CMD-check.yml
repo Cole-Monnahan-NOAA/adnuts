@@ -71,6 +71,7 @@ jobs:
        run: |
          cd tests/simple
          admb simple.tpl
+      shell: bash
 
       - name: Query dependencies
         run: |
