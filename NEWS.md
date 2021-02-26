@@ -6,10 +6,9 @@ adnuts 1.1.1.9000
 
 * Add new option -verbose which suppresses almost all console output when set to FALSE
 
-* Add better handling of Windows short names. Should now smoothly handle them and warn user. Documentation updated to strongly recommend shorter file names. 
-
 * Update demo file, vignette and README in preparation for submission to CRAN
 
+* Add smoother 
 
 ------------------------------------------------------------------------
 adnuts 1.1.1 (2021-02-19)
