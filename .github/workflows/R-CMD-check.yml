@@ -58,8 +58,8 @@ jobs:
         shell: bash
 
       - name: Get admb and put in path (Linux)
-          if: runner.os == 'Linux'
-         run: |
+        if: runner.os == 'Linux'
+        run: |
           wget https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-linux.zip
           sudo unzip admb-12.2-linux.zip -d /usr/local/bin
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
