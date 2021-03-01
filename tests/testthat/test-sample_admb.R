@@ -166,6 +166,7 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
 })
 
 test_that("verbose option works", {
+  skip_on_cran()
   inits.fn <- function() list(c(0,0))
   message("Should be no console output between here....")
   message("Starting verbose NUTS in parallel..")
