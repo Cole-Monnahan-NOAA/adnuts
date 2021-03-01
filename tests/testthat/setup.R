@@ -1,12 +1,12 @@
 ## Skip consistency and reproducibility tests? Only need to run
 ## these locally when ADMB changes.
-skip_consistency <- FALSE
-skip_reproducibility <- FALSE
+skip_consistency <- TRUE
+skip_reproducibility <- TRUE
 
 ## Setup executable whether testing locally (Windows) or through CI (linux 18.04).
 oldwd <- getwd()
 setwd('../simple')
-# system("admb simple")
+system("admb simple")
 system('./simple')
 dir.create('../simple_long_filename')
 trash <- file.copy('../simple/simple.tpl',
