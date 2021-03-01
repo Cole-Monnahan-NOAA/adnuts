@@ -115,6 +115,45 @@ print.adfit <- function(x, ...){
     return(TRUE)
 }
 
+#' Plot MLE vs MCMC marginal standard deviations for each
+#' parameter
+#'
+#' @param fit A fitted object returned by
+#'   \code{\link{sample_admb}}
+#' @param log Whether to plot the logarithm or not.
+#' @param plot Whether to plot it or not.
+#' @details It can be helpful to compare uncertainty estimates
+#'   between the two paradigms. This plots the marginal posterior
+#'   standard deviation vs the frequentist standard error
+#'   estimated from the .cor file. Large differences often
+#'   indicate issues with one estimation method.
+#' @return Invisibly returns data.frame with parameter name and
+#'   estimated uncertainties.
+#' @examples
+#' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
+#' x <- plot_uncertainties(fit, plot=FALSE)
+#' head(x)
+#' @export
+plot_uncertainties <- function(fit, log=TRUE, plot=TRUE){
+  stopifnot(is.adfit(fit))
+  if(!is.list(fit$mle))
+    stop("MLE object not found so cannot plot it")
+  sd.post <- apply(extract_samples(fit), 2, sd)
+  sd.mle <- fit$mle$se[1:length(sd.post)]
+  pars <- fit$par_names[1:length(sd.post)]
+  if(log){
+    sd.post2 <- log10(sd.post)
+    sd.mle2 <- log10(sd.mle)
+  } else {
+    sd.post2 <- sd.post; sd.mle2 <- sd.mle
+  }
+  plot(sd.post2, sd.mle2, xlab='Posterior SD', ylab='MLE SE',
+       main='Comparing Bayesian vs frequentist uncertainty estimates'); abline(0,1)
+  df <- data.frame(par=pars, sd.post=sd.post, sd.mle=sd.mle)
+  return(invisible(df))
+}
+
+
 #' Plot marginal distributions for a fitted model
 #'
 #' @param fit A fitted object returned by

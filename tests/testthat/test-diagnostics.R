@@ -16,4 +16,5 @@ test_that("diagnostics and plotting", {
   plot_marginals(fit)
   plot_marginals(fit, add.monitor=FALSE)
   plot_marginals(fit, add.mle=FALSE)
+  x <- plot_uncertainties(fit, plot=FALSE)
 })
