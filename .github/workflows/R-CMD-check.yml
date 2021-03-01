@@ -37,26 +37,21 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@master
 
-      - name: Get admb and put in path (Windows)
+      - name: Get admb and put in path
         if: runner.os == 'Windows'
         run: |
-          wget https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-windows.zip
-          sudo unzip admb-12.2-windows.zip -d /usr/local/bin
-          sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
-          rm admb-12.2-windows.zip
-          echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
-        shell: bash
-
+          Invoke-WebRequest -Uri https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-windows.zip -OutFile "D:\a\adnuts\adnuts\admb-12.2.zip"
+          Expand-Archive -LiteralPath "D:\a\adnuts\adnuts\admb-12.2.zip" -DestinationPath "D:\a\adnuts\adnuts\"
+          echo "D:\a\adnuts\adnuts\admb-12.2\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+#dummy
       - name: Get admb and put in path (MacOS)
-        if: runner.os == 'macOS'
+        if: runner.os == 'MacOS'
         run: |
-          wget https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-macos.zip
-          sudo unzip admb-12.2-macos.zip -d /usr/local/bin
-          sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
-          rm admb-12.2-macos.zip
+          curl https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-macos-xcode12.zip -L -o admb-12.2.zip
+          unzip admb-12.2.zip -d /usr/local/bin
+          ls /usr/local/bin
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
-        shell: bash
-
+#dummy
       - name: Get admb and put in path (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -65,13 +60,12 @@ jobs:
           sudo chmod 755 /usr/local/bin/admb-12.2/bin/admb
           rm admb-12.2-linux.zip
           echo "/usr/local/bin/admb-12.2/bin" >> $GITHUB_PATH
-        shell: bash
-
-     - name: Compile model and run
-       run: |
-         cd tests/simple
-         admb simple.tpl
-      shell: bash
+# dummy
+    # - name: Compile model and run
+    #   run: |
+    #     cd tests/simple
+    #     admb simple.tpl
+    #  shell: bash
 
       - name: Query dependencies
         run: |
