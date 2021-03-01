@@ -40,9 +40,9 @@ jobs:
       - name: Get admb and put in path (Windows)
         if: runner.os == 'Windows'
         run: |
-          Invoke-WebRequest -Uri https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-windows.zip -OutFile "D:\a\admb\admb-12.2.zip"
-          Expand-Archive -LiteralPath "D:\a\admb\admb-12.2.zip" -DestinationPath "D:\a\admb\"
-          echo "D:\a\admb\admb-12.2\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Invoke-WebRequest -Uri https://github.com/admb-project/admb/releases/download/admb-12.2/admb-12.2-windows.zip -OutFile "D:\a\adnuts\admb-12.2.zip"
+          Expand-Archive -LiteralPath "D:\a\adnuts\admb-12.2.zip" -DestinationPath "D:\a\adnuts\admb\"
+          echo "D:\a\adnuts\admb\admb-12.2\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 #dummy
       - name: Get admb and put in path (MacOS)
         if: runner.os == 'MacOS'
