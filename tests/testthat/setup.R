@@ -3,6 +3,9 @@
 skip_consistency <- TRUE
 skip_reproducibility <- TRUE
 
+### Skip all this if on CRAN
+!identical(Sys.getenv("NOT_CRAN"), "true"){
+
 ## Setup executable whether testing locally (Windows) or through CI (linux 18.04).
 oldwd <- getwd()
 setwd('../simple')
@@ -27,4 +30,6 @@ if(requireNamespace('withr')){
     unlink("../simple_chain_2", TRUE)
     unlink("../simple_chain_3", TRUE)
   }, teardown_env())
+}
+
 }
