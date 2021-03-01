@@ -32,8 +32,9 @@ if(Sys.getenv("NOT_CRAN")=='true'){
       unlink("../simple_chain_1", TRUE)
       unlink("../simple_chain_2", TRUE)
       unlink("../simple_chain_3", TRUE)
-      plotout <- 'Rplots.pdf'
-      trash <- if(file.exists(plotout)) file.remove(plotout)
+      ## dev.off()
+      ## plotout <- 'Rplots.pdf'
+      ## trash <- if(file.exists(plotout)) file.remove(plotout)
     }, teardown_env())
   }
 

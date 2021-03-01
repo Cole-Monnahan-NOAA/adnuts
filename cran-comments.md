@@ -1,11 +1,11 @@
-This is a small patch release fixing bugs and adding minor new capabilities.
+This is a minor release fixing bugs and adding minor new capabilities.
 
 ## Test environments
-* local Windows 10, R 3.5.3
-* local CentOS Linux 7.6.1810, R 3.4.3
-* ubuntu 14.04 (on travis-ci), R 3.5.2
-* macOS High Sierra 10.13.3, R 3.4.3
-* win-builder (devel and release)
+* local Windows 10, R 4.0.3
+* ubuntu 18.04 (on Github Actions), R 4.0.4
+* macOS 10.15.7 (on Github Actions), R 4.0.4
+* Windows server 2019 10.0.17763 (on Github Actions), R 4.0.4
+* win-builder (devel)
 
 ## R CMD check results
 0 ERRORs | 0 WARNINGS | 0 NOTEs.

@@ -8,7 +8,11 @@ adnuts 1.1.1.9000
 
 * Update demo file, vignette and README in preparation for submission to CRAN
 
-* Add smoother 
+* Add new function plot_uncertainties
+
+* Expand continuous testing
+
+* Add slot 'par_names' to objects of type adfit
 
 ------------------------------------------------------------------------
 adnuts 1.1.1 (2021-02-19)
