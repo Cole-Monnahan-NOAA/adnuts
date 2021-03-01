@@ -61,7 +61,7 @@ summary.adfit <- function(object, ...) print(object)
 print.adfit <- function(x, ...){
   iter <- dim(x$samples)[1]
   chains <- dim(x$samples)[2]
-  pars <- dim(x$samples)[3]
+  pars <- dim(x$samples)[3]-1
   samples <- (iter-x$warmup)*chains
   cat(paste0("Model '", x$model,"'"), "has", pars,
       "pars, and was fit using", x$algorithm,
@@ -69,10 +69,12 @@ print.adfit <- function(x, ...){
       "chains\n")
   rt <- sum(x$time.total)/chains
   ru <- 'seconds'
-  if(rt>60){
-    rt <- rt/60; ru <- 'minutes'
+  if(rt>60*60*24) {
+    rt <- rt/(60*60*24); ru <- 'days'
   } else if(rt>60*60) {
     rt <- rt/(60*60); ru <- 'hours'
+  } else if(rt>60){
+    rt <- rt/60; ru <- 'minutes'
   }
   cat("Average run time per chain was", round(rt,2),  ru, '\n')
   if(!is.null(x$monitor)){
@@ -83,6 +85,8 @@ print.adfit <- function(x, ...){
                    " (",
                    round(100*minESS/samples,2),
                    "%), and maximum Rhat=", maxRhat, '\n'))
+    if(minESS<200 | maxRhat > 1.1)
+      cat('!! Warning: Signs of non-convergence found. Do not use for inference !!')
   }
   if(x$algorithm=='NUTS'){
     ndivs <- sum(extract_sampler_params(x)[,'divergent__'])
