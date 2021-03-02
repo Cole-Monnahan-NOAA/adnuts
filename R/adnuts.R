@@ -73,10 +73,11 @@
 #' @docType package
 #' @name adnuts
 #' @import snowfall
-#' @importFrom stats rnorm runif cov acf cor dnorm qnorm
+#' @importFrom stats rnorm runif cov acf cor dnorm qnorm sd
 #' @importFrom utils read.csv read.table write.table
 #' @importFrom grDevices gray rgb
-#' @importFrom graphics axis box hist legend lines mtext par plot points text
+#' @importFrom graphics axis box hist legend lines mtext par plot
+#'   points text abline
 #' @importFrom ellipse ellipse
 #' @importFrom rstan monitor
 #' @importFrom ggplot2 ggplot aes geom_point theme_bw facet_wrap

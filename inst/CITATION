@@ -18,7 +18,7 @@ citEntry(entry = "Article",
 )
 
 citEntry(entry = "Manual",
-  title        = "adnuts: No-U-Turn MCMC Sampling for ADMB and TMB Models. ",
+  title        = "adnuts: No-U-Turn MCMC Sampling for ADMB Models. ",
   author       = personList(as.person("Cole C. Monnahan")),
   year         = year,
   note         = vers,

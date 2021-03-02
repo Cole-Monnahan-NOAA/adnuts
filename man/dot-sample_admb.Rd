@@ -15,9 +15,9 @@
   thin = 1,
   mceval = FALSE,
   duration = NULL,
-  parallel = FALSE,
   cores = NULL,
   control = NULL,
+  verbose = TRUE,
   algorithm = "NUTS",
   skip_optimization = TRUE,
   skip_monitor = FALSE,
@@ -26,9 +26,13 @@
 )
 }
 \arguments{
-\item{model}{Name of model (i.e., model.tpl). For non-Windows
-systems this will automatically be converted to './model'
-internally.}
+\item{model}{Name of model (i.e., 'model' for model.tpl). For
+non-Windows systems this will automatically be converted to
+'./model' internally. For Windows, long file names are
+sometimes shortened from e.g., 'long_model_filename' to
+'LONG_~1'. This should work, but will throw warnings. Please
+shorten the model name. See
+https://en.wikipedia.org/wiki/8.3_filename.}
 
 \item{path}{Path to model executable. Defaults to working
 directory. Often best to have model files in a separate
@@ -57,10 +61,6 @@ samples from merged chains.}
 \item{duration}{The number of minutes after which the model
 will quit running.}
 
-\item{parallel}{A deprecated argument, use cores=1 for serial
-execution or cores>1 for parallel (default is to parallel
-with cores equal to the available-1)}
-
 \item{cores}{The number of cores to use for parallel
 execution. Default is number available in the system minus
 1. If \code{cores=1}, serial execution occurs (even if
@@ -71,6 +71,10 @@ single chain.}
 
 \item{control}{A list to control the sampler. See details for
 further use.}
+
+\item{verbose}{Flag whether to show console output (default)
+or suppress it completely except for warnings and
+errors. Works for serial or parallel execution.}
 
 \item{algorithm}{The algorithm to use, one of "NUTS" or "RWM"}
 

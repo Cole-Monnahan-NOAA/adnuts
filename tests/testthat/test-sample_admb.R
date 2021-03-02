@@ -164,3 +164,52 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
                                    chains=3, seeds=1),
                        regexp='Length of seeds must match chains')
 })
+
+test_that("verbose option works", {
+  skip_on_cran()
+  inits.fn <- function() list(c(0,0))
+  message("Should be no console output between here....")
+  message("Starting verbose NUTS in parallel..")
+  fit <- sample_nuts('simple', path='../simple', chains=3,
+                     seeds=1:3, init=inits.fn, iter=800,
+                     skip_monitor = TRUE, verbose=FALSE)
+  message("Starting verbose NUTS in serial..")
+  fit <- sample_nuts('simple', path='../simple', chains=1,
+                     seeds=1, init=inits.fn, iter=800,
+                     skip_monitor = TRUE, verbose=FALSE)
+  message("Starting verbose RWM in parallel..")
+  fit <- sample_rwm('simple', path='../simple', chains=3,
+                     seeds=1:3, init=inits.fn, iter=800,
+                     skip_monitor = TRUE, verbose=FALSE)
+  message("Starting verbose RWM in serial..")
+  fit <- sample_rwm('simple', path='../simple', chains=1,
+                     seeds=1, init=inits.fn, iter=800,
+                    skip_monitor = TRUE, verbose=FALSE)
+  message("... and here")
+})
+
+
+test_that("long file names work ok on Windows",{
+  skip_on_cran()
+  inits.fn <- function() list(1,1)
+  p <- '../simple_long_filename'
+  m <- 'simple_long_filename'
+  if(.Platform$OS.type=='windows'){
+    ## Should give warning
+    test <- expect_warning(sample_nuts(m, path=p, chains=3, cores=1,
+                                       seeds=1:3, init=inits.fn, iter=1000,
+                                       control=list(refresh=-1),
+                                       skip_monitor = TRUE),
+                           regexp='It appears a shortened')
+    test <- expect_warning(sample_nuts(m, path=p, chains=3, cores=3,
+                                       seeds=1:3, init=inits.fn, iter=1000,
+                                       control=list(refresh=-1),
+                                       skip_monitor = TRUE),
+                           regexp='It appears a shortened')
+  } else {
+    test <- sample_nuts(m, path=p, chains=3, cores=1,
+                        seeds=1:3, init=inits.fn, iter=1000,
+                        control=list(refresh=-1),
+                        skip_monitor = TRUE)
+  }
+})

@@ -61,7 +61,7 @@ summary.adfit <- function(object, ...) print(object)
 print.adfit <- function(x, ...){
   iter <- dim(x$samples)[1]
   chains <- dim(x$samples)[2]
-  pars <- dim(x$samples)[3]
+  pars <- dim(x$samples)[3]-1
   samples <- (iter-x$warmup)*chains
   cat(paste0("Model '", x$model,"'"), "has", pars,
       "pars, and was fit using", x$algorithm,
@@ -69,10 +69,12 @@ print.adfit <- function(x, ...){
       "chains\n")
   rt <- sum(x$time.total)/chains
   ru <- 'seconds'
-  if(rt>60){
-    rt <- rt/60; ru <- 'minutes'
+  if(rt>60*60*24) {
+    rt <- rt/(60*60*24); ru <- 'days'
   } else if(rt>60*60) {
     rt <- rt/(60*60); ru <- 'hours'
+  } else if(rt>60){
+    rt <- rt/60; ru <- 'minutes'
   }
   cat("Average run time per chain was", round(rt,2),  ru, '\n')
   if(!is.null(x$monitor)){
@@ -83,6 +85,8 @@ print.adfit <- function(x, ...){
                    " (",
                    round(100*minESS/samples,2),
                    "%), and maximum Rhat=", maxRhat, '\n'))
+    if(minESS<200 | maxRhat > 1.1)
+      cat('!! Warning: Signs of non-convergence found. Do not use for inference !!')
   }
   if(x$algorithm=='NUTS'){
     ndivs <- sum(extract_sampler_params(x)[,'divergent__'])
@@ -98,15 +102,57 @@ print.adfit <- function(x, ...){
 #'   not show on the console. As a workaround it is captured in
 #'   each cluster into a file and then read in and printed.
 #' @return Boolean whether output should be printed to console
-#'   progressively, or saved and printed at the end.
+#'   progressively, or saved to file and printed at the end.
+#' @param parallel Boolean whether chain is executed in parallel
+#'   mode or not.
 #'
-.check_console_printing <- function(){
+.check_console_printing <- function(parallel){
+  if(!parallel) return(TRUE)
   ## If not using parallel always print to console
   if (identical(Sys.getenv("RSTUDIO"), "1"))
     return(FALSE)
   else
     return(TRUE)
 }
+
+#' Plot MLE vs MCMC marginal standard deviations for each
+#' parameter
+#'
+#' @param fit A fitted object returned by
+#'   \code{\link{sample_admb}}
+#' @param log Whether to plot the logarithm or not.
+#' @param plot Whether to plot it or not.
+#' @details It can be helpful to compare uncertainty estimates
+#'   between the two paradigms. This plots the marginal posterior
+#'   standard deviation vs the frequentist standard error
+#'   estimated from the .cor file. Large differences often
+#'   indicate issues with one estimation method.
+#' @return Invisibly returns data.frame with parameter name and
+#'   estimated uncertainties.
+#' @examples
+#' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
+#' x <- plot_uncertainties(fit, plot=FALSE)
+#' head(x)
+#' @export
+plot_uncertainties <- function(fit, log=TRUE, plot=TRUE){
+  stopifnot(is.adfit(fit))
+  if(!is.list(fit$mle))
+    stop("MLE object not found so cannot plot it")
+  sd.post <- apply(extract_samples(fit), 2, stats::sd)
+  sd.mle <- fit$mle$se[1:length(sd.post)]
+  pars <- fit$par_names[1:length(sd.post)]
+  if(log){
+    sd.post2 <- log10(sd.post)
+    sd.mle2 <- log10(sd.mle)
+  } else {
+    sd.post2 <- sd.post; sd.mle2 <- sd.mle
+  }
+  plot(sd.post2, sd.mle2, xlab='Posterior SD', ylab='MLE SE',
+       main='Comparing Bayesian vs frequentist uncertainty estimates'); abline(0,1)
+  df <- data.frame(par=pars, sd.post=sd.post, sd.mle=sd.mle)
+  return(invisible(df))
+}
+
 
 #' Plot marginal distributions for a fitted model
 #'
@@ -415,20 +461,20 @@ check_identifiable <- function(model, path=getwd()){
 
 ## Read in PSV file
 .get_psv <- function(model){
-      if(!file.exists(paste0(model, '.psv'))){
-      ## Sometimes ADMB will shorten the name of the psv file for some
-      ## reason, so need to catch that here.
-      ff <- list.files()[grep(x=list.files(), pattern='psv')]
-      if(length(ff)==1){
-        warning(paste("No .psv file found, using", ff))
-        pars <- R2admb::read_psv(sub('.psv', '', x=ff))
-      } else {
-        stop(paste("No .psv file found -- did something go wrong??"))
-      }
+  if(!file.exists(paste0(model, '.psv'))){
+    ## Sometimes ADMB will shorten the name of the psv file for some
+    ## reason, so need to catch that here.
+    ff <- list.files()[grep(x=list.files(), pattern='psv')]
+    if(length(ff)==1){
+      warning(paste("No .psv file found, using", ff))
+      pars <- R2admb::read_psv(sub('.psv', '', x=ff))
     } else {
-      ## If model file exists
-      pars <- R2admb::read_psv(model)
+      stop(paste("No .psv file found -- did something go wrong??"))
     }
+  } else {
+    ## If model file exists
+    pars <- R2admb::read_psv(model)
+  }
   return(pars)
 }
 
@@ -760,9 +806,24 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
   ## and maxgrad at the top
   f <- paste(model,'.par', sep='')
   if(!file.exists(f)){
-    warning(paste("File", f,
-                  "not found so could not read in MLE quantities or parameter names"))
-    return(NULL)
+    ## Test for shortened windows filenames
+    ## E.g.: simple_longname.par becomes SIMPLE~1.par only on
+    ## Windows and seemingly randomly??
+    ff <- list.files()[grep(x=list.files(), pattern='.par')]
+    if(length(ff)==1){
+      if(.Platform$OS.type == "windows" & length(grep("~", ff))>0){
+        warning("It appears a shortened Windows filename exists,",
+                "which occurs with long\nmodel names. Try shortening it.",
+                " See help for argument 'model'")
+      }
+      warning("Standard .par file ", f, " not found. Trying this one: ", ff)
+      f <- ff
+    } else if(length(ff)>1){
+      stop("More than one .par file found in directory. Delete unused ones and try again")
+    } else {
+      warning("No .par file found so skipping MLE info and parameter names.\nOptimize model to get this.")
+      return(NULL)
+    }
   }
   par <- as.numeric(scan(f, what='', n=16, quiet=TRUE)[c(6,11,16)])
   nopar <- as.integer(par[1])
@@ -774,9 +835,22 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
   ## file.
   f <- paste(model,'.cor', sep='')
   if(!file.exists(f)){
-    warning(paste("File", f,
-                  "not found so could not read in MLE quantities or parameter names"))
-    return(NULL)
+    ## Test for shortened windows filenames
+    ff <- list.files()[grep(x=list.files(), pattern='.cor')]
+    if(length(ff)==1){
+      if(.Platform$OS.type == "windows" & length(grep("~", ff))>0){
+        warning("It appears a shortened Windows filename exists,",
+                "which occurs with long\nmodel names. Try shortening it.",
+                " See help for argument 'model'")
+      }
+      warning("Standard .cor file ", f, " not found. Trying this one: ", ff)
+      f <- ff
+    } else if(length(ff)>1){
+      stop("More than one .cor file found in directory. Delete unused ones and try again")
+    } else {
+      warning("No .cor file found so skipping MLE info and parameter names.\nOptimize model to get this.")
+      return(NULL)
+    }
   }
   xx <- readLines(f)
   ## Total parameter including sdreport variables

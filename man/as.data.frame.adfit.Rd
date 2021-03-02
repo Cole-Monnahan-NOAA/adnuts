@@ -12,9 +12,9 @@
 
 \item{row.names}{Ignored}
 
-\item{...}{Ignored}
+\item{optional}{Ignored}
 
-\item{optinal}{Ignored}
+\item{...}{Ignored}
 }
 \value{
 A data frame with parameters as columns and samples as

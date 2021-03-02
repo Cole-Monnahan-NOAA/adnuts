@@ -1,4 +1,23 @@
 ------------------------------------------------------------------------
+adnuts 1.1.2 (2021-03-02)
+------------------------------------------------------------------------
+
+* Improve console output for RStudio users. Was broken for NUTS
+  chains and in serial.
+
+* Add new argument 'verbose' which suppresses almost all console
+  output when set to FALSE
+
+* Update demo file, vignette and README in preparation for
+  submission to CRAN
+
+* Add new function plot_uncertainties
+
+* Expand continuous testing
+
+* Add slot 'par_names' to objects of type adfit
+
+------------------------------------------------------------------------
 adnuts 1.1.1 (2021-02-19)
 ------------------------------------------------------------------------
 
@@ -8,13 +27,17 @@ adnuts 1.1.1 (2021-02-19)
 
 * Improved and expanded testing via continuous integration
 
-* Print the ADMB command to console when it fails to run properly to help user diagnose issues
+* Print the ADMB command to console when it fails to run properly
+  to help user diagnose issues
 
-* Improve console output for RStudio users. It will now print at conclusion of parallel runs.
+* Improve console output for RStudio users. It will now print at
+  conclusion of parallel runs.
 
-* Fix bugs in model names for MacOS (use ./model insted of model internally)
+* Fix bugs in model names for MacOS (use ./model insted of model
+  internally)
 
-* Fix small bug with mceval=TRUE for newest verison of stock synthesis
+* Fix small bug with mceval=TRUE for newest verison of stock
+  synthesis
 
 * Fix `sample_tmb` to work again for short-term use
 
