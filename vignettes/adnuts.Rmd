@@ -180,14 +180,14 @@ Parameter transformations are limited to box constraints within the ADMB
 template (e.g., `init_bounded_number`). When used, this puts an implicit
 uniform prior on the parameter over the bounds. Implicit improper uniform
 priors occur when an unbounded parameter has no explicit prior. The
-analysis can procede if the data contain information to update the prior,
+analysis can proceed if the data contain information to update the prior,
 but if not the chains will wander between negative and positive infinity
 and fail diagnostic checks.
 
 Variance parameters are common and require bounds of (0, Inf). To implement
 such a bound in ADMB, specify the model parameter as the log of the
 standard deviation, and then in the template exponentiate it and use
-throughout. Because of this parameter transformation, the Jacbobian
+throughout. Because of this parameter transformation, the Jacobian
 adjustment is needed. This can be accomplished by subtracting the parameter
 in log space from the negative log-likelihood. For instance, use parameter
 `log_sd` in the template, then let `sigma=exp(log_sd)`, and update the
@@ -199,7 +199,7 @@ rates, maximum length, unfished recruits, etc.
 
 ### Initializing chains
 
-It is generally recommended to intialize multiple chains from "dispersed"
+It is generally recommended to initialize multiple chains from "dispersed"
 values relative to the typical set of the posterior. The sampling functions
 can accept a list of lists (one for each chain), or function which returns
 a list of parameters (e.g., `init <- function() list(a=rnorm(1),
@@ -216,7 +216,7 @@ reasonable random initial values**.
 
 If your model has inactive parameters (those with negative phases) they are
 completely ignored in the MCMC analysis (sampling, inputs, outputs, etc.),
-so the intial values are only for active parameters. This means you cannot
+so the initial values are only for active parameters. This means you cannot
 read in the .par file and use it for initial values if there are inactive
 parameters. 
 
@@ -358,7 +358,7 @@ parameters. Divergences are shown as green points if they exist (none do
 here). A red point shows the posterior mode and an ellipse shows the 95%
 bivariate confidence region, taken from the inverse Hessian calculated by
 ADMB. Since the log-posterior (lp__) is not a parameter there is no
-ellipse. Note that the posterior samples and asympotic approximations for
+ellipse. Note that the posterior samples and asymptotic approximations for
 the two fixed effects `a` match closely, whereas for the `sigmaphi`
 hypervariance parameter there is a notable mismatch. This mismatch is not
 surprising as estimates from optimizing hierarchical models are not
@@ -379,7 +379,7 @@ when thinking about the mass matrix.
 
 ADMB has the capability to do both diagonal and dense (full matrix, as of
 version 12.2) estimation during warmup (adaptation). The initial matrix can
-likewise easily be intialized in two ways. First is a unit diagonal, and
+likewise easily be initialized in two ways. First is a unit diagonal, and
 second is the "MLE" option, which more accurately is the covariance matrix
 calculated from inverting the Hessian at the maximum posterior density (the
 mode -- informally referred to as the MLE often). I refer to this as
@@ -409,7 +409,7 @@ numerical cost to using a dense matrix over a diagonal one, and one that
 scales poorly with dimensionality. However, the more computationally
 expensive the model is (the prediction and log density calculations) the
 smaller relative cost of the dense calculations. Thus there is an interplay
-between the mass matrix form, dimensinality, model computational cost, and
+between the mass matrix form, dimensionality, model computational cost, and
 MCMC sampling efficiency.
 
 In addition to these options, an arbitrary matrix `M` can be passed via
@@ -432,12 +432,12 @@ general differences among them.
 The three which start with a unit diagonal matrix are apparent by their
 small initial step sizes, while the three which start with dense are
 larger. There is a clear shift in the stepsize at iteration 125 which is
-when the first mass matrix udpate happens (and with improved knowledge of
+when the first mass matrix update happens (and with improved knowledge of
 the geometry the optimal step size changes). A second update happens later
 but is not apparent, indicating the first was sufficient. All fits with a
 dense matrix end with the same approximate step size, which is larger than
 any without it. Option 3 starts off diagonal but after updating to a dense
-matrix peforms equivalently. For the diagonal options, option 1 does not
+matrix performs equivalently. For the diagonal options, option 1 does not
 update, while option two starts at unit diagonal and aftering updating the
 diagonal performs equally well as option 5 which starts well.
 
@@ -531,7 +531,7 @@ occurs after twice the iterations as the previous update. This process
 repeats until the last 25 samples of the warmup phase. During this phase
 the mass matrix is held constant and only the step size adapt. See the Stan
 manual [@stan2017] for more details. The step size is adapted during all
-warmup iterations. No information is returned about mass matrix adapation
+warmup iterations. No information is returned about mass matrix adaptation
 currently.
 
 Once the warmup phase is over, no adaptation is done. Because of the
@@ -613,7 +613,7 @@ equivalent set of points from RWM and IID samples from Monte Carlo samples
 (e.g., `rnorm`). Long chains and thining ensured no residual
 autocorrelation. I repeated this for 20 chains for the RWM, NUTS with MLE
 metric, adaptive NUTS, and Monte Carlo (mc). Results are plotted as
-relative error of different probalities (via `pnorm` etc.).
+relative error of different probabilities (via `pnorm` etc.).
 
 ![Validity of ADMB MCMC algorithms](validity_tests.png){width=100%}
 

@@ -74,7 +74,7 @@ instead of 'model_filename_2021.tpl' use e.g. 'model_21'.
 Analyses are reproducible by setting the same initial values and a seed in
 `sample_rwm` or `sample_nuts` (passed to ADMB as '-mcseed'). However, they
 may not be entirely consistent across OS platforms. The chains will start
-the same but may eventually diverge. This is likely due to miniscule
+the same but may eventually diverge. This is likely due to minuscule
 differences in the gradient and log-posterior calculations between systems
 and compilers.
 
