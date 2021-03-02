@@ -1,3 +1,6 @@
+## Resubmission
+This is a resubmission where I have corrected a potentially invalid URL in the README file.
+
 This is a minor release fixing bugs and adding minor new capabilities.
 
 ## Test environments
@@ -8,7 +11,8 @@ This is a minor release fixing bugs and adding minor new capabilities.
 * win-builder (release and devel)
 
 ## R CMD check results
-0 errors ✔ | 0 warnings ✔ | 0 notes ✔
+There were no errors, warnings or notes:
+0 errors  | 0 warnings  | 0 notes 
 
 ## Downstream dependencies
 There are currently no downstream dependencies for this package.
