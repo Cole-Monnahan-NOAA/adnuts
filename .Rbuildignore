@@ -5,5 +5,4 @@
 ^inst/examples/simple/simple.obj
 ^\.github/
 tests/testthat/Rplots.pdf
-tests/testthat/fit.RDS
-vignettes/fit.RDS
+
