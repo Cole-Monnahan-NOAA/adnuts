@@ -37,7 +37,7 @@ Plot marginal distributions for a fitted model
 \details{
 This function plots grid cells of all parameters
   in a model, comparing the marginal posterior histogram vs
-  the asympotitic normal (red lines) from the inverse
+  the asymptotic normal (red lines) from the inverse
   Hessian. Its intended use is to quickly gauge differences
   between frequentist and Bayesian inference on the same
   model.
