@@ -1,5 +1,5 @@
 ## Resubmission
-This is a resubmission where I have corrected a potentially invalid URL in the README file.
+This is a resubmission where I have corrected more potentially invalid URL in the README file.
 
 This is a minor release fixing bugs and adding minor new capabilities.
 
