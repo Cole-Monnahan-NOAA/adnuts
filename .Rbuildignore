@@ -6,3 +6,4 @@
 ^\.github/
 tests/testthat/Rplots.pdf
 
+^CRAN-RELEASE$
