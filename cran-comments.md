@@ -8,7 +8,7 @@ This is a minor release fixing bugs and adding minor new capabilities.
 * win-builder (release and devel)
 
 ## R CMD check results
-0 ERRORs | 0 WARNINGS | 0 NOTEs.
+0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 
 ## Downstream dependencies
 There are currently no downstream dependencies for this package.
