@@ -18,7 +18,8 @@ sample_nuts <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
             call. = FALSE)
     admb_args <- extra.args
   }
-
+  if(is.null(init) & verbose)
+    warning('Default init of MLE used for each chain. Consider using dispersed inits')
   .sample_admb(model=model, path=path, iter=iter, init=init,
                chains=chains, warmup=warmup, seeds=seeds,
                thin=thin, mceval=mceval, duration=duration,
@@ -46,7 +47,9 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
     warning("Argument extra.args is deprecated, use admb_args instead",
             call. = FALSE)
     admb_args <- extra.args
-  }
+    }
+  if(is.null(init) & verbose)
+    warning('Default init of MLE used for each chain. Consider using dispersed inits')
   .sample_admb(model=model, path=path, iter=iter, init=init,
                chains=chains, warmup=warmup, seeds=seeds,
                thin=thin, mceval=mceval, duration=duration,
@@ -297,8 +300,9 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   if(algorithm=='NUTS')
     control <- .update_control(control)
   if(is.null(init)){
-    if(verbose) warning('Using MLE inits for each chain -- strongly recommended to use dispersed inits')
-  }  else if(is.function(init)){
+    ## warning moved to higher functions
+  }  else
+    if(is.function(init)){
     init <- lapply(1:chains, function(x) init())
   } else if(!is.list(init)){
     stop("init must be NULL, a list, or a function")
