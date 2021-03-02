@@ -3,7 +3,7 @@
 main: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg?branch=main)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check)
 dev: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg?branch=dev)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check) [![codecov](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts/branch/dev/graph/badge.svg)](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts)
 [![](https://www.r-pkg.org/badges/version/adnuts)](https://www.r-pkg.org/pkg/adnuts)
-[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/adnuts)](http://www.r-pkg.org/pkg/adnuts)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/adnuts)](https://www.r-pkg.org/pkg/adnuts)
 
 The aim of 'adnuts' (pronounced A-D NUTS like A-D MB) is to provide
 advanced MCMC sampling for 'ADMB' and 'TMB' models. It mimics 'Stan' in
@@ -26,7 +26,7 @@ and interested authors are referred to:
 Monnahan, C.C., T.A. Branch, J.T. Thorson, I.J. Stewart, C.S. Szuwalksi
 (2020) Overcoming long Bayesian run times in integrated fisheries stock
 assessments. ICES Journal of Marine
-Science. http://dx.doi.org/10.1093/icesjms/fsz059
+Science. https://dx.doi.org/10.1093/icesjms/fsz059
 
 
 ## Usage
@@ -48,7 +48,7 @@ is the best place to help get you started, and there is also a user guide:
 To use the ADMB functionality you need to build your model with version
 12.0 (released December 2017) or later, otherwise this functionality is not
 available. See [the ADMB installation
-instructions](http://www.admb-project.org/docs/install/) for more
+instructions](https://www.admb-project.org/docs/install/) for more
 information. ADMB 12.2 is highly recommended because it provides better
 console output, fixes bugs, and adds improved adaptation capabilities as
 compared to 12.0. You can check the ADMB version of a compiled model from
