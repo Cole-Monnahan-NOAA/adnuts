@@ -86,7 +86,7 @@ print.adfit <- function(x, ...){
                    round(100*minESS/samples,2),
                    "%), and maximum Rhat=", maxRhat, '\n'))
     if(minESS<200 | maxRhat > 1.1)
-      cat('!! Warning: Signs of non-convergence found. Do not use for inference !!')
+      cat('!! Warning: Signs of non-convergence found. Do not use for inference !!\n')
   }
   if(x$algorithm=='NUTS'){
     ndivs <- sum(extract_sampler_params(x)[,'divergent__'])
