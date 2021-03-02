@@ -5,7 +5,7 @@ adnuts 1.1.2 (2021-03-02)
 * Improve console output for RStudio users. Was broken for NUTS
   chains and in serial.
 
-* Add new option -verbose which suppresses almost all console
+* Add new argument 'verbose' which suppresses almost all console
   output when set to FALSE
 
 * Update demo file, vignette and README in preparation for
