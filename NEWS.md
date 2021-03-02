@@ -33,10 +33,10 @@ adnuts 1.1.1 (2021-02-19)
 * Improve console output for RStudio users. It will now print at
   conclusion of parallel runs.
 
-* Fix bugs in model names for MacOS (use ./model insted of model
+* Fix bugs in model names for MacOS (use ./model instead of model
   internally)
 
-* Fix small bug with mceval=TRUE for newest verison of stock
+* Fix small bug with mceval=TRUE for newest version of stock
   synthesis
 
 * Fix `sample_tmb` to work again for short-term use
@@ -46,7 +46,7 @@ adnuts 1.1.0 (2020-07-13)
 ------------------------------------------------------------------------
 
 * Change from `sample_admb` to `sample_nuts` and `sample_rwm` to
-  run the NUTS and RWM algoriths, respectively.
+  run the NUTS and RWM algorithms, respectively.
   
 * Rework metric options to allow user to access ADMB 12.2's new
   dense mass matrix adaptation scheme. Added new section

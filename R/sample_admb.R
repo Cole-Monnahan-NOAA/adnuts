@@ -76,7 +76,7 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #' provides no new functionality not available from previous
 #' versions of ADMB. However, `sample_rwm` has an improved
 #' console output, is setup for parallel execution, and a smooth
-#' workflow for dianostics.
+#' workflow for diagnostics.
 #'
 #' Parallel chains will be run if argument `cores` is greater
 #' than one. This entails copying the folder, and starting a new
@@ -118,7 +118,7 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   50)}
 #' \item{adapt_term_buffer}{The terminal buffer size (default 75)
 #'   during mass
-#'   matrix adpatation (final fast phase)}
+#'   matrix adaptation (final fast phase)}
 #' \item{adapt_window}{The initial size of the mass matrix
 #'   adaptation window, which gets doubled each time thereafter.}
 #' \item{refresh}{The rate at which to refresh progress to the
