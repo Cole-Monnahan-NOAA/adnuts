@@ -3,7 +3,7 @@
 .RData
 inst/doc
 *.bar
-*.cor 
+*.cor
 *.cpp
 *.ecm
 *.eva
@@ -27,4 +27,4 @@ unbounded.csv
 *adapted_metric.txt
 tests/simple_chain*
 tests/testthat/Rplots.pdf
-docs
+
