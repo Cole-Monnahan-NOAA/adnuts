@@ -36,7 +36,7 @@ sample_admb_nuts <- function(path, model, iter=2000,
   ## Build the command to run the model
   model2 <- .update_model(model)
   if(skip_optimization){
-    cmd <- paste(model2,"-nox -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
+    cmd <- paste(model2,"-nox -noest -nohess -maxfn 0 -phase 1000 -nuts -mcmc ",iter)
   } else {
     cmd <- paste(model2,"-hbf -nuts -mcmc ",iter)
   }
