@@ -81,6 +81,8 @@ pairs_admb <- function(fit, order=NULL,
   par.names <- names(posterior)
   ess <- fit$monitor$n_eff
   Rhat <- fit$monitor$Rhat
+  if(!is.null(pars) & length(pars)<=1)
+    stop("pars argument <=1, only makes sense for >=2")
   if(is.null(ess))
     warning("No monitor information found in fitted object so ESS and Rhat not available. See details of help.")
   if(!is.null(order)){
