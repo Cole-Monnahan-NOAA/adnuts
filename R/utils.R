@@ -401,9 +401,10 @@ sample_inits <- function(fit, chains){
 
 #' Read in admodel.hes file
 #' @param path Path to folder containing the admodel.hes file
-#'
+#' @param full Whether to return just the Hessian (FALSE -
+#'   default) or the full
 #' @return The Hessian matrix
-.getADMBHessian <- function(path){
+.getADMBHessian <- function(path, full=FALSE){
   ## This function reads in all of the information contained in the
   ## admodel.hes file. Some of this is needed for relaxing the
   ## covariance matrix, and others just need to be recorded and
@@ -418,6 +419,7 @@ sample_inits <- function(fit, chains){
   hes <- matrix(hes.vec, ncol=num.pars, nrow=num.pars)
   hybrid_bounded_flag <- readBin(f, "integer", 1)
   scale <- readBin(f, "numeric", num.pars)
+  if(full) return(list(num.pars=num.pars, hes=hes, hbf=hybrid_bounded_flag, scale=scale))
   return(hes)
 }
 
