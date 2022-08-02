@@ -67,10 +67,10 @@ sample_admb_nuts <- function(path, model, iter=2000,
   if(is.matrix(metric)){
     ## User defined one will be writen to admodel.cov
     if(!requireNamespace("matrixcalc", quietly = TRUE))
-      stop("Package 'matrixcalc' is required to pass a matrix.\n Install it and try again.")
+      warning("Package 'matrixcalc' is highly recommended to pass a matrix.")
     cor.user <- metric/ sqrt(diag(metric) %o% diag(metric))
     if(!matrixcalc::is.positive.definite(x=cor.user))
-      stop("Invalid mass matrix passed: it is not positive definite.\n Check 'metric' argument or use different option.")
+      warning("Mass matrix passed is not positive definite.\n Check 'metric' argument or use different option.")
     .write.admb.cov(metric, hbf=1)
     warning("admodel.cov overwritten, revert admodel_original.cov if needed")
   } else if(is.character(metric) && metric == 'unit') {
