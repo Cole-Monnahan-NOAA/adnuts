@@ -389,8 +389,12 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   }
   iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
   if(any(iters!=iter/thin)){
-    N <- min(iters)
-    warning(paste("Variable chain lengths, truncating to minimum=", N))
+    ## This can happen if 'duration' arg used, or if chain errors
+    ## out.
+    N <- min(iters)/thin
+    warning(paste0("Variable chain lengths, iter=(",
+                   paste0(iters, collapse=','),
+                   "), truncating to minimum after thinning=", N))
   } else {
     N <- iter/thin
   }
