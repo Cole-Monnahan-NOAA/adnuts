@@ -391,7 +391,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   if(any(iters!=iter/thin)){
     ## This can happen if 'duration' arg used, or if chain errors
     ## out.
-    N <- min(iters)/thin
+    N <- floor(min(iters)/thin)
     warning(paste0("Variable chain lengths, iter=(",
                    paste0(iters, collapse=','),
                    "), truncating to minimum after thinning=", N))
