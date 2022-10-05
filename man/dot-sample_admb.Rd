@@ -59,7 +59,10 @@ not used with NUTS.}
 samples from merged chains.}
 
 \item{duration}{The number of minutes after which the model
-will quit running.}
+will quit running. It is recommended to set the warmup carefully
+and iter higher than expected so it runs through duration. This
+usually results in chains with different lengths, so the minimum
+is taken across them all.}
 
 \item{cores}{The number of cores to use for parallel
 execution. Default is number available in the system minus
