@@ -1,7 +1,7 @@
 ## Skip consistency and reproducibility tests? Only need to run
 ## these locally when ADMB changes.
-skip_consistency <- TRUE
-skip_reproducibility <- TRUE
+skip_consistency <- FALSE
+skip_reproducibility <- FALSE
 
 ### Skip all this if on CRAN. Otherwise locally or on CI, need to
 ### build the executables and run them so they're available for
@@ -28,6 +28,7 @@ if(Sys.getenv("NOT_CRAN")=='true'){
     withr::defer({
       files <- list.files('../simple', full.names = TRUE)
       ignore <- file.remove(files[-grep('.dat|.tpl', x=files)])
+      ignore <- file.remove('../simple/mceval.dat')
       unlink('../simple_long_filename', TRUE)
       unlink("../simple_chain_1", TRUE)
       unlink("../simple_chain_2", TRUE)

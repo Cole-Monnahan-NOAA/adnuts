@@ -155,7 +155,10 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #' @param mceval Whether to run the model with \code{-mceval} on
 #'   samples from merged chains.
 #' @param duration The number of minutes after which the model
-#'   will quit running.
+#'   will quit running. It is recommended to set the warmup carefully
+#'   and iter higher than expected so it runs through duration. This
+#'   usually results in chains with different lengths, so the minimum
+#'   is taken across them all.
 #' @param parallel A deprecated argument, use cores=1 for serial
 #'   execution or cores>1 for parallel (default is to parallel
 #'   with cores equal to the available-1)
@@ -392,7 +395,7 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
     ## This can happen if 'duration' arg used, or if chain errors
     ## out.
     N <- floor(min(iters)/thin)
-    warning(paste0("Variable chain lengths, iter=(",
+    warning(paste0("Incomplete chain lengths, iter=(",
                    paste0(iters, collapse=','),
                    "), truncating to minimum after thinning=", N))
   } else {

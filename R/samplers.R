@@ -140,6 +140,10 @@ sample_admb_nuts <- function(path, model, iter=2000,
   ## Thin samples and adaptation post hoc for NUTS
   pars <- pars[seq(1, nrow(pars), by=thin),]
   unbounded <- unbounded[seq(1, nrow(unbounded), by=thin),]
+  if(length(nrow(sampler_params))>1) {
+    print(str(sampler_params))
+    error("Dimensions are wrong with the sampler_params output. Check arguments, particularly duration, and try again")
+  }
   sampler_params <- sampler_params[seq(1, nrow(sampler_params), by=thin),]
   time.total <- time; time.warmup <- NA
   warmup <- warmup/thin

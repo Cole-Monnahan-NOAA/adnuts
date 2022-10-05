@@ -8,7 +8,7 @@ test_that("diagnostics and plotting", {
   pairs_admb(fit, pars=1:3, order='fast')
   pairs_admb(fit, pars=c('a', 'lp__', 'b'), add.monitor=FALSE)
   expect_warning(pairs_admb(fit, pars=c('a', 'b', 'c')), 'Some par names did not match')
-  expect_error(pairs_admb(fit, pars=c('a')), 'only meaningful for >1 parameter')
+  expect_error(pairs_admb(fit, pars=c('a')), 'only makes sense for >=2')
   pairs_admb(fit, add.mle=FALSE)
   pairs_admb(fit, add.mle=FALSE, diag='hist')
   pairs_admb(fit, add.mle=FALSE, diag='acf')
