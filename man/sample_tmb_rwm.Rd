@@ -22,11 +22,13 @@ sample_tmb_rwm(
 
 \item{fn}{A function that returns the log of the posterior density.}
 
-\item{init}{A list of lists containing the initial parameter
-vectors, one for each chain or a function. It is strongly
-recommended to initialize multiple chains from dispersed
-points. A of NULL signifies to use the starting values
-present in the model (i.e., \code{obj$par}) for all chains.}
+\item{init}{Can be either a list containing a vector for each
+chain, a function which returns a vector of parameters, or
+NULL which specifies to use the MLE as stored in the
+admodel.hes file. It is generally recommended to use
+dispersed initial values to improve diagnostic checks
+(starting from the same point makes it less likely to find
+multiple modes).}
 
 \item{alpha}{The amount to scale the proposal, i.e,
 Xnew=Xcur+alpha*Xproposed where Xproposed is generated from a mean-zero

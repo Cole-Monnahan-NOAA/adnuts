@@ -19,9 +19,10 @@ setwd('..')
 
 ## 3 options to specify inits: list, NULL (uses MLE), or a function that
 ## returns a list.
-init <-  lapply(1:3, function(i) rnorm(2))
+npar <- 2 # number of parameters in the model
+init <-  lapply(1:3, function(i) rnorm(npar))
 init <- NULL # uses MLEs -- not recommended!
-init <- function() rnorm(2)
+init <- function() rnorm(npar)
 fit <- sample_nuts(model='simple', init=init, path=path, cores=1)
 fit$cmd[1] # this is the command line arguments used
 ## Merged chains after discarding warmup phase

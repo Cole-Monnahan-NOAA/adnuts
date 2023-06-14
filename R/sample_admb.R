@@ -142,11 +142,13 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   directory. Often best to have model files in a separate
 #'   subdirectory, particularly for parallel.
 #' @param iter The number of samples to draw.
-#' @param init A list of lists containing the initial parameter
-#'   vectors, one for each chain or a function. It is strongly
-#'   recommended to initialize multiple chains from dispersed
-#'   points. A of NULL signifies to use the starting values
-#'   present in the model (i.e., \code{obj$par}) for all chains.
+#' @param init Can be either a list containing a vector for each
+#'   chain, a function which returns a vector of parameters, or
+#'   NULL which specifies to use the MLE as stored in the
+#'   admodel.hes file. It is generally recommended to use
+#'   dispersed initial values to improve diagnostic checks
+#'   (starting from the same point makes it less likely to find
+#'   multiple modes).
 #' @param chains The number of chains to run.
 #' @param warmup The number of warmup iterations.
 #' @param seeds A vector of seeds, one for each chain.
@@ -155,10 +157,10 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #' @param mceval Whether to run the model with \code{-mceval} on
 #'   samples from merged chains.
 #' @param duration The number of minutes after which the model
-#'   will quit running. It is recommended to set the warmup carefully
-#'   and iter higher than expected so it runs through duration. This
-#'   usually results in chains with different lengths, so the minimum
-#'   is taken across them all.
+#'   will quit running. It is recommended to set the warmup
+#'   carefully and iter higher than expected so it runs through
+#'   duration. This usually results in chains with different
+#'   lengths, so the minimum is taken across them all.
 #' @param parallel A deprecated argument, use cores=1 for serial
 #'   execution or cores>1 for parallel (default is to parallel
 #'   with cores equal to the available-1)
