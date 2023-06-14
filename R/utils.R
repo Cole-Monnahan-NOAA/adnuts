@@ -440,7 +440,11 @@ check_identifiable <- function(model, path=getwd()){
   fit <- .read_mle_fit(model, path)
   hes <- .getADMBHessian(path)
   ev  <-  eigen(hes)
-  WhichBad <-  which( ev$values < sqrt(.Machine$double.eps) )
+  if (any(is.complex(ev$values))){
+    WhichBad <- which( abs(Im(ev$values)) > .Machine$double.eps);
+  } else {
+    WhichBad <- which( ev$values < sqrt(.Machine$double.eps) );
+  }
   if(length(WhichBad)==0){
     message( "All parameters are identifiable" )
   } else {
