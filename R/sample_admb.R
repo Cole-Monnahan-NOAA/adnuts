@@ -413,8 +413,8 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   for(i in 1:chains){
     samples[,i,] <- mcmc.out[[i]]$samples[1:N,]
     if(!skip_unbounded)
-      samples.unbounded[,i,] <- cbind(mcmc.out[[i]]$unbounded[1:N,],
-                                      mcmc.out[[i]]$samples[,1+length(par.names)])
+      samples.unbounded[,i,] <-
+        cbind(mcmc.out[[i]]$unbounded[1:N,], mcmc.out[[i]]$samples[1:N,1+length(par.names)])
   }
   if(algorithm=="NUTS")
     sampler_params <-
