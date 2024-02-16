@@ -66,11 +66,13 @@ subdirectory, particularly for parallel.}
 
 \item{iter}{The number of samples to draw.}
 
-\item{init}{A list of lists containing the initial parameter
-vectors, one for each chain or a function. It is strongly
-recommended to initialize multiple chains from dispersed
-points. A of NULL signifies to use the starting values
-present in the model (i.e., \code{obj$par}) for all chains.}
+\item{init}{Can be either a list containing a vector for each
+chain, a function which returns a vector of parameters, or
+NULL which specifies to use the MLE as stored in the
+admodel.hes file. It is generally recommended to use
+dispersed initial values to improve diagnostic checks
+(starting from the same point makes it less likely to find
+multiple modes).}
 
 \item{chains}{The number of chains to run.}
 
@@ -85,7 +87,10 @@ not used with NUTS.}
 samples from merged chains.}
 
 \item{duration}{The number of minutes after which the model
-will quit running.}
+will quit running. It is recommended to set the warmup
+carefully and iter higher than expected so it runs through
+duration. This usually results in chains with different
+lengths, so the minimum is taken across them all.}
 
 \item{parallel}{A deprecated argument, use cores=1 for serial
 execution or cores>1 for parallel (default is to parallel
@@ -168,13 +173,13 @@ and loosely follows package \code{rstan}. The step size can be
  Further control of algorithms can be
   specified with the \code{control} argument.  Elements are:
 \describe{
-\item{adapt_delta}{The target acceptance rate. D}
+\item{adapt_delta}{The target acceptance rate, with values
+  closer to 1 forcing smaller step sizes. Defaults to 0.8.  }
 \item{metric}{The mass metric to use. Options are: "unit" for a unit diagonal
   matrix; \code{NULL} to estimate a diagonal matrix during warmup; a matrix
   to be used directly (in untransformed space).}
-\item{adapt_delta}{Whether adaptation of step size is turned on.}
-\item{adapt_mass}{Whether adaptation of mass matrix is turned
-  on. Currently only allowed for diagonal metric.}
+\item{adapt_mass}{Whether adaptation of diagonal mass matrix is turned
+  on.}
 \item{adapt_mass_dense}{Whether dense adaptation of mass
   matrix is turned on.}
 \item{max_treedepth}{Maximum treedepth for the NUTS algorithm.}

@@ -4,10 +4,13 @@
 \alias{.getADMBHessian}
 \title{Read in admodel.hes file}
 \usage{
-.getADMBHessian(path)
+.getADMBHessian(path, full = FALSE)
 }
 \arguments{
 \item{path}{Path to folder containing the admodel.hes file}
+
+\item{full}{Whether to return just the Hessian (FALSE -
+default) or the full}
 }
 \value{
 The Hessian matrix

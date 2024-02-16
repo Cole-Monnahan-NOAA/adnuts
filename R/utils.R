@@ -401,9 +401,10 @@ sample_inits <- function(fit, chains){
 
 #' Read in admodel.hes file
 #' @param path Path to folder containing the admodel.hes file
-#'
+#' @param full Whether to return just the Hessian (FALSE -
+#'   default) or the full
 #' @return The Hessian matrix
-.getADMBHessian <- function(path){
+.getADMBHessian <- function(path, full=FALSE){
   ## This function reads in all of the information contained in the
   ## admodel.hes file. Some of this is needed for relaxing the
   ## covariance matrix, and others just need to be recorded and
@@ -418,6 +419,7 @@ sample_inits <- function(fit, chains){
   hes <- matrix(hes.vec, ncol=num.pars, nrow=num.pars)
   hybrid_bounded_flag <- readBin(f, "integer", 1)
   scale <- readBin(f, "numeric", num.pars)
+  if(full) return(list(num.pars=num.pars, hes=hes, hbf=hybrid_bounded_flag, scale=scale))
   return(hes)
 }
 
@@ -438,7 +440,11 @@ check_identifiable <- function(model, path=getwd()){
   fit <- .read_mle_fit(model, path)
   hes <- .getADMBHessian(path)
   ev  <-  eigen(hes)
-  WhichBad <-  which( ev$values < sqrt(.Machine$double.eps) )
+  if (any(is.complex(ev$values))){
+    WhichBad <- which( abs(Im(ev$values)) > .Machine$double.eps);
+  } else {
+    WhichBad <- which( ev$values < sqrt(.Machine$double.eps) );
+  }
   if(length(WhichBad)==0){
     message( "All parameters are identifiable" )
   } else {
@@ -839,7 +845,7 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
     ## Test for shortened windows filenames
     ## E.g.: simple_longname.par becomes SIMPLE~1.par only on
     ## Windows and seemingly randomly??
-    ff <- list.files()[grep(x=list.files(), pattern='.par')]
+    ff <- list.files()[grep(x=list.files(), pattern='\\.par')]
     if(length(ff)==1){
       if(.Platform$OS.type == "windows" & length(grep("~", ff))>0){
         warning("It appears a shortened Windows filename exists,",
@@ -849,6 +855,7 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
       warning("Standard .par file ", f, " not found. Trying this one: ", ff)
       f <- ff
     } else if(length(ff)>1){
+      message(ff)
       stop("More than one .par file found in directory. Delete unused ones and try again")
     } else {
       warning("No .par file found so skipping MLE info and parameter names.\nOptimize model to get this.")

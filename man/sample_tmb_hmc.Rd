@@ -26,11 +26,13 @@ sample_tmb_hmc(
 \item{gr}{A function that returns a vector of gradients of the log of
 the posterior density (same as \code{fn}).}
 
-\item{init}{A list of lists containing the initial parameter
-vectors, one for each chain or a function. It is strongly
-recommended to initialize multiple chains from dispersed
-points. A of NULL signifies to use the starting values
-present in the model (i.e., \code{obj$par}) for all chains.}
+\item{init}{Can be either a list containing a vector for each
+chain, a function which returns a vector of parameters, or
+NULL which specifies to use the MLE as stored in the
+admodel.hes file. It is generally recommended to use
+dispersed initial values to improve diagnostic checks
+(starting from the same point makes it less likely to find
+multiple modes).}
 
 \item{L}{The number of leapfrog steps to take. The NUTS algorithm does
 not require this as an input. If \code{L=1} this function will perform

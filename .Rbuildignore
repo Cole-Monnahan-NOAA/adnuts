@@ -7,3 +7,6 @@
 tests/testthat/Rplots.pdf
 
 ^CRAN-RELEASE$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

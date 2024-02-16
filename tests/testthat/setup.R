@@ -10,8 +10,8 @@ skip_reproducibility <- TRUE
 if(Sys.getenv("NOT_CRAN")=='true'){
   oldwd <- getwd()
   setwd('../simple')
-  system("admb simple")
-  system('./simple')
+  system("admb simple", ignore.stdout = TRUE)
+  system('./simple', ignore.stdout = TRUE)
   expect_equal(readLines('simple.par')[2], '# a:') # hack to test something
   dir.create('../simple_long_filename')
   trash <- file.copy('../simple/simple.tpl',
@@ -19,8 +19,8 @@ if(Sys.getenv("NOT_CRAN")=='true'){
   trash <- file.copy('../simple/simple.dat',
                      to='../simple_long_filename/simple_long_filename.dat')
   setwd('../simple_long_filename')
-  system("admb simple_long_filename")
-  system('./simple_long_filename')
+  system("admb simple_long_filename", ignore.stdout = TRUE)
+  system('./simple_long_filename', ignore.stdout = TRUE)
   setwd(oldwd)
 
   ## Clean up files to pass checks locally
@@ -28,6 +28,7 @@ if(Sys.getenv("NOT_CRAN")=='true'){
     withr::defer({
       files <- list.files('../simple', full.names = TRUE)
       ignore <- file.remove(files[-grep('.dat|.tpl', x=files)])
+      ignore <- file.remove('../simple/mceval.dat')
       unlink('../simple_long_filename', TRUE)
       unlink("../simple_chain_1", TRUE)
       unlink("../simple_chain_2", TRUE)

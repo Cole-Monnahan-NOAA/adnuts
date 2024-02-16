@@ -101,13 +101,13 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'  Further control of algorithms can be
 #'   specified with the \code{control} argument.  Elements are:
 #' \describe{
-#' \item{adapt_delta}{The target acceptance rate. D}
+#' \item{adapt_delta}{The target acceptance rate, with values
+#'   closer to 1 forcing smaller step sizes. Defaults to 0.8.  }
 #' \item{metric}{The mass metric to use. Options are: "unit" for a unit diagonal
 #'   matrix; \code{NULL} to estimate a diagonal matrix during warmup; a matrix
 #'   to be used directly (in untransformed space).}
-#' \item{adapt_delta}{Whether adaptation of step size is turned on.}
-#' \item{adapt_mass}{Whether adaptation of mass matrix is turned
-#'   on. Currently only allowed for diagonal metric.}
+#' \item{adapt_mass}{Whether adaptation of diagonal mass matrix is turned
+#'   on.}
 #' \item{adapt_mass_dense}{Whether dense adaptation of mass
 #'   matrix is turned on.}
 #' \item{max_treedepth}{Maximum treedepth for the NUTS algorithm.}
@@ -142,11 +142,13 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #'   directory. Often best to have model files in a separate
 #'   subdirectory, particularly for parallel.
 #' @param iter The number of samples to draw.
-#' @param init A list of lists containing the initial parameter
-#'   vectors, one for each chain or a function. It is strongly
-#'   recommended to initialize multiple chains from dispersed
-#'   points. A of NULL signifies to use the starting values
-#'   present in the model (i.e., \code{obj$par}) for all chains.
+#' @param init Can be either a list containing a vector for each
+#'   chain, a function which returns a vector of parameters, or
+#'   NULL which specifies to use the MLE as stored in the
+#'   admodel.hes file. It is generally recommended to use
+#'   dispersed initial values to improve diagnostic checks
+#'   (starting from the same point makes it less likely to find
+#'   multiple modes).
 #' @param chains The number of chains to run.
 #' @param warmup The number of warmup iterations.
 #' @param seeds A vector of seeds, one for each chain.
@@ -155,7 +157,10 @@ sample_rwm <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, warm
 #' @param mceval Whether to run the model with \code{-mceval} on
 #'   samples from merged chains.
 #' @param duration The number of minutes after which the model
-#'   will quit running.
+#'   will quit running. It is recommended to set the warmup
+#'   carefully and iter higher than expected so it runs through
+#'   duration. This usually results in chains with different
+#'   lengths, so the minimum is taken across them all.
 #' @param parallel A deprecated argument, use cores=1 for serial
 #'   execution or cores>1 for parallel (default is to parallel
 #'   with cores equal to the available-1)
@@ -389,8 +394,12 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   }
   iters <- unlist(lapply(mcmc.out, function(x) dim(x$samples)[1]))
   if(any(iters!=iter/thin)){
-    N <- min(iters)
-    warning(paste("Variable chain lengths, truncating to minimum=", N))
+    ## This can happen if 'duration' arg used, or if chain errors
+    ## out.
+    N <- floor(min(iters)/thin)
+    warning(paste0("Incomplete chain lengths, iter=(",
+                   paste0(iters, collapse=','),
+                   "), truncating to minimum after thinning=", N))
   } else {
     N <- iter/thin
   }
@@ -404,8 +413,8 @@ sample_admb <- function(model, path=getwd(), iter=2000, init=NULL, chains=3, war
   for(i in 1:chains){
     samples[,i,] <- mcmc.out[[i]]$samples[1:N,]
     if(!skip_unbounded)
-      samples.unbounded[,i,] <- cbind(mcmc.out[[i]]$unbounded[1:N,],
-                                      mcmc.out[[i]]$samples[,1+length(par.names)])
+      samples.unbounded[,i,] <-
+        cbind(mcmc.out[[i]]$unbounded[1:N,], mcmc.out[[i]]$samples[1:N,1+length(par.names)])
   }
   if(algorithm=="NUTS")
     sampler_params <-
