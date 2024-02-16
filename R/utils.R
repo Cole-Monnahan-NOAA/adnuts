@@ -488,6 +488,7 @@ check_identifiable <- function(model, path=getwd()){
   ## Rotation done using choleski decomposition
   ## First case is a dense mass matrix
   if(is.matrix(M)){
+    J <- NULL
     chd <- t(chol(M))               # lower triangular Cholesky decomp.
     chd.inv <- solve(chd)               # inverse
     ## Define rotated fn and gr functions
@@ -496,6 +497,7 @@ check_identifiable <- function(model, path=getwd()){
     ## Now rotate back to "x" space using the new mass matrix M
     x.cur <- as.numeric(chd.inv %*% y.cur)
   } else if(is.vector(M)){
+    J <- NULL
     chd <- sqrt(M)
     fn2 <- function(x) fn(chd * x)
     gr2 <- function(x) as.vector(gr(chd * x) ) * chd
@@ -503,13 +505,41 @@ check_identifiable <- function(model, path=getwd()){
     ## vector here. Note the big difference in efficiency without the
     ## matrix operations.
     x.cur <- (1/chd) * y.cur
+  } else if(is(M,"Matrix")){
+    warning( "HIGHLY EXPERIMENTAL" )
+    # M is actually Q, i.e., the inverse-mass
+    # Antidiagonal matrix JJ = I
+    J = Matrix::sparseMatrix( i=1:nrow(M), j=nrow(M):1 )
+    #chd <- Cholesky(M, super=FALSE, perm=FALSE)
+    #chd <- Matrix::Cholesky(M, super=TRUE, perm=FALSE)
+    chd <- Matrix::Cholesky(J%*%M%*%J, super=TRUE, perm=FALSE) # perm
+    Linv_times_x = function(chd,x){
+      as.numeric(J%*%solve(chd, solve(chd, J%*%x, system="Lt"), system="Pt"))
+    }
+    x_times_Linv = function(chd,x){
+      #x %*% chol()
+      as.numeric(J%*%solve(chd, solve(chd, t(x%*%J), system="L"), system="Pt"))
+    }
+    fn2 <- function(x){
+      Linv_x = Linv_times_x(chd, x)
+      fn(Linv_x)
+    }
+    gr2 <- function(x){
+      Linv_x = Linv_times_x(chd, x)
+      grad = gr( Linv_x )
+      as.vector(  x_times_Linv(chd, grad) )
+    }
+    ## Now rotate back to "x" space using the new mass matrix M
+    #  solve(t(chol(solve(M)))) ~~ IS EQUAL TO ~~ J%*%chol(M)%*%J
+    # J%*%chol(J%*%prec%*%J) %*% J%*%x
+    x.cur <- as.numeric(J%*%chol(J%*%M%*%J) %*% J%*%y.cur)
   } else {
-    stop("Mass matrix must be vector or matrix")
+    stop("Mass matrix must be vector or matrix or sparseMatrix")
   }
   ## Redefine these functions
   ## Need to adjust the current parameters so the chain is
   ## continuous. First rotate to be in Y space.
-  return(list(gr2=gr2, fn2=fn2, x.cur=x.cur, chd=chd))
+  return(list(gr2=gr2, fn2=fn2, x.cur=x.cur, chd=chd, J=J))
 }
 
 ## Update the control list.

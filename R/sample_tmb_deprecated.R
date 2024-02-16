@@ -245,8 +245,8 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   npar <- length(init)
   M <- control$metric
   if(is.null(M)) M <- rep(1, len=npar)
-  if( !(is.vector(M) | is.matrix(M)) )
-    stop("Metric must be vector or matrix")
+  if( !(is.vector(M) | is.matrix(M) | is(M,"Matrix")) )
+    stop("Metric must be vector or matrix or Matrix")
   max_td <- control$max_treedepth
   adapt_delta <- control$adapt_delta
   adapt_mass <- control$adapt_mass
@@ -265,6 +265,8 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
   fn2 <- rotation$fn2; gr2 <- rotation$gr2
   theta.cur <- rotation$x.cur
   chd <- rotation$chd
+  J <- rotation$J
+
   sampler_params <-
     matrix(numeric(0), nrow=iter, ncol=6, dimnames=list(NULL,
       c("accept_stat__", "stepsize__", "treedepth__", "n_leapfrog__",
@@ -292,8 +294,15 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
     ## Initialize this iteration from previous in case divergence at first
     ## treebuilding. If successful trajectory they are overwritten
     theta.minus <- theta.plus <- theta.cur
-    theta.out[m,] <-
-      if(is.vector(M)) chd*theta.cur else t(chd %*% theta.cur)
+    if(is.vector(M)){
+      theta.out[m,] <- chd*theta.cur
+    }else if(is.matrix(M)){
+      theta.out[m,] <- t(chd %*% theta.cur)
+    }else if(is(M,"Matrix")){
+      theta.out[m,] <- t(as.numeric(J%*%solve(chd, solve(chd, J%*%theta.cur, system="Lt"), system="Pt")))
+    }else{
+      stop("M not viable")
+    }
     lp[m] <- if(m==1) fn2(theta.cur) else lp[m-1]
     r.cur <- r.plus <- r.minus <-  rnorm(npar,0,1)
     H0 <- .calculate.H(theta=theta.cur, r=r.cur, fn=fn2)
@@ -328,8 +337,17 @@ sample_tmb_nuts <- function(iter, fn, gr, init, warmup=floor(iter/2),
           theta.cur <- res$theta.prime
           lp[m] <- fn2(theta.cur)
           ## Rotate parameters
-          theta.out[m,] <-
-            if(is.vector(M)) chd*theta.cur else t(chd %*% theta.cur)
+          #theta.out[m,] <-
+          #  if(is.vector(M)) chd*theta.cur else t(chd %*% theta.cur)
+          if(is.vector(M)){
+            theta.out[m,] <- chd*theta.cur
+          }else if(is.matrix(M)){
+            theta.out[m,] <- t(chd %*% theta.cur)
+          }else if(is(M,"Matrix")){
+            theta.out[m,] <- t(as.numeric(J%*%solve(chd, solve(chd, J%*%theta.cur, system="Lt"), system="Pt")))
+          }else{
+            stop("M not viable")
+          }
         }
       }
       n <- n+res$n
