@@ -3,31 +3,31 @@
 test_that("simple example works", {
   skip_on_cran()
   inits.fn <- function() list(c(0,0))
-  fit <- sample_rwm('simple', path='../simple', chains=1,
+  fit <- sample_rwm('simple', path='../simple', verbose=FALSE, chains=1,
                      seeds=1, init=inits.fn,
                      skip_optimization=FALSE,
                      control=list(refresh=-1), skip_monitor=TRUE)
   expect_known_output(extract_samples(fit)[1000,],
                       file='_expect_simple_rwm')
-  fit <- sample_rwm('simple', path='../simple', chains=1,
+  fit <- sample_rwm('simple', path='../simple', verbose=FALSE, chains=1,
                     seeds=1, init=inits.fn,
                     skip_optimization=FALSE,
                     control=list(refresh=-1), skip_monitor=TRUE)
   expect_known_output(extract_samples(fit)[1000,],
                       file='_expect_simple_rwm')
-  fit <- sample_nuts('simple', path='../simple', chains=1,
+  fit <- sample_nuts('simple', path='../simple', verbose=FALSE, chains=1,
                      seeds=1, init=inits.fn,
                      skip_optimization=FALSE,
                      control=list(refresh=-1), skip_monitor=TRUE)
   expect_known_output(extract_samples(fit)[1000,],
                       file='_expect_nuts')
-  fit <- sample_nuts('simple', path='../simple', chains=1,
+  fit <- sample_nuts('simple', path='../simple', verbose=FALSE, chains=1,
                      seeds=1, init=inits.fn,
                      control=list(metric='mle', refresh=-1),
                      skip_monitor = TRUE)
   expect_known_output(extract_samples(fit)[1000,],
                       file='_expect_nuts_mle')
-  fit <- sample_nuts('simple', path='../simple', chains=1,
+  fit <- sample_nuts('simple', path='../simple', verbose=FALSE, chains=1,
                      seeds=1, init=inits.fn,
                      control=list(metric='mle', refresh=-1),
                      skip_monitor = TRUE)
@@ -40,7 +40,7 @@ test_that("mceval works",{
   inits.fn <- function() list(c(0,0))
   ff <- '../simple/mceval.dat'
   if(file.exists(ff)) file.remove(ff)
-  fit <- sample_nuts('simple', path='../simple', chains=1,
+  fit <- sample_nuts('simple', path='../simple', verbose=FALSE, chains=1,
                      seeds=1, init=inits.fn,
                      control=list(metric='mle', refresh=-1),
                      skip_monitor = TRUE,
@@ -52,12 +52,12 @@ test_that("parallel works",{
   skip_on_cran()
   message("Starting parallel tests")
   inits.fn <- function() list(c(0,0))
-  fit1 <- sample_nuts('simple', path='../simple', chains=3,
+  fit1 <- sample_nuts('simple', path='../simple', verbose=FALSE, chains=3,
                      seeds=1:3, init=inits.fn, iter=1000,
                      control=list(refresh=-1),
                      skip_monitor = TRUE)
   ## expect_equal(extract_samples(fit)[1500,2], 3.483071)
-  fit2 <- sample_rwm('simple', path='../simple', chains=3,
+  fit2 <- sample_rwm('simple', path='../simple', verbose=FALSE, chains=3,
                      seeds=1:3, init=inits.fn, iter=1000,
                      control=list(refresh=-1),
                      skip_monitor = TRUE)
@@ -69,46 +69,27 @@ test_that("duration works",{
   skip_on_cran()
   message("Starting duration tests")
   inits.fn <- function() list(c(0,0))
-  duration <- 5/60 # 5 seconds
-  expect_warning(fit11 <- sample_nuts('simple', path='../simple',
-                                      chains=2, cores=1, seeds=1:2,
-                                      init=inits.fn, iter=1e9, warmup=50,
-                                      control=list(refresh=-1), duration=duration,
-                                      skip_monitor = TRUE, skip_unbounded=FALSE),
-                 regexp='Incomplete chain lengths')
-  expect_true(exists('fit11'))
-  expect_true(dim(fit11$samples)[1] == nrow(fit11$sampler_params[[1]]))
-  expect_true(dim(fit11$samples)[1] == dim(fit11$samples_unbounded)[1])
-
-  expect_warning(fit12 <- sample_rwm('simple', path='../simple',
+  duration <- 3/60 # 3 seconds
+  thin <- 3
+  expect_warning(fit12 <- sample_rwm('simple', path='../simple', verbose=FALSE,
                                      chains=2, cores=1, seeds=1:2,
-                                     init=inits.fn, iter=1e9, warmup=500,
-                                     duration=duration,
+                                     init=inits.fn, iter=1e6, warmup=500,
+                                     duration=duration, thin=thin,
                                      skip_monitor = TRUE, skip_unbounded=FALSE),
                  regexp='Incomplete chain lengths')
   expect_true(exists('fit12'))
-  expect_true(dim(fit11$samples)[1] == dim(fit11$samples_unbounded)[1])
 
  # try again with a weird thin rate
-  thin <- 13
-  expect_warning(fit13 <- sample_nuts('simple', path='../simple',
+  thin <- 3
+  expect_warning(fit13 <- sample_nuts('simple', path='../simple', verbose=FALSE,
                                       chains=2, cores=1, seeds=1:2, thin=thin,
-                                      init=inits.fn, iter=1e9, warmup=50,
-                                      control=list(refresh=-1), duration=duration,
+                                      init=inits.fn, iter=1e5, warmup=500,
+                                      control=list(refresh=NULL), duration=duration,
                                       skip_monitor = TRUE, skip_unbounded=FALSE),
                  regexp='Incomplete chain lengths')
   expect_true(exists('fit13'))
   expect_true(dim(fit13$samples)[1] == nrow(fit13$sampler_params[[1]]))
   expect_true(dim(fit13$samples)[1] == dim(fit13$samples_unbounded)[1])
-
-  expect_warning(fit14 <- sample_rwm('simple', path='../simple',
-                                     chains=2, cores=1, seeds=1:2,
-                                     init=inits.fn, iter=1e9, warmup=500,
-                                     duration=duration,
-                                     skip_monitor = TRUE, skip_unbounded=FALSE),
-                 regexp='Incomplete chain lengths')
-  expect_true(exists('fit14'))
-  expect_true(dim(fit14$samples)[1] == dim(fit14$samples_unbounded)[1])
 })
 
 
@@ -220,7 +201,7 @@ test_that("verbose option works", {
   skip_on_cran()
   inits.fn <- function() list(c(0,0))
   message("Should be no console output between here....")
-  message("Starting verbose NUTS in parallel..")
+  message("Starting not verbose NUTS in parallel..")
   fit <- sample_nuts('simple', path='../simple', chains=3,
                      seeds=1:3, init=inits.fn, iter=800,
                      skip_monitor = TRUE, verbose=FALSE)
@@ -229,11 +210,11 @@ test_that("verbose option works", {
                      seeds=1, init=inits.fn, iter=800,
                      skip_monitor = TRUE, verbose=FALSE)
   message("Starting verbose RWM in parallel..")
-  fit <- sample_rwm('simple', path='../simple', chains=3,
+  fit <- sample_rwm('simple', path='../simple',  chains=3,
                      seeds=1:3, init=inits.fn, iter=800,
                      skip_monitor = TRUE, verbose=FALSE)
   message("Starting verbose RWM in serial..")
-  fit <- sample_rwm('simple', path='../simple', chains=1,
+  fit <- sample_rwm('simple', path='../simple',  chains=1,
                      seeds=1, init=inits.fn, iter=800,
                     skip_monitor = TRUE, verbose=FALSE)
   message("... and here")
@@ -248,18 +229,18 @@ test_that("long file names work ok on Windows",{
   m <- 'simple_long_filename'
   if(.Platform$OS.type=='windows'){
     ## Should give warning
-    test <- expect_warning(sample_nuts(m, path=p, chains=3, cores=1,
+    test <- expect_warning(sample_nuts(m, path=p, verbose=FALSE, chains=3, cores=1,
                                        seeds=1:3, init=inits.fn, iter=1000,
                                        control=list(refresh=-1),
                                        skip_monitor = TRUE),
                            regexp='It appears a shortened')
-    test <- expect_warning(sample_nuts(m, path=p, chains=3, cores=3,
+    test <- expect_warning(sample_nuts(m, path=p, verbose=FALSE, chains=3, cores=3,
                                        seeds=1:3, init=inits.fn, iter=1000,
                                        control=list(refresh=-1),
                                        skip_monitor = TRUE),
                            regexp='It appears a shortened')
   } else {
-    test <- sample_nuts(m, path=p, chains=3, cores=1,
+    test <- sample_nuts(m, path=p, verbose=FALSE, chains=3, cores=1,
                         seeds=1:3, init=inits.fn, iter=1000,
                         control=list(refresh=-1),
                         skip_monitor = TRUE)

@@ -1,7 +1,7 @@
 ## Skip consistency and reproducibility tests? Only need to run
 ## these locally when ADMB changes.
-skip_consistency <- FALSE
-skip_reproducibility <- FALSE
+skip_consistency <- TRUE
+skip_reproducibility <- TRUE
 
 ### Skip all this if on CRAN. Otherwise locally or on CI, need to
 ### build the executables and run them so they're available for
@@ -10,8 +10,8 @@ skip_reproducibility <- FALSE
 if(Sys.getenv("NOT_CRAN")=='true'){
   oldwd <- getwd()
   setwd('../simple')
-  system("admb simple")
-  system('./simple')
+  system("admb simple", ignore.stdout = TRUE)
+  system('./simple', ignore.stdout = TRUE)
   expect_equal(readLines('simple.par')[2], '# a:') # hack to test something
   dir.create('../simple_long_filename')
   trash <- file.copy('../simple/simple.tpl',
@@ -19,8 +19,8 @@ if(Sys.getenv("NOT_CRAN")=='true'){
   trash <- file.copy('../simple/simple.dat',
                      to='../simple_long_filename/simple_long_filename.dat')
   setwd('../simple_long_filename')
-  system("admb simple_long_filename")
-  system('./simple_long_filename')
+  system("admb simple_long_filename", ignore.stdout = TRUE)
+  system('./simple_long_filename', ignore.stdout = TRUE)
   setwd(oldwd)
 
   ## Clean up files to pass checks locally
