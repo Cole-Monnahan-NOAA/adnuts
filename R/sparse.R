@@ -11,13 +11,12 @@
 #' @export
 sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               control=NULL, seed=NULL){
-  source("c:/Users/cole.monnahan/adnuts/R/utils.R")
   iter <- iter-warmup
   sdr <- sdreport(obj, getJointPrecision=TRUE)
   Q <- sdr$jointPrecision
   Qinv <- solve(Q)
   init <- obj$env$last.par.best
-    ## Make parameter names unique if vectors exist
+  ## Make parameter names unique if vectors exist
   parnames <- names(init)
   parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
     temp <- parnames[parnames==x]
@@ -39,9 +38,8 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   invsparse <- function(theta.cur){
     J <- rotation$J
     chd <- rotation$chd
-    t(as.numeric(J%*%solve(chd, solve(chd, J%*%theta.cur, system="Lt"), system="Pt")))
+    t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%theta.cur, system="Lt"), system="Pt")))
   }
-
   globals <- list(obj = obj2, mydll=mydll, rotation=rotation)
   fit <- stan_sample(fn=fsparse, par_inits=initssparse,
                      grad_fun=gsparse, num_samples=iter,
@@ -52,6 +50,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                      num_chains = chains, seed = seed)
 
   fit2 <- as.tmbfit(fit, mle=mle, invf=invsparse)
+  print(fit2)
   fit2
 }
 
@@ -89,7 +88,7 @@ get_post <- function(x, invf, parnames, array=FALSE) {
 as.tmbfit <- function(x, mle, invf){
   parnames <- mle$parnames
   ## move lp__ to end to match order of draws
-  mon <- summary(x)
+  mon <- StanEstimators::summary(x)
   mon$variable <- c('lp__', parnames)
   mon <- rbind(mon[-1,], mon[1,])
   mon$n_eff <- mon$ess_tail

@@ -522,11 +522,11 @@ check_identifiable <- function(model, path=getwd()){
     #chd <- Matrix::Cholesky(M, super=TRUE, perm=FALSE)
     chd <- Matrix::Cholesky(J%*%M%*%J, super=TRUE, perm=FALSE) # perm
     Linv_times_x = function(chd,x){
-      as.numeric(J%*%solve(chd, solve(chd, J%*%x, system="Lt"), system="Pt"))
+      as.numeric(J%*% Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt"))
     }
     x_times_Linv = function(chd,x){
       #x %*% chol()
-      as.numeric(J%*%solve(chd, solve(chd, t(x%*%J), system="L"), system="Pt"))
+      as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, Matrix::t(x%*%J), system="L"), system="Pt"))
     }
     fn2 <- function(x){
       Linv_x = Linv_times_x(chd, x)
