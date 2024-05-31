@@ -164,6 +164,7 @@ sample_tmb <- function(obj, iter=2000, init, chains=3, seeds=NULL,
     if(file.exists('mcmc_progress.txt')) trash <- file.remove('mcmc_progress.txt')
     snowfall::sfInit(parallel=TRUE, cpus=cores, slaveOutfile='mcmc_progress.txt')
     ## snowfall::sfLibrary("TMB")
+ ##    snowfall::sfLibrary("adnuts")
     snowfall::sfExportAll()
     on.exit(snowfall::sfStop())
     message("Starting parallel chains... ")
@@ -989,7 +990,7 @@ sample_tmb_hmc <-
 .update_control_tmb <- function(control){
   default <- list(adapt_delta=0.8, metric=NULL, stepsize=NULL,
                   adapt_mass=TRUE, max_treedepth=12, w1=75, w2=50, w3=25)
-  if(is.matrix(control$metric) & !is.null(control$adapt_mass)){
+  if( (is(control$metric, "Matrix") || is.matrix(control$metric)) & !is.null(control$adapt_mass)){
     if(control$adapt_mass==TRUE){
       warning("Mass matrix adaptation disabled if metric is a matrix")
     }

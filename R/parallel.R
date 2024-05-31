@@ -45,6 +45,9 @@ sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
 ## A wrapper for running TMB models in parallel
 sample_tmb_parallel <-  function(parallel_number, obj, init, path,
                                  algorithm, lower, upper, seed, laplace, ...){
+library(Matrix)
+  source("c:/Users/cole.monnahan/adnuts/R/utils.R")
+  source("c:/Users/cole.monnahan/adnuts/R/sample_tmb_deprecated.R")
   ## Each node starts in a random work directory. Rebuild TMB model obj so
   ## can link it in each session.
   setwd(path)
@@ -52,10 +55,13 @@ sample_tmb_parallel <-  function(parallel_number, obj, init, path,
   ## Use 'shape' attribute to obtain full length of 'map'ped parameters.
   map.index <- which(names(obj$env$parameters) %in% names(obj$env$map))
   new.par <- obj$env$parameters
-  new.par[map.index] <- lapply(obj$env$parameters[map.index], function(x) attr(x, "shape"))
+  new.par[map.index] <- lapply(obj$env$parameters[map.index],
+                               function(x) attr(x, "shape"))
+  if(obj$env$DLL!='RTMB'){
   obj <- TMB::MakeADFun(data=obj$env$data, parameters=new.par, random=obj$env$random,
                    map=obj$env$map, DLL=obj$env$DLL, silent=TRUE)
   obj$env$beSilent()
+  }
 
   ## Ignore parameters declared as random? Borrowed from tmbstan.
   if(laplace){
