@@ -722,7 +722,7 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
     its <- 1:length(ind)
   } else{
     ind <- -(1:fit$warmup)
-    its <- (1:length(ind)) + fit$warmup
+    its <- (1:nrow(x[[1]]))[ind]
   }
   y <- do.call(rbind, lapply(1:length(x), function(i)
     cbind(chain=i, iteration=its, x[[i]][ind,])))
