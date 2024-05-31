@@ -484,12 +484,13 @@ check_identifiable <- function(model, path=getwd()){
   return(pars)
 }
 
-## Update algorithm for mass matrix.
-##
-## @param fn The current fn function.
-## @param gr The current gr function
-## @param y.cur The current parameter vector in unrotated (Y) space.
-## @param M The new mass matrix
+#' Update algorithm for mass matrix.
+#'
+#' @param fn The current fn function.
+#' @param gr The current gr function
+#' @param y.cur The current parameter vector in unrotated (Y) space.
+#' @param M The new mass matrix
+#' @export
 .rotate_space <- function(fn, gr, M,  y.cur){
   ## Rotation done using choleski decomposition
   ## First case is a dense mass matrix
@@ -512,7 +513,8 @@ check_identifiable <- function(model, path=getwd()){
     ## matrix operations.
     x.cur <- (1/chd) * y.cur
   } else if(is(M,"Matrix")){
-    warning( "HIGHLY EXPERIMENTAL" )
+    warning( "Use of Q is highly experimental still" )
+    stopifnot(require(Matrix))
     # M is actually Q, i.e., the inverse-mass
     # Antidiagonal matrix JJ = I
     J = Matrix::sparseMatrix( i=1:nrow(M), j=nrow(M):1 )
