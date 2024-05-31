@@ -101,10 +101,12 @@ as.tmbfit <- function(x, mle, invf){
   for(chain in 1:max(sp$.chain)){
     spl[[chain]] <- as.matrix(sp[sp$.chain==chain,1:6])
   }
+  timing <- sapply(x@timing, function(x) unlist(x))
   x <- list(samples=post, sampler_params=spl, mle=mle,
             monitor=mon, model='test',
             max_treedepth=x@metadata$max_depth,
             warmup=as.numeric(x@metadata$num_warmup),
+            time.warmup=timing[1,], time.total=timing[1,]+timing[,2],
             ## iter=as.numeric(x@metadata$num_samples)+as.numeric(x@metadata$num_warmup),
             algorithm='NUTS')
   adfit(x)
