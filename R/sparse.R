@@ -12,6 +12,7 @@
 sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               control=NULL, seed=NULL){
   iter <- iter-warmup
+  obj$env$beSilent()
   sdr <- sdreport(obj, getJointPrecision=TRUE)
   Q <- sdr$jointPrecision
   Qinv <- solve(Q)
@@ -95,7 +96,7 @@ as.tmbfit <- function(x, mle, invf){
   mon$Rhat <- mon$rhat
   ## prepare objects to use the pairs_admb function
   post <- get_post(x, invf, parnames=parnames, TRUE)
-  sp <- x@diagnostics
+  sp <- as.data.frame(x@diagnostics)
   spl <- list()
   for(chain in 1:max(sp$.chain)){
     spl[[chain]] <- as.matrix(sp[sp$.chain==chain,1:6])
@@ -104,7 +105,7 @@ as.tmbfit <- function(x, mle, invf){
             monitor=mon, model='test',
             max_treedepth=x@metadata$max_depth,
             warmup=as.numeric(x@metadata$num_warmup),
-            iter=as.numeric(x@metadata$num_samples),
+            ## iter=as.numeric(x@metadata$num_samples)+as.numeric(x@metadata$num_warmup),
             algorithm='NUTS')
   adfit(x)
 }

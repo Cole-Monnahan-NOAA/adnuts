@@ -513,7 +513,7 @@ check_identifiable <- function(model, path=getwd()){
     ## matrix operations.
     x.cur <- (1/chd) * y.cur
   } else if(is(M,"Matrix")){
-    warning( "Use of Q is highly experimental still" )
+    ##  warning( "Use of Q is highly experimental still" )
     stopifnot(require(Matrix))
     # M is actually Q, i.e., the inverse-mass
     # Antidiagonal matrix JJ = I
@@ -756,8 +756,12 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
     ind <- -(1:fit$warmup)
     its <- (1:nrow(x[[1]]))[ind]
   }
-  y <- do.call(rbind, lapply(1:length(x), function(i)
-    cbind(chain=i, iteration=its, x[[i]][ind,])))
+  y <- do.call(rbind, lapply(1:length(x), function(i){
+    if(length(its) != NROW(x[[i]][ind,]))
+      warning("Length mismatch in extract_sampler_params: iterations=", length(its),
+              " and draws=", NROW(x[[i]][ind,]))
+    cbind(chain=i, iteration=its, x[[i]][ind,])
+  }))
   return(invisible(as.data.frame(y)))
 }
 
