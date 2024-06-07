@@ -503,6 +503,9 @@ check_identifiable <- function(model, path=getwd()){
     gr2 <- function(x) {as.vector( gr(chd %*% x) %*% chd )}
     ## Now rotate back to "x" space using the new mass matrix M
     x.cur <- as.numeric(chd.inv %*% y.cur)
+    finv <- function(x){
+      t(chd %*% x)
+    }
   } else if(is.vector(M)){
     J <- NULL
     chd <- sqrt(M)
@@ -512,6 +515,9 @@ check_identifiable <- function(model, path=getwd()){
     ## vector here. Note the big difference in efficiency without the
     ## matrix operations.
     x.cur <- (1/chd) * y.cur
+    finv <- function(x){
+      chd*x
+    }
   } else if(is(M,"Matrix")){
     ##  warning( "Use of Q is highly experimental still" )
     stopifnot(require(Matrix))
@@ -541,13 +547,16 @@ check_identifiable <- function(model, path=getwd()){
     #  solve(t(chol(solve(M)))) ~~ IS EQUAL TO ~~ J%*%chol(M)%*%J
     # J%*%chol(J%*%prec%*%J) %*% J%*%x
     x.cur <- as.numeric(J%*%chol(J%*%M%*%J) %*% J%*%y.cur)
+    finv <- function(x){
+      t(as.numeric(J%*%solve(chd, solve(chd, J%*%x, system="Lt"), system="Pt")))
+    }
   } else {
     stop("Mass matrix must be vector or matrix or sparseMatrix")
   }
   ## Redefine these functions
   ## Need to adjust the current parameters so the chain is
   ## continuous. First rotate to be in Y space.
-  return(list(gr2=gr2, fn2=fn2, x.cur=x.cur, chd=chd, J=J))
+  return(list(gr2=gr2, fn2=fn2, finv=finv, x.cur=x.cur, chd=chd, J=J))
 }
 
 ## Update the control list.
