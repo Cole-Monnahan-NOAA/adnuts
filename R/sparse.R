@@ -10,7 +10,8 @@
 #' @return A fitted MCMC object of class 'adfit'
 #' @export
 sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
-                              control=NULL, seed=NULL, metric=c('sparse','dense','diag')){
+                              control=NULL, seed=NULL,
+                              metric=c('sparse','dense','diag')){
   iter <- iter-warmup
   metric <- match.arg(metric)
   obj$env$beSilent()
@@ -35,6 +36,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   ## rebuild without random effects
   mydll <- unclass(getLoadedDLLs()[[obj$env$DLL]])$path
   isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
+  message("Rebuilding obj without random effects...")
   if(!isRTMB){
     obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
                     map=obj$env$map,
@@ -58,6 +60,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   } else {
     packages = c("RTMB", "Matrix")
   }
+  message("Starting MCMC sampling...")
   fit <- stan_sample(fn=fsparse, par_inits=initssparse,
                      grad_fun=gsparse, num_samples=iter,
                      num_warmup=warmup,
@@ -65,9 +68,23 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                      adapt_delta=control$adapt_delta,
                      parallel_chains=cores, save_warmup=TRUE,
                      num_chains = chains, seed = seed)
-
   fit2 <- as.tmbfit(fit, mle=mle, invf=finv)
   fit2$time.Q <- time.Q; fit2$time.Qinv <- time.Qinv
+  ## gradient timings to check for added overhead
+  if(require(microbenchmark)){
+    bench <- microbenchmark(obj2$gr(init),
+                            gsparse(initssparse),
+                            times=500, unit='s')
+    fit2$time.gr <- summary(bench)$median[1]
+    fit2$time.gr2 <- summary(bench)$median[2]
+  } else {
+    warning("Package microbenchmark required to do accurate gradient timings, using system.time() instead")
+    fit2$time.gr <-
+      as.numeric(system.time(trash <- replicate(1000, obj2$gr(init)))[3])
+    fit2$time.gr2 <-
+      as.numeric(system.time(trash <- replicate(1000, gsparse(initssparse)))[3])
+  }
+  fit2$metric <- metric
   print(fit2)
   fit2
 }
@@ -124,8 +141,10 @@ as.tmbfit <- function(x, mle, invf){
             par_names=mle$parnames,
             max_treedepth=x@metadata$max_depth,
             warmup=as.numeric(x@metadata$num_warmup),
-            time.warmup=timing[1,], time.total=timing[1,]+timing[,2],
+            time.warmup=timing[1,], time.total=timing[1,]+timing[2,],
             ## iter=as.numeric(x@metadata$num_samples)+as.numeric(x@metadata$num_warmup),
             algorithm='NUTS')
   adfit(x)
 }
+
+
