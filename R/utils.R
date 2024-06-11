@@ -548,7 +548,7 @@ check_identifiable <- function(model, path=getwd()){
     # J%*%chol(J%*%prec%*%J) %*% J%*%x
     x.cur <- as.numeric(J%*%chol(J%*%M%*%J) %*% J%*%y.cur)
     finv <- function(x){
-      t(as.numeric(J%*%solve(chd, solve(chd, J%*%x, system="Lt"), system="Pt")))
+      t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt")))
     }
   } else {
     stop("Mass matrix must be vector or matrix or sparseMatrix")
