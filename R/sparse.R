@@ -11,20 +11,23 @@
 #' @export
 sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               control=NULL, seed=NULL,
-                              metric=c('sparse','dense','diag')){
+                              init=c('last.par.best', 'random'),
+                              metric=c('sparse','dense','diag', 'unit')){
   iter <- iter-warmup
   metric <- match.arg(metric)
+  init <- match.arg(init)
   obj$env$beSilent()
   message("Getting Q...")
   time.Q <- as.numeric(system.time(sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
   Q <- sdr$jointPrecision
   message("Inverting Q...")
   time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
-  init <- obj$env$last.par.best
+  init.mle <- obj$env$last.par.best
   if(metric=='dense') Q <- as.matrix(Qinv)
   if(metric=='diag') Q <- as.numeric(diag(Qinv))
+  if(metric=='unit') Q <- rep(1, nrow(Q))
   ## Make parameter names unique if vectors exist
-  parnames <- names(init)
+  parnames <- names(init.mle)
   parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
     temp <- parnames[parnames==x]
     if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
@@ -49,10 +52,14 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                             random=NULL, silent=TRUE,
                             DLL=obj$env$DLL)
   }
-  rotation <- .rotate_space(fn=obj2$fn, gr=obj2$gr, M=Q, y.cur=init)
+  rotation <- .rotate_space(fn=obj2$fn, gr=obj2$gr, M=Q, y.cur=init.mle)
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
-  initssparse <- rotation$x.cur
+  inits <- rotation$x.cur
+  if(init=='random'){
+    if(!is.null(seed)) set.seed(seed)
+    inits <- as.numeric(rotation$x.cur + mvtnorm::rmvt(n=1, sigma=diag(length(inits)), df=1))
+  }
   finv <- rotation$finv
   globals <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
   if(!isRTMB){
@@ -61,7 +68,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     packages = c("RTMB", "Matrix")
   }
   message("Starting MCMC sampling...")
-  fit <- stan_sample(fn=fsparse, par_inits=initssparse,
+  fit <- stan_sample(fn=fsparse, par_inits=inits,
                      grad_fun=gsparse, num_samples=iter,
                      num_warmup=warmup,
                      globals = globals, packages=packages,
@@ -72,17 +79,17 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   fit2$time.Q <- time.Q; fit2$time.Qinv <- time.Qinv
   ## gradient timings to check for added overhead
   if(require(microbenchmark)){
-    bench <- microbenchmark(obj2$gr(init),
-                            gsparse(initssparse),
+    bench <- microbenchmark(obj2$gr(inits),
+                            gsparse(inits),
                             times=500, unit='s')
     fit2$time.gr <- summary(bench)$median[1]
     fit2$time.gr2 <- summary(bench)$median[2]
   } else {
     warning("Package microbenchmark required to do accurate gradient timings, using system.time() instead")
     fit2$time.gr <-
-      as.numeric(system.time(trash <- replicate(1000, obj2$gr(init)))[3])
+      as.numeric(system.time(trash <- replicate(1000, obj2$gr(inits)))[3])
     fit2$time.gr2 <-
-      as.numeric(system.time(trash <- replicate(1000, gsparse(initssparse)))[3])
+      as.numeric(system.time(trash <- replicate(1000, gsparse(inits)))[3])
   }
   fit2$metric <- metric
   print(fit2)

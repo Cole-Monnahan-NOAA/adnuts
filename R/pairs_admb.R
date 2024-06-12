@@ -1,3 +1,4 @@
+
 #' Plot pairwise parameter posteriors and optionally the MLE points and
 #' confidence ellipses.
 #'
@@ -6,6 +7,8 @@
 #'   representing which parameters to subset. Useful if the model
 #'   has a larger number of parameters and you just want to show
 #'   a few key ones.
+#' @param inc_warmup Whether to include the warmup samples or not
+#'   (default).
 #' @param label.cex Control size of outer and diagonal labels (default 1)
 #' @param order The order to consider the parameters. Options are
 #'   NULL (default) to use the order declared in the model, or
@@ -54,7 +57,7 @@
 #' pairs_admb(fit, pars=1:2, order='slow')
 #' pairs_admb(fit, pars=1:2, order='fast')
 #'
-pairs_admb <- function(fit, order=NULL,
+pairs_admb <- function(fit, order=NULL, inc_warmup=FALSE,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        pars=NULL, label.cex=.8, limits=NULL,
@@ -67,10 +70,19 @@ pairs_admb <- function(fit, order=NULL,
   } else {
     mle <- fit$mle
   }
-  posterior <- extract_samples(fit, inc_lp=TRUE, unbounded=unbounded)
-  chains <- rep(1:dim(fit$samples)[2], each=dim(fit$samples)[1]-fit$warmup)
+  posterior <- extract_samples(fit, inc_lp=TRUE,
+                               inc_warmup=inc_warmup,
+                               unbounded=unbounded)
+  if(!inc_warmup){
+    chains <- rep(1:dim(fit$samples)[2],
+                  each=dim(fit$samples)[1]-fit$warmup)
+  } else {
+    chains <- rep(1:dim(fit$samples)[2],
+                  each=dim(fit$samples)[1])
+
+  }
   divs <- if(fit$algorithm=="NUTS")
-            extract_sampler_params(fit)$divergent__ else NULL
+            extract_sampler_params(fit, inc_warmup=inc_warmup)$divergent__ else NULL
   ptcex <- .2
   divcex <- .75
   chaincols <- 1:length(unique(chains))
