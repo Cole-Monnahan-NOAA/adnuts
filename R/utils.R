@@ -507,16 +507,26 @@ check_identifiable <- function(model, path=getwd()){
       t(chd %*% x)
     }
   } else if(is.vector(M)){
-    J <- NULL
-    chd <- sqrt(M)
-    fn2 <- function(x) fn(chd * x)
-    gr2 <- function(x) as.vector(gr(chd * x) ) * chd
-    ## Now rotate back to "x" space using the new mass matrix M. M is a
-    ## vector here. Note the big difference in efficiency without the
-    ## matrix operations.
-    x.cur <- (1/chd) * y.cur
-    finv <- function(x){
-      chd*x
+    ## diagonal but not unit
+    if(!all(1==M)){
+      J <- NULL
+      chd <- sqrt(M)
+      fn2 <- function(x) fn(chd * x)
+      gr2 <- function(x) as.vector(gr(chd * x) ) * chd
+      ## Now rotate back to "x" space using the new mass matrix M. M is a
+      ## vector here. Note the big difference in efficiency without the
+      ## matrix operations.
+      x.cur <- (1/chd) * y.cur
+      finv <- function(x){
+        chd*x
+      }
+    } else {
+      ## no correlation so everything is the identity
+      fn2 <- function(x) fn(x)
+      gr2 <- function(x) gr(x)
+      x.cur <- y.cur
+      finv <- function(x) x
+      chd <- J <- NULL
     }
   } else if(is(M,"Matrix")){
     ##  warning( "Use of Q is highly experimental still" )
