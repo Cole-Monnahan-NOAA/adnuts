@@ -11,7 +11,9 @@ sample_sparse_tmb(
   cores,
   chains,
   control = NULL,
-  seed = NULL
+  seed = NULL,
+  init = c("last.par.best", "random"),
+  metric = c("sparse", "dense", "diag", "unit")
 )
 }
 \arguments{
@@ -29,6 +31,14 @@ optimized}
 \item{control}{NUTS control list}
 
 \item{seed}{Random number seed}
+
+\item{init}{Either 'last.par.best' (default) or 'random'. The
+former starts from the joint mode and the latter draws from
+a multivariate t distribution with df=1 centered at the mode
+using the inverse joint precision matrix as a covariance
+matrix. Note that StanEstimators only allows for the same
+init vector for all chains currently. If a seed is specified
+it will be set and thus the inits used will be reproducible.}
 }
 \value{
 A fitted MCMC object of class 'adfit'

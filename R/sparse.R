@@ -2,6 +2,13 @@
 #' @param obj The TMB object with random effects turned on and
 #'   optimized
 #' @param iter Total iterations to run (warmup + sampling)
+#' @param init Either 'last.par.best' (default) or 'random'. The
+#'   former starts from the joint mode and the latter draws from
+#'   a multivariate t distribution with df=1 centered at the mode
+#'   using the inverse joint precision matrix as a covariance
+#'   matrix. Note that StanEstimators only allows for the same
+#'   init vector for all chains currently. If a seed is specified
+#'   it will be set and thus the inits used will be reproducible.
 #' @param warmup Total warmup iterations
 #' @param chains Number of chains
 #' @param cores Number of parallel cores to use

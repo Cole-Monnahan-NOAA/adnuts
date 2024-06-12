@@ -8,6 +8,7 @@ confidence ellipses.}
 pairs_admb(
   fit,
   order = NULL,
+  inc_warmup = FALSE,
   diag = c("trace", "acf", "hist"),
   acf.ylim = c(-1, 1),
   ymult = NULL,
@@ -29,6 +30,9 @@ NULL (default) to use the order declared in the model, or
 'slow' and 'fast' which are based on the effective sample
 sizes ordered by slowest or fastest mixing respectively. See
 example for usage.}
+
+\item{inc_warmup}{Whether to include the warmup samples or not
+(default).}
 
 \item{diag}{What type of plot to include on the diagonal,
 options are 'acf' which plots the autocorrelation function
