@@ -14,6 +14,8 @@
 #' @param cores Number of parallel cores to use
 #' @param control NUTS control list
 #' @param seed Random number seed
+#' @param skip_optimization Whether to skip optimization or not
+#'   (default).
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
@@ -22,18 +24,27 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               control=NULL, seed=NULL,
                               init=c('last.par.best', 'random'),
                               metric=c('sparse','dense','diag', 'unit'),
+                              skip_optimization=FALSE, Q=NULL, Qinv=NULL,
                               ...){
   iter <- iter-warmup
   metric <- match.arg(metric)
   init <- match.arg(init)
   obj$env$beSilent()
-  message("Optimizing...")
-  time.opt <- as.numeric(system.time(opt <- with(obj, nlminb(par, fn, gr)))[3])
-  message("Getting Q...")
-  time.Q <- as.numeric(system.time(sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
-  Q <- sdr$jointPrecision
-  message("Inverting Q...")
-  time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
+  time.opt <- time.Q <- time.Qinv <- 0
+  if(!skip_optimization){
+    message("Optimizing...")
+    time.opt <-
+      as.numeric(system.time(opt <- with(obj, nlminb(par, fn, gr)))[3])
+  }
+  if(is.null(Q) & metric!='unit'){
+    message("Getting Q...")
+    time.Q <- as.numeric(system.time(sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
+    Q <- sdr$jointPrecision
+  }
+  if(is.null(Qinv) & metric!='unit'){
+    message("Inverting Q...")
+    time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
+  }
   init.mle <- obj$env$last.par.best
   if(metric=='dense') Q <- as.matrix(Qinv)
   if(metric=='diag') Q <- as.numeric(diag(Qinv))
@@ -52,12 +63,15 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   ## rebuild without random effects
   mydll <- unclass(getLoadedDLLs()[[obj$env$DLL]])$path
   isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
-  message("Rebuilding obj without random effects...")
   if(!isRTMB){
+    message("Rebuilding TMB obj without random effects...")
+    packages <- c("TMB", "Matrix")
     obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
-                    map=obj$env$map,
-                    random=NULL, silent=TRUE, DLL=obj$env$DLL)
+                           map=obj$env$map,
+                           random=NULL, silent=TRUE, DLL=obj$env$DLL)
   } else {
+    message("Rebuilding RTMB obj without random effects...")
+    packages <- c("RTMB", "Matrix")
     if(is.null(obj$myfun))
       stop("Slot 'myfun' not found in RTMB obj. Please add it manually and retry")
     obj2 <- RTMB::MakeADFun(obj$myfun, parameters=obj$env$parList(),
@@ -75,11 +89,6 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   }
   finv <- rotation$finv
   globals <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
-  if(!isRTMB){
-    packages = c("TMB", "Matrix")
-  } else {
-    packages = c("RTMB", "Matrix")
-  }
   message("Starting MCMC sampling...")
   fit <- stan_sample(fn=fsparse, par_inits=inits,
                      grad_fun=gsparse, num_samples=iter,
