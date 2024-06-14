@@ -21,7 +21,8 @@
 sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               control=NULL, seed=NULL,
                               init=c('last.par.best', 'random'),
-                              metric=c('sparse','dense','diag', 'unit')){
+                              metric=c('sparse','dense','diag', 'unit'),
+                              ...){
   iter <- iter-warmup
   metric <- match.arg(metric)
   init <- match.arg(init)
@@ -86,7 +87,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                      globals = globals, packages=packages,
                      adapt_delta=control$adapt_delta,
                      parallel_chains=cores, save_warmup=TRUE,
-                     num_chains = chains, seed = seed)
+                     num_chains = chains, seed = seed, ...)
   fit2 <- as.tmbfit(fit, mle=mle, invf=finv)
   fit2$time.Q <- time.Q; fit2$time.Qinv <- time.Qinv; fit2$time.opt <- time.opt
   ## gradient timings to check for added overhead
