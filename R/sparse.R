@@ -14,6 +14,8 @@
 #' @param cores Number of parallel cores to use
 #' @param control NUTS control list
 #' @param seed Random number seed
+#' @param ... Additional arguments to pass to
+#'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
 #' @export
 sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
@@ -24,6 +26,8 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   metric <- match.arg(metric)
   init <- match.arg(init)
   obj$env$beSilent()
+  message("Optimizing...")
+  time.opt <- as.numeric(system.time(opt <- with(obj, nlminb(par, fn, gr)))[3])
   message("Getting Q...")
   time.Q <- as.numeric(system.time(sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
   Q <- sdr$jointPrecision
@@ -42,7 +46,8 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
 
   par <- obj$env$last.par.best
   mle <- list(nopar=length(par), est=par, se=sqrt(diag(Qinv)),
-              cor=cov2cor(solve(Qinv)), parnames=parnames, Q=Q)
+              cor=cov2cor(solve(Qinv)), parnames=parnames, Q=Q,
+              Qinv=Qinv)
   ## rebuild without random effects
   mydll <- unclass(getLoadedDLLs()[[obj$env$DLL]])$path
   isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
@@ -83,7 +88,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                      parallel_chains=cores, save_warmup=TRUE,
                      num_chains = chains, seed = seed)
   fit2 <- as.tmbfit(fit, mle=mle, invf=finv)
-  fit2$time.Q <- time.Q; fit2$time.Qinv <- time.Qinv
+  fit2$time.Q <- time.Q; fit2$time.Qinv <- time.Qinv; fit2$time.opt <- time.opt
   ## gradient timings to check for added overhead
   if(require(microbenchmark)){
     bench <- microbenchmark(obj2$gr(inits),
