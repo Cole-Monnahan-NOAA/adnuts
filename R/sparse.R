@@ -36,19 +36,32 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     time.opt <-
       as.numeric(system.time(opt <- with(obj, nlminb(par, fn, gr)))[3])
   }
-  if(is.null(Q) & metric!='unit'){
+  if(is.null(Q)){
     message("Getting Q...")
     time.Q <- as.numeric(system.time(sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
     Q <- sdr$jointPrecision
   }
-  if(is.null(Qinv) & metric!='unit'){
+  if(is.null(Qinv)){
     message("Inverting Q...")
     time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
   }
+  message("Q has ", round(100*mean(Q==0),2), " percent zeroes")
+  x <- eigen(Q,TRUE)
+  mine <- min(x$value)
+  maxe <- max(x$value)
+  ratio <- maxe/mine
+  message("Q has condition factor of ",round(ratio,0),
+          ' where min=',round(mine,4), ' and max=', round(maxe,1))
+  x <- eigen(Qinv,TRUE)
+  mine <- min(x$value)
+  maxe <- max(x$value)
+  ratio <- maxe/mine
+  message("Qinv has condition factor of ",round(ratio,0),
+          ' where min=',round(mine,4), ' and max=', round(maxe,1))
   init.mle <- obj$env$last.par.best
   if(metric=='dense') Q <- as.matrix(Qinv)
   if(metric=='diag') Q <- as.numeric(diag(Qinv))
-  if(metric=='unit') Q <- rep(1, nrow(Q))
+  if(metric=='unit') Q <- rep(1, length(init.mle))
   ## Make parameter names unique if vectors exist
   parnames <- names(init.mle)
   parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
