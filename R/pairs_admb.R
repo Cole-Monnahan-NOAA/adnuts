@@ -1,11 +1,12 @@
 #' Plot pairwise parameter posteriors and optionally the MLE points and
 #' confidence ellipses.
 #'
-#' @param fit A list as returned by \code{sample_admb}.
-#' @param pars A vector of parameter names or integers
+#' @param fit A list as returned by \code{sample_nuts}.
+#' @param pars A character vector of parameters or integers
 #'   representing which parameters to subset. Useful if the model
 #'   has a larger number of parameters and you just want to show
-#'   a few key ones. The default is the first 10.
+#'   a few key ones. The default is the first 10. Integer inputs
+#'   are compatible with the \code{order} argument.
 #' @param order The order to consider the parameters. Options are
 #'   'orig' (default) to use the order declared in the model, or
 #'   'slow' and 'fast' which are based on the effective sample
@@ -36,7 +37,7 @@
 #'   version of the parameters.  size (ESS) and Rhat values on
 #'   the diagonal.
 #' @param ... Arguments to be passed to plot call in lower
-#'   diagonal panels
+#'   triangular panels (scatterplots).
 #' @return Produces a plot, and returns nothing.
 #' @details This function is modified from the base \code{pairs}
 #'   code to work specifically with fits from the 'adnuts'
@@ -54,6 +55,7 @@
 #' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 #' pairs_admb(fit)
 #' pairs_admb(fit, pars=1:2)
+#' pairs_admb(fit, pars=c(2,1))
 #' pairs_admb(fit, pars=c('b', 'a'))
 #' pairs_admb(fit, pars=1:2, order='slow')
 #' pairs_admb(fit, pars=1:2, order='fast')
