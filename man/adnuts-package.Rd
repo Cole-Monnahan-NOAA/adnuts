@@ -2,6 +2,7 @@
 % Please edit documentation in R/adnuts-package.R
 \docType{package}
 \name{adnuts-package}
+\alias{adnuts}
 \alias{adnuts-package}
 \title{adnuts: No-U-turn sampling for AD Model Builder (ADMB)}
 \description{

@@ -136,8 +136,8 @@ print.adfit <- function(x, ...){
 #' @export
 plot_uncertainties <- function(fit, log=TRUE, plot=TRUE){
   stopifnot(is.adfit(fit))
-  if(!is.list(fit$mle))
-    stop("MLE object not found so cannot plot it")
+  if(is.null(fit$mle$se))
+    stop("MLE SEs not found so cannot plot them")
   sd.post <- apply(extract_samples(fit), 2, stats::sd)
   sd.mle <- fit$mle$se[1:length(sd.post)]
   pars <- fit$par_names[1:length(sd.post)]
