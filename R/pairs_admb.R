@@ -5,7 +5,7 @@
 #' @param pars A vector of parameter names or integers
 #'   representing which parameters to subset. Useful if the model
 #'   has a larger number of parameters and you just want to show
-#'   a few key ones.
+#'   a few key ones. The default is the first 10.
 #' @param order The order to consider the parameters. Options are
 #'   'orig' (default) to use the order declared in the model, or
 #'   'slow' and 'fast' which are based on the effective sample
