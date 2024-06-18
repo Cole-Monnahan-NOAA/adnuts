@@ -7,13 +7,17 @@ confidence ellipses.}
 \usage{
 pairs_admb(
   fit,
+<<<<<<< HEAD
   order = NULL,
   inc_warmup = FALSE,
+=======
+  pars = NULL,
+  order = c("orig", "slow", "fast", "mismatch"),
+>>>>>>> dev
   diag = c("trace", "acf", "hist"),
   acf.ylim = c(-1, 1),
   ymult = NULL,
   axis.col = gray(0.5),
-  pars = NULL,
   label.cex = 0.8,
   limits = NULL,
   add.mle = TRUE,
@@ -23,12 +27,22 @@ pairs_admb(
 )
 }
 \arguments{
-\item{fit}{A list as returned by \code{sample_admb}.}
+\item{fit}{A list as returned by \code{sample_nuts}.}
+
+\item{pars}{A character vector of parameters or integers
+representing which parameters to subset. Useful if the model
+has a larger number of parameters and you just want to show
+a few key ones. The default is the first 10. Integer inputs
+are compatible with the \code{order} argument.}
 
 \item{order}{The order to consider the parameters. Options are
-NULL (default) to use the order declared in the model, or
+'orig' (default) to use the order declared in the model, or
 'slow' and 'fast' which are based on the effective sample
-sizes ordered by slowest or fastest mixing respectively. See
+sizes ordered by slowest or fastest mixing
+respectively. Finally 'mismatch' is for parameters with
+large discrepancies between the MLE and posterior marginal
+variances, defined as the absolute relative difference of
+the MLE from the posterior i.e., abs((mle-post)/post). See
 example for usage.}
 
 \item{inc_warmup}{Whether to include the warmup samples or not
@@ -49,12 +63,8 @@ plot. The default is 1.3 for all parameters.}
 
 \item{axis.col}{Color of axes}
 
-\item{pars}{A vector of parameter names or integers
-representing which parameters to subset. Useful if the model
-has a larger number of parameters and you just want to show
-a few key ones.}
-
-\item{label.cex}{Control size of outer and diagonal labels (default 1)}
+\item{label.cex}{Control size of outer and diagonal labels
+(default 1)}
 
 \item{limits}{A list containing the ranges for each parameter
 to use in plotting.}
@@ -64,11 +74,11 @@ to use in plotting.}
 \item{add.monitor}{Boolean whether to print effective sample}
 
 \item{unbounded}{Whether to use the bounded or unbounded
-version of the parameters.
-size (ESS) and Rhat values on the diagonal.}
+version of the parameters.  size (ESS) and Rhat values on
+the diagonal.}
 
 \item{...}{Arguments to be passed to plot call in lower
-diagonal panels}
+triangular panels (scatterplots).}
 }
 \value{
 Produces a plot, and returns nothing.
@@ -79,24 +89,25 @@ confidence ellipses.
 }
 \details{
 This function is modified from the base \code{pairs}
-  code to work specifically with fits from the
-  'adnuts' package using either the NUTS or RWM MCMC
-  algorithms. If an invertible Hessian was found (in
-  \code{fit$mle}) then estimated covariances are available to
-  compare and added automatically (red ellipses). Likewise, a
-  "monitor" object from \code{rstan::monitor} is attached as
-  \code{fit$monitor} and provides effective sample sizes (ESS)
-  and Rhat values. The ESS are used to potentially order the
-  parameters via argument \code{order}, but also printed on
-  the diagonal.
+  code to work specifically with fits from the 'adnuts'
+  package using either the NUTS or RWM MCMC algorithms. If an
+  invertible Hessian was found (in \code{fit$mle}) then
+  estimated covariances are available to compare and added
+  automatically (red ellipses). Likewise, a "monitor" object
+  from \code{rstan::monitor} is attached as \code{fit$monitor}
+  and provides effective sample sizes (ESS) and Rhat
+  values. The ESS are used to potentially order the parameters
+  via argument \code{order}, but also printed on the diagonal.
 }
 \examples{
 fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 pairs_admb(fit)
 pairs_admb(fit, pars=1:2)
+pairs_admb(fit, pars=c(2,1))
 pairs_admb(fit, pars=c('b', 'a'))
 pairs_admb(fit, pars=1:2, order='slow')
 pairs_admb(fit, pars=1:2, order='fast')
+pairs_admb(fit, pars=1:2, order='mismatch')
 
 }
 \author{

@@ -2,19 +2,22 @@
 #' Plot pairwise parameter posteriors and optionally the MLE points and
 #' confidence ellipses.
 #'
-#' @param fit A list as returned by \code{sample_admb}.
-#' @param pars A vector of parameter names or integers
+#' @param fit A list as returned by \code{sample_nuts}.
+#' @param pars A character vector of parameters or integers
 #'   representing which parameters to subset. Useful if the model
 #'   has a larger number of parameters and you just want to show
 #'   a few key ones.
+#' @param order The order to consider the parameters. Options are
+#'   'orig' (default) to use the order declared in the model, or
+#'   'slow' and 'fast' which are based on the effective sample
+#'   sizes ordered by slowest or fastest mixing
+#'   respectively. Finally 'mismatch' is for parameters with
+#'   large discrepancies between the MLE and posterior marginal
+#'   variances, defined as the absolute relative difference of
+#'   the MLE from the posterior i.e., abs((mle-post)/post). See
+#'   example for usage.
 #' @param inc_warmup Whether to include the warmup samples or not
 #'   (default).
-#' @param label.cex Control size of outer and diagonal labels (default 1)
-#' @param order The order to consider the parameters. Options are
-#'   NULL (default) to use the order declared in the model, or
-#'   'slow' and 'fast' which are based on the effective sample
-#'   sizes ordered by slowest or fastest mixing respectively. See
-#'   example for usage.
 #' @param diag What type of plot to include on the diagonal,
 #'   options are 'acf' which plots the autocorrelation function
 #'   \code{acf}, 'hist' shows marginal posterior histograms, and
@@ -26,41 +29,46 @@
 #'   diagonal. For use if the label is blocking part of the
 #'   plot. The default is 1.3 for all parameters.
 #' @param axis.col Color of axes
-#' @param ... Arguments to be passed to plot call in lower
-#'   diagonal panels
+#' @param label.cex Control size of outer and diagonal labels
+#'   (default 1)
 #' @param limits A list containing the ranges for each parameter
 #'   to use in plotting.
-#' @param add.monitor Boolean whether to print effective sample
 #' @param add.mle Boolean whether to add 95\% confidence ellipses
+#' @param add.monitor Boolean whether to print effective sample
 #' @param unbounded Whether to use the bounded or unbounded
-#'   version of the parameters.
-#'   size (ESS) and Rhat values on the diagonal.
+#'   version of the parameters.  size (ESS) and Rhat values on
+#'   the diagonal.
+#' @param ... Arguments to be passed to plot call in lower
+#'   triangular panels (scatterplots).
 #' @return Produces a plot, and returns nothing.
 #' @details This function is modified from the base \code{pairs}
-#'   code to work specifically with fits from the
-#'   'adnuts' package using either the NUTS or RWM MCMC
-#'   algorithms. If an invertible Hessian was found (in
-#'   \code{fit$mle}) then estimated covariances are available to
-#'   compare and added automatically (red ellipses). Likewise, a
-#'   "monitor" object from \code{rstan::monitor} is attached as
-#'   \code{fit$monitor} and provides effective sample sizes (ESS)
-#'   and Rhat values. The ESS are used to potentially order the
-#'   parameters via argument \code{order}, but also printed on
-#'   the diagonal.
+#'   code to work specifically with fits from the 'adnuts'
+#'   package using either the NUTS or RWM MCMC algorithms. If an
+#'   invertible Hessian was found (in \code{fit$mle}) then
+#'   estimated covariances are available to compare and added
+#'   automatically (red ellipses). Likewise, a "monitor" object
+#'   from \code{rstan::monitor} is attached as \code{fit$monitor}
+#'   and provides effective sample sizes (ESS) and Rhat
+#'   values. The ESS are used to potentially order the parameters
+#'   via argument \code{order}, but also printed on the diagonal.
 #' @export
 #' @author Cole Monnahan
 #' @examples
 #' fit <- readRDS(system.file('examples', 'fit.RDS', package='adnuts'))
 #' pairs_admb(fit)
 #' pairs_admb(fit, pars=1:2)
+#' pairs_admb(fit, pars=c(2,1))
 #' pairs_admb(fit, pars=c('b', 'a'))
 #' pairs_admb(fit, pars=1:2, order='slow')
 #' pairs_admb(fit, pars=1:2, order='fast')
+#' pairs_admb(fit, pars=1:2, order='mismatch')
 #'
-pairs_admb <- function(fit, order=NULL, inc_warmup=FALSE,
+pairs_admb <- function(fit, pars=NULL,
+                       order=c('orig', 'slow', 'fast', 'mismatch'),
+                       inc_warmup=FALSE,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
-                       pars=NULL, label.cex=.8, limits=NULL,
+                       label.cex=.8, limits=NULL,
                        add.mle=TRUE, add.monitor=TRUE, unbounded=FALSE,
                        ...){
   if(!is.adfit(fit))
@@ -90,6 +98,7 @@ pairs_admb <- function(fit, order=NULL, inc_warmup=FALSE,
   old.par <- par(no.readonly=TRUE)
   on.exit(par(old.par))
   diag <- match.arg(diag)
+  order <- match.arg(order)
   par.names <- names(posterior)
   ess <- fit$monitor$n_eff
   Rhat <- fit$monitor$Rhat
@@ -97,13 +106,10 @@ pairs_admb <- function(fit, order=NULL, inc_warmup=FALSE,
     stop("pars argument <=1, only makes sense for >=2")
   if(is.null(ess))
     warning("No monitor information found in fitted object so ESS and Rhat not available. See details of help.")
-  if(!is.null(order)){
-    if(! order %in% c('slow', 'fast')){
-      stop("Invalid 'order' argument, should be 'slow', 'fast', or NULL")
-    }
-    if(is.null(ess)){
-      stop("No effective sample sizes found so cannot order by slow/fast.")
-    }
+  if(order=='orig'){
+    ## do nothing
+  } else if(order %in% c('slow', 'fast')){
+    if(is.null(ess)) stop("No effective sample sizes found so cannot order by slow/fast.")
     if(!is.numeric(pars[1])){
       warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
     } else {
@@ -111,7 +117,17 @@ pairs_admb <- function(fit, order=NULL, inc_warmup=FALSE,
       ind <- order(ess, decreasing=(order=='fast'))
       par.names <- par.names[ind]
     }
+  } else if(order=='mismatch'){
+    if(!is.numeric(pars[1])){
+      warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
+    } else {
+      tmp <- plot_uncertainties(fit, log=FALSE, plot=FALSE)
+      x <- abs((tmp$sd.mle-tmp$sd.post)/tmp$sd.post)
+      ind <- order(x, decreasing=TRUE)
+      par.names <- par.names[ind]
+    }
   }
+
   ## if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
   ##   stop("Number of parameters in posterior and mle not the same")
   ## pars will either be NULL, so use all parameters. OR a vector of
