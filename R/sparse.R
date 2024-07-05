@@ -16,6 +16,9 @@
 #' @param seed Random number seed
 #' @param skip_optimization Whether to skip optimization or not
 #'   (default).
+#' @param globals A named list of objects to pass to new R
+#'   sessions when running in parallel and using RTMB. Typically
+#'   this is the `data` object for now.
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
@@ -24,8 +27,9 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               control=NULL, seed=NULL,
                               init=c('last.par.best', 'random'),
                               metric=c('sparse','dense','diag', 'unit'),
-                              skip_optimization=FALSE, Q=NULL, Qinv=NULL,
-                              ...){
+                              skip_optimization=FALSE, Q=NULL,
+                              Qinv=NULL,
+                              globals=NULL, ...){
   iter <- iter-warmup
   metric <- match.arg(metric)
   init <- match.arg(init)
@@ -81,13 +85,14 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     packages <- c("TMB", "Matrix")
     obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
                            map=obj$env$map,
-                           random=NULL, silent=TRUE, DLL=obj$env$DLL)
+                           random=NULL, silent=TRUE,
+                           DLL=obj$env$DLL)
   } else {
     message("Rebuilding RTMB obj without random effects...")
     packages <- c("RTMB", "Matrix")
-    if(is.null(obj$myfun))
-      stop("Slot 'myfun' not found in RTMB obj. Please add it manually and retry")
-    obj2 <- RTMB::MakeADFun(obj$myfun, parameters=obj$env$parList(),
+    ## if(is.null(obj$myfun))
+    ##   stop("Slot 'myfun' not found in RTMB obj. Please add it manually and retry")
+    obj2 <- RTMB::MakeADFun(func=obj$env$data, parameters=obj$env$parList(),
                             map=obj$env$map,
                             random=NULL, silent=TRUE,
                             DLL=obj$env$DLL)
@@ -101,12 +106,14 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     inits <- as.numeric(rotation$x.cur + mvtnorm::rmvt(n=1, sigma=diag(length(inits)), df=1))
   }
   finv <- rotation$finv
-  globals <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
+  globals2 <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
+  ## the user must pass data objects
+  if(isRTMB) globals2 <- c(globals2,globals)
   message("Starting MCMC sampling...")
   fit <- stan_sample(fn=fsparse, par_inits=inits,
                      grad_fun=gsparse, num_samples=iter,
                      num_warmup=warmup,
-                     globals = globals, packages=packages,
+                     globals = globals2, packages=packages,
                      adapt_delta=control$adapt_delta,
                      parallel_chains=cores, save_warmup=TRUE,
                      num_chains = chains, seed = seed, ...)
@@ -183,7 +190,9 @@ as.tmbfit <- function(x, mle, invf){
             par_names=mle$parnames,
             max_treedepth=x@metadata$max_depth,
             warmup=as.numeric(x@metadata$num_warmup),
-            time.warmup=timing[1,], time.total=timing[1,]+timing[2,],
+            time.warmup=timing[1,],
+            time.sampling=timing[2,],
+            time.total=timing[1,]+timing[2,],
             ## iter=as.numeric(x@metadata$num_samples)+as.numeric(x@metadata$num_warmup),
             algorithm='NUTS')
   adfit(x)
