@@ -75,7 +75,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
 
   par <- obj$env$last.par.best
   mle <- list(nopar=length(par), est=par, se=sqrt(diag(Qinv)),
-              cor=cov2cor(solve(Qinv)), parnames=parnames, Q=Q,
+              cor=cov2cor(Qinv), parnames=parnames, Q=Q,
               Qinv=Qinv)
   ## rebuild without random effects
   mydll <- unclass(getLoadedDLLs()[[obj$env$DLL]])$path
