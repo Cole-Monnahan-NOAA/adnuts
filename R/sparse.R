@@ -12,7 +12,12 @@
 #' @param warmup Total warmup iterations
 #' @param chains Number of chains
 #' @param cores Number of parallel cores to use
-#' @param control NUTS control list
+#' @param control NUTS control list, currently available options
+#'   are 'adapt_delta', 'max_treedepth', and 'metric' which is
+#'   the type of metric adaptation for Stan to do with options
+#'   ('unit_e', 'diag_e', or 'dense_e'). For dense and sparse
+#'   metrics this usually can be 'unit_e' to skip adaptation.
+#'   NULL values (default) revert to \code{stan_sample} defaults.
 #' @param seed Random number seed
 #' @param skip_optimization Whether to skip optimization or not
 #'   (default).
@@ -115,6 +120,11 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                      num_warmup=warmup,
                      globals = globals2, packages=packages,
                      adapt_delta=control$adapt_delta,
+                     adapt_window=control$adapt_window,
+                     adapt_init_buffer=control$adapt_init_buffer,
+                     adapt_term_buffer=control$adapt_term_buffer,
+                     metric=control$metric,
+                     max_treedepth=control$max_treedepth,
                      parallel_chains=cores, save_warmup=TRUE,
                      num_chains = chains, seed = seed, ...)
   fit2 <- as.tmbfit(fit, mle=mle, invf=finv)
