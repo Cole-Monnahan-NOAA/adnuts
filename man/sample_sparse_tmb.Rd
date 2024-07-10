@@ -13,7 +13,12 @@ sample_sparse_tmb(
   control = NULL,
   seed = NULL,
   init = c("last.par.best", "random"),
-  metric = c("sparse", "dense", "diag", "unit")
+  metric = c("sparse", "dense", "diag", "unit"),
+  skip_optimization = FALSE,
+  Q = NULL,
+  Qinv = NULL,
+  globals = NULL,
+  ...
 )
 }
 \arguments{
@@ -39,6 +44,16 @@ using the inverse joint precision matrix as a covariance
 matrix. Note that StanEstimators only allows for the same
 init vector for all chains currently. If a seed is specified
 it will be set and thus the inits used will be reproducible.}
+
+\item{skip_optimization}{Whether to skip optimization or not
+(default).}
+
+\item{globals}{A named list of objects to pass to new R
+sessions when running in parallel and using RTMB. Typically
+this is the `data` object for now.}
+
+\item{...}{Additional arguments to pass to
+\code{\link{StanEstimators::stan_sample}}.}
 }
 \value{
 A fitted MCMC object of class 'adfit'

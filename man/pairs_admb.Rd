@@ -7,13 +7,9 @@ confidence ellipses.}
 \usage{
 pairs_admb(
   fit,
-<<<<<<< HEAD
-  order = NULL,
-  inc_warmup = FALSE,
-=======
   pars = NULL,
   order = c("orig", "slow", "fast", "mismatch"),
->>>>>>> dev
+  inc_warmup = FALSE,
   diag = c("trace", "acf", "hist"),
   acf.ylim = c(-1, 1),
   ymult = NULL,
@@ -32,8 +28,7 @@ pairs_admb(
 \item{pars}{A character vector of parameters or integers
 representing which parameters to subset. Useful if the model
 has a larger number of parameters and you just want to show
-a few key ones. The default is the first 10. Integer inputs
-are compatible with the \code{order} argument.}
+a few key ones.}
 
 \item{order}{The order to consider the parameters. Options are
 'orig' (default) to use the order declared in the model, or
