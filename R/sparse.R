@@ -54,19 +54,18 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     message("Inverting Q...")
     time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
   }
-  message("Q has ", round(100*mean(Q==0),2), " percent zeroes")
-  x <- eigen(Q,TRUE)
-  mine <- min(x$value)
-  maxe <- max(x$value)
-  ratio <- maxe/mine
-  message("Q has condition factor of ",round(ratio,0),
-          ' where min=',round(mine,4), ' and max=', round(maxe,1))
-  x <- eigen(Qinv,TRUE)
-  mine <- min(x$value)
-  maxe <- max(x$value)
-  ratio <- maxe/mine
-  message("Qinv has condition factor of ",round(ratio,0),
-          ' where min=',round(mine,4), ' and max=', round(maxe,1))
+  print.mat.stats <- function(x, name){
+    nm <- deparse(substitute(x))
+    e <- eigen(x,TRUE)
+    mine <- min(e$value); maxe <- max(e$value); ratio <- maxe/mine
+    ## why does this return NA without the as.numeric?
+    pct.sparsity <- round(100*mean(as.numeric(x==0)),2)
+    message(nm, " is ", pct.sparsity,
+            " % zeroes, with condition factor=",round(ratio,0),
+            ' (min=',round(mine,3), ', max=', round(maxe,1),")")
+  }
+  print.mat.stats(Q)
+  print.mat.stats(Qinv)
   init.mle <- obj$env$last.par.best
   if(metric=='dense') Q <- as.matrix(Qinv)
   if(metric=='diag') Q <- as.numeric(diag(Qinv))
