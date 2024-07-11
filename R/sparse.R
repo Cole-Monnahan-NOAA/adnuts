@@ -108,6 +108,10 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   if(init=='random'){
     if(!is.null(seed)) set.seed(seed)
     inits <- as.numeric(rotation$x.cur + mvtnorm::rmvt(n=1, sigma=diag(length(inits)), df=1))
+    if(!is.finite(obj2$fn(inits))) {
+      warning("random inits resulted in NaN NLL, trying last.par.best instead")
+      inits <- rotation$x.cur
+    }
   }
   finv <- rotation$finv
   globals2 <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
