@@ -80,13 +80,17 @@ print.adfit <- function(x, ...){
   if(!is.null(x$monitor)){
     minESS <- min(x$monitor$n_eff)
     maxRhat <- round(max(x$monitor$Rhat),3)
-    cat(paste0("Minimum ESS=",
-                   minESS,
-                   " (",
-                   round(100*minESS/samples,2),
-                   "%), and maximum Rhat=", maxRhat, '\n'))
-    if(minESS<200 | maxRhat > 1.1)
-      cat('!! Warning: Signs of non-convergence found. Do not use for inference !!\n')
+    if(is.finite(minESS) & is.finite(maxRhat)){
+      cat(paste0("Minimum ESS=",
+                 minESS,
+                 " (",
+                 round(100*minESS/samples,2),
+                 "%), and maximum Rhat=", maxRhat, '\n'))
+      if(minESS<200 | maxRhat > 1.1)
+        cat('!! Warning: Signs of non-convergence found. Do not use for inference !!\n')
+    } else {
+      warning("ESS and Rhat calculations are not finite. Check model and rerun")
+    }
   }
   if(x$algorithm=='NUTS'){
     ndivs <- sum(extract_sampler_params(x)[,'divergent__'])
