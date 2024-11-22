@@ -33,7 +33,12 @@ optimized}
 
 \item{chains}{Number of chains}
 
-\item{control}{NUTS control list}
+\item{control}{NUTS control list, currently available options
+are 'adapt_delta', 'max_treedepth', and 'metric' which is
+the type of metric adaptation for Stan to do with options
+('unit_e', 'diag_e', or 'dense_e'). For dense and sparse
+metrics this usually can be 'unit_e' to skip adaptation.
+NULL values (default) revert to \code{stan_sample} defaults.}
 
 \item{seed}{Random number seed}
 

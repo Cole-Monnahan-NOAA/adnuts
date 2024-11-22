@@ -14,13 +14,14 @@ Description: Bayesian inference using the no-U-turn (NUTS) algorithm by
 Depends:
     R (>= 3.6.0),
     snowfall (>= 1.84.6.1),
-    Matrix
+    Matrix,
+    StanEstimators
 URL: https://github.com/Cole-Monnahan-NOAA/adnuts
 BugReports: https://github.com/Cole-Monnahan-NOAA/adnuts/issues
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 ByteCompile: true
 Suggests:
     shinystan (>= 2.5.0),
