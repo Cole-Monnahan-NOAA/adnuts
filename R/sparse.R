@@ -38,6 +38,9 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               skip_optimization=FALSE, Q=NULL,
                               Qinv=NULL,
                               globals=NULL, ...){
+
+
+
   iter <- iter-warmup
   metric <- match.arg(metric)
   init <- match.arg(init)
@@ -47,17 +50,6 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     message("Optimizing...")
     time.opt <-
       as.numeric(system.time(opt <- with(obj, nlminb(par, fn, gr)))[3])
-
-  }
-  print.mat.stats <- function(x, name){
-    nm <- deparse(substitute(x))
-    e <- eigen(x,TRUE)
-    mine <- min(e$value); maxe <- max(e$value); ratio <- maxe/mine
-    ## why does this return NA without the as.numeric?
-    pct.sparsity <- round(100*mean(as.numeric(x==0)),2)
-    message(nm, " is ", pct.sparsity,
-            " % zeroes, with condition factor=",round(ratio,0),
-            ' (min=',round(mine,3), ', max=', round(maxe,1),")")
   }
   hasRE <-  !is.null(obj$env$random)
   if(laplace & !hasRE)
@@ -65,19 +57,27 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   if( (laplace | !hasRE) & metric=='sparse')
     stop("sparse metric only allowed with random effects
          and laplace=FALSE")
-    if(!laplace){
-    if(is.null(Q)){
+  if(!laplace){
+    if(is.null(Q) & hasRE){
       message("Getting Q...")
       time.Q <- as.numeric(system.time(
         sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
       Q <- sdr$jointPrecision
     }
     if(is.null(Qinv)){
-      message("Inverting Q...")
-      time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
+      if(!is.null(Q)){
+        ## Q found above
+        message("Inverting Q...")
+        time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
+      } else if(!hasRE){
+        ## fixed effect only model
+        time.Qinv <- as.numeric(system.time(Qinv <- sdreport(obj)$cov.fixed)[3])
+      } else {
+       stop("something wrong here")
+     }
     }
-    print.mat.stats(Q)
-    print.mat.stats(Qinv)
+    .print.mat.stats(Q)
+    .print.mat.stats(Qinv)
     mle <- obj$env$last.par.best
   ## Make parameter names unique if vectors exist
   parnames <- names(mle)
@@ -86,12 +86,13 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
   }))))
   stopifnot(all.equal(length(mle), nrow(Qinv)))
-
   } else {
       message("Getting M for fixed effects...")
     time.Qinv <- as.numeric(system.time(sdr <- sdreport(obj)))
     Qinv <- sdr$cov.fixed
-    print.mat.stats(Qinv)
+    .print.mat.stats(Qinv)
+    if(is.null(opt))
+      stop("No opt object found, rerun with 'skip_optimization=FALSE'")
     mle <- opt$par
     ## Make parameter names unique if vectors exist
     parnames <- names(mle)
@@ -101,9 +102,21 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     }))))
     stopifnot(all.equal(length(mle), nrow(Qinv)))
   }
-  mle <- list(nopar=length(mle), est=mle, se=sqrt(diag(Qinv)),
-              cor=cov2cor(Qinv), parnames=parnames, Q=Q,
+  ses <- suppressWarnings(sqrt(diag(Qinv)))
+  mycor <- suppressWarnings(cov2cor(Qinv))
+  if(!all(is.finite(ses))){
+    if(metric=='unit'){
+    warning("Some standard errors estimated to be NaN, filling with dummy values so unit metric works. The 'mle' slot will be wrong so do not use it")
+    cor <- diag(length(mle))
+    ses <- rep(1,length(mle))
+    } else {
+      stop("Some standard errors estimated to be NaN, use 'unit' metric for models without a mode or positive definite Hessian")
+    }
+  }
+  mle <- list(nopar=length(mle), est=mle, se=ses,
+              cor=mycor, parnames=parnames, Q=Q,
               Qinv=Qinv)
+
   ## prepare to run via StanEstimators
   mydll <- unclass(getLoadedDLLs()[[obj$env$DLL]])$path
   isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
@@ -132,6 +145,11 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   if(metric=='dense') Q <- as.matrix(Qinv)
   if(metric=='diag') Q <- as.numeric(diag(Qinv))
   if(metric=='unit') Q <- rep(1, length(mle$nopar))
+  if(metric=='dense'){
+    if(!matrixcalc::is.symmetric.matrix(Q) ||
+       !matrixcalc::is.positive.definite(Q))
+    warning("Estimated dense matrix was not positive definite so may be unreliable. Try different metric or turn on the laplace if there are random effects if it fails.")
+  }
   rotation <- .rotate_space(fn=obj2$fn, gr=obj2$gr, M=Q, y.cur=mle$est)
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
@@ -240,4 +258,21 @@ as.tmbfit <- function(x, mle, invf){
             ## iter=as.numeric(x@metadata$num_samples)+as.numeric(x@metadata$num_warmup),
             algorithm='NUTS')
   adfit(x)
+}
+
+#' Print matrix stats
+#'
+#' @param x matrix object
+#' @param name
+#'
+.print.mat.stats <- function(x){
+  if(is.null(x)) return(NULL)
+  nm <- deparse(substitute(x))
+  e <- eigen(x,TRUE)
+  mine <- min(e$value); maxe <- max(e$value); ratio <- maxe/mine
+  ## why does this return NA without the as.numeric?
+  pct.sparsity <- round(100*mean(as.numeric(x==0)),2)
+  message(nm, " is ", pct.sparsity,
+          " % zeroes, with condition factor=",round(ratio,0),
+          ' (min=',round(mine,3), ', max=', round(maxe,1),")")
 }
