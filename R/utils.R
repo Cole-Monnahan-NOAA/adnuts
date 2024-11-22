@@ -78,7 +78,7 @@ print.adfit <- function(x, ...){
   }
   cat("Average run time per chain was", round(rt,2),  ru, '\n')
   if(!is.null(x$monitor)){
-    minESS <- min(x$monitor$n_eff)
+    minESS <- round(min(x$monitor$n_eff),2)
     maxRhat <- round(max(x$monitor$Rhat),3)
     if(is.finite(minESS) & is.finite(maxRhat)){
       cat(paste0("Minimum ESS=",
