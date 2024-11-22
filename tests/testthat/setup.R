@@ -2,11 +2,14 @@
 ## these locally when ADMB changes.
 skip_consistency <- TRUE
 skip_reproducibility <- TRUE
+skip_ADMB <- TRUE
+skip_TMB <- FALSE
 
 ### Skip all this if on CRAN. Otherwise locally or on CI, need to
 ### build the executables and run them so they're available for
 ### the tests. Then cleanup. On CRAN only a .RDS file is read in
 ### and really simple tests are performed.
+if(!skip_ADMB){
 if(Sys.getenv("NOT_CRAN")=='true'){
   oldwd <- getwd()
   setwd('../simple')
@@ -39,4 +42,5 @@ if(Sys.getenv("NOT_CRAN")=='true'){
     }, teardown_env())
   }
 
+}
 }

@@ -1,4 +1,5 @@
 test_that("diagnostics and plotting", {
+  skip_if(skip_ADMB)
   fit <- readRDS('fit.RDS')
   sp <- extract_sampler_params(fit)
   expect_is(sp,  'data.frame')

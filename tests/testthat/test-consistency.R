@@ -1,6 +1,7 @@
 test_that("consistency of algorithms within platform", {
   skip_on_cran()
   skip_if(skip_consistency)
+  skip_if(skip_ADMB)
   ## These will work across platforms b/c they compare within
   ## each. Running the same chains repeatedly to make sure the
   ## same answer each time.

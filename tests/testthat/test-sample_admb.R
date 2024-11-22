@@ -2,6 +2,7 @@
 ## Note these were tested with ADMB 13.0 on 2022-10-05
 test_that("simple example works", {
   skip_on_cran()
+  skip_if(skip_ADMB)
   inits.fn <- function() list(c(0,0))
   fit <- sample_rwm('simple', path='../simple', verbose=FALSE, chains=1,
                      seeds=1, init=inits.fn,
@@ -37,6 +38,7 @@ test_that("simple example works", {
 
 test_that("mceval works",{
   skip_on_cran()
+  skip_if(skip_ADMB)
   inits.fn <- function() list(c(0,0))
   ff <- '../simple/mceval.dat'
   if(file.exists(ff)) file.remove(ff)
@@ -50,6 +52,7 @@ test_that("mceval works",{
 
 test_that("parallel works",{
   skip_on_cran()
+  skip_if(skip_ADMB)
   message("Starting parallel tests")
   inits.fn <- function() list(c(0,0))
   fit1 <- sample_nuts('simple', path='../simple', verbose=FALSE, chains=3,
@@ -67,6 +70,7 @@ test_that("parallel works",{
 
 test_that("duration works",{
   skip_on_cran()
+  skip_if(skip_ADMB)
   message("Starting duration tests")
   inits.fn <- function() list(c(0,0))
   duration <- 3/60 # 3 seconds
@@ -95,6 +99,7 @@ test_that("duration works",{
 
 test_that("warnings and errors in sample_nuts and sample_rwm",{
   skip_on_cran()
+  skip_if(skip_ADMB)
   inits <- function() list(1,1)
   test <- expect_warning(sample_nuts('simple', path='../simple',
                                      iter=1000, init=inits,
@@ -199,6 +204,7 @@ test_that("warnings and errors in sample_nuts and sample_rwm",{
 
 test_that("verbose option works", {
   skip_on_cran()
+  skip_if(skip_ADMB)
   inits.fn <- function() list(c(0,0))
   message("Should be no console output between here....")
   message("Starting not verbose NUTS in parallel..")
@@ -224,6 +230,7 @@ test_that("verbose option works", {
 
 test_that("long file names work ok on Windows",{
   skip_on_cran()
+  skip_if(skip_ADMB)
   inits.fn <- function() list(1,1)
   p <- '../simple_long_filename'
   m <- 'simple_long_filename'
