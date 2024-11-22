@@ -39,8 +39,6 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               Qinv=NULL,
                               globals=NULL, ...){
 
-
-
   iter <- iter-warmup
   metric <- match.arg(metric)
   init <- match.arg(init)
