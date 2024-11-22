@@ -12,6 +12,7 @@ sample_sparse_tmb(
   chains,
   control = NULL,
   seed = NULL,
+  laplace = FALSE,
   init = c("last.par.best", "random"),
   metric = c("sparse", "dense", "diag", "unit"),
   skip_optimization = FALSE,
@@ -41,6 +42,10 @@ metrics this usually can be 'unit_e' to skip adaptation.
 NULL values (default) revert to \code{stan_sample} defaults.}
 
 \item{seed}{Random number seed}
+
+\item{laplace}{Whether to leave the Laplace approximation on
+and only use NUTS to sample the fixed effects, or turn it
+off and sample from the joint parameter space (default).}
 
 \item{init}{Either 'last.par.best' (default) or 'random'. The
 former starts from the joint mode and the latter draws from

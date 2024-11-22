@@ -19,6 +19,9 @@
 #'   metrics this usually can be 'unit_e' to skip adaptation.
 #'   NULL values (default) revert to \code{stan_sample} defaults.
 #' @param seed Random number seed
+#' @param laplace Whether to leave the Laplace approximation on
+#'   and only use NUTS to sample the fixed effects, or turn it
+#'   off and sample from the joint parameter space (default).
 #' @param skip_optimization Whether to skip optimization or not
 #'   (default).
 #' @param globals A named list of objects to pass to new R
@@ -29,7 +32,7 @@
 #' @return A fitted MCMC object of class 'adfit'
 #' @export
 sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
-                              control=NULL, seed=NULL,
+                              control=NULL, seed=NULL, laplace=FALSE,
                               init=c('last.par.best', 'random'),
                               metric=c('sparse','dense','diag', 'unit'),
                               skip_optimization=FALSE, Q=NULL,
@@ -44,15 +47,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     message("Optimizing...")
     time.opt <-
       as.numeric(system.time(opt <- with(obj, nlminb(par, fn, gr)))[3])
-  }
-  if(is.null(Q)){
-    message("Getting Q...")
-    time.Q <- as.numeric(system.time(sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
-    Q <- sdr$jointPrecision
-  }
-  if(is.null(Qinv)){
-    message("Inverting Q...")
-    time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
+
   }
   print.mat.stats <- function(x, name){
     nm <- deparse(substitute(x))
@@ -64,44 +59,80 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
             " % zeroes, with condition factor=",round(ratio,0),
             ' (min=',round(mine,3), ', max=', round(maxe,1),")")
   }
-  print.mat.stats(Q)
-  print.mat.stats(Qinv)
-  init.mle <- obj$env$last.par.best
-  if(metric=='dense') Q <- as.matrix(Qinv)
-  if(metric=='diag') Q <- as.numeric(diag(Qinv))
-  if(metric=='unit') Q <- rep(1, length(init.mle))
+  hasRE <-  !is.null(obj$env$random)
+  if(laplace & !hasRE)
+    stop("No random effects found so laplace=TRUE fails, set to FALSE")
+  if( (laplace | !hasRE) & metric=='sparse')
+    stop("sparse metric only allowed with random effects
+         and laplace=FALSE")
+    if(!laplace){
+    if(is.null(Q)){
+      message("Getting Q...")
+      time.Q <- as.numeric(system.time(
+        sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
+      Q <- sdr$jointPrecision
+    }
+    if(is.null(Qinv)){
+      message("Inverting Q...")
+      time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
+    }
+    print.mat.stats(Q)
+    print.mat.stats(Qinv)
+    mle <- obj$env$last.par.best
   ## Make parameter names unique if vectors exist
-  parnames <- names(init.mle)
+  parnames <- names(mle)
   parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
     temp <- parnames[parnames==x]
     if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
   }))))
+  stopifnot(all.equal(length(mle), nrow(Qinv)))
 
-  par <- obj$env$last.par.best
-  mle <- list(nopar=length(par), est=par, se=sqrt(diag(Qinv)),
+  } else {
+      message("Getting M for fixed effects...")
+    time.Qinv <- as.numeric(system.time(sdr <- sdreport(obj)))
+    Qinv <- sdr$cov.fixed
+    print.mat.stats(Qinv)
+    mle <- opt$par
+    ## Make parameter names unique if vectors exist
+    parnames <- names(mle)
+    parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
+      temp <- parnames[parnames==x]
+      if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
+    }))))
+    stopifnot(all.equal(length(mle), nrow(Qinv)))
+  }
+  mle <- list(nopar=length(mle), est=mle, se=sqrt(diag(Qinv)),
               cor=cov2cor(Qinv), parnames=parnames, Q=Q,
               Qinv=Qinv)
-  ## rebuild without random effects
+  ## prepare to run via StanEstimators
   mydll <- unclass(getLoadedDLLs()[[obj$env$DLL]])$path
   isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
   if(!isRTMB){
-    message("Rebuilding TMB obj without random effects...")
     packages <- c("TMB", "Matrix")
-    obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
-                           map=obj$env$map,
-                           random=NULL, silent=TRUE,
-                           DLL=obj$env$DLL)
+    obj2 <- obj
+    if(!laplace){
+      message("Rebuilding TMB obj without random effects...")
+      obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
+                             map=obj$env$map,
+                             random=NULL, silent=TRUE,
+                             DLL=obj$env$DLL)
+    }
   } else {
-    message("Rebuilding RTMB obj without random effects...")
     packages <- c("RTMB", "Matrix")
-    ## if(is.null(obj$myfun))
-    ##   stop("Slot 'myfun' not found in RTMB obj. Please add it manually and retry")
-    obj2 <- RTMB::MakeADFun(func=obj$env$data, parameters=obj$env$parList(),
-                            map=obj$env$map,
-                            random=NULL, silent=TRUE,
-                            DLL=obj$env$DLL)
+    obj2 <- obj
+    if(!laplace){
+      message("Rebuilding RTMB obj without random effects...")
+      obj2 <- RTMB::MakeADFun(func=obj$env$data, parameters=obj$env$parList(),
+                              map=obj$env$map,
+                              random=NULL, silent=TRUE,
+                              DLL=obj$env$DLL)
+    }
   }
-  rotation <- .rotate_space(fn=obj2$fn, gr=obj2$gr, M=Q, y.cur=init.mle)
+
+  if(metric=='dense') Q <- as.matrix(Qinv)
+  if(metric=='diag') Q <- as.numeric(diag(Qinv))
+  if(metric=='unit') Q <- rep(1, length(mle$nopar))
+  rotation <- .rotate_space(fn=obj2$fn, gr=obj2$gr, M=Q, y.cur=mle$est)
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
   inits <- rotation$x.cur
@@ -109,7 +140,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     if(!is.null(seed)) set.seed(seed)
     inits <- as.numeric(rotation$x.cur + mvtnorm::rmvt(n=1, sigma=diag(length(inits)), df=1))
     if(!is.finite(obj2$fn(inits))) {
-      warning("random inits resulted in NaN NLL, trying last.par.best instead")
+      warning("random inits resulted in NaN NLL, trying parameter mode instead")
       inits <- rotation$x.cur
     }
   }
@@ -210,5 +241,3 @@ as.tmbfit <- function(x, mle, invf){
             algorithm='NUTS')
   adfit(x)
 }
-
-
