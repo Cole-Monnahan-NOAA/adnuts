@@ -235,7 +235,7 @@ as.tmbfit <- function(x, mle, invf){
   mon <- StanEstimators::summary(x)
   mon$variable <- c('lp__', parnames)
   mon <- rbind(mon[-1,], mon[1,])
-  mon$n_eff <- mon$ess_tail
+  mon$n_eff <- mon$ess_bulk
   mon$Rhat <- mon$rhat
   ## prepare objects to use the pairs_admb function
   post <- get_post(x, invf, parnames=parnames, TRUE)
