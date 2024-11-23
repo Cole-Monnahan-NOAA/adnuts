@@ -63,10 +63,10 @@ print.adfit <- function(x, ...){
   chains <- dim(x$samples)[2]
   pars <- dim(x$samples)[3]-1
   samples <- (iter-x$warmup)*chains
-  cat(paste0("Model '", x$model,"'"), "has", pars,
-      "pars, and was fit using", x$algorithm,
-      "with", iter, "iter and", chains,
-      "chains\n")
+  cat(paste0("Model '", x$model,"'", " has ", pars,
+      " pars, and was fit using ", x$algorithm,
+      " with a '", x$metric, "' metric\n"))
+  cat(paste0(chains," chain(s) of ", iter, " total iterations (", x$warmup, " warmup) were used\n"))
   rt <- sum(x$time.total)/chains
   ru <- 'seconds'
   if(rt>60*60*24) {

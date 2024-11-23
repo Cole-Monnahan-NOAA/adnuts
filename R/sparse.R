@@ -177,7 +177,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                      max_treedepth=control$max_treedepth,
                      parallel_chains=cores, save_warmup=TRUE,
                      num_chains = chains, seed = seed, ...)
-  fit2 <- as.tmbfit(fit, mle=mle, invf=finv)
+  fit2 <- as.tmbfit(fit, mle=mle, invf=finv, metric=metric)
   fit2$time.Q <- time.Q; fit2$time.Qinv <- time.Qinv; fit2$time.opt <- time.opt
   ## gradient timings to check for added overhead
   if(require(microbenchmark)){
@@ -193,7 +193,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     fit2$time.gr2 <-
       as.numeric(system.time(trash <- replicate(1000, gsparse(inits)))[3])
   }
-  fit2$metric <- metric
+  cat('\n\n')
   print(fit2)
   fit2
 }
@@ -228,8 +228,9 @@ get_post <- function(x, invf, parnames, array=FALSE) {
 #' @param x A fitted MCMC object
 #' @param mle A list of MLE parameters
 #' @param invf The inverse function for the parameters
+#' @param metric The metric used
 #' @export
-as.tmbfit <- function(x, mle, invf){
+as.tmbfit <- function(x, mle, invf, metric){
   parnames <- mle$parnames
   ## move lp__ to end to match order of draws
   mon <- StanEstimators::summary(x)
@@ -246,7 +247,8 @@ as.tmbfit <- function(x, mle, invf){
   }
   timing <- sapply(x@timing, function(x) unlist(x))
   x <- list(samples=post, sampler_params=spl, mle=mle,
-            monitor=mon, model='test',
+            monitor=mon, model=obj$env$DLL,
+            metric=metric,
             par_names=mle$parnames,
             max_treedepth=x@metadata$max_depth,
             warmup=as.numeric(x@metadata$num_warmup),
