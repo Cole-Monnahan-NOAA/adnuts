@@ -77,12 +77,8 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               DLL=obj$env$DLL)
     }
   }
-
- # if(metric=='dense') Q <- as.matrix(Qinv)
-#  if(metric=='diag') Q <- as.numeric(diag(Qinv))
-#  if(metric=='unit') Q <- rep(1, length(mle$nopar))
   rotation <- .rotate_posterior(metric=metric, fn=obj2$fn, gr=obj2$gr, Q=Q, Qinv=Qinv, y.cur=mle$est)
- # rotation <- .rotate_space(fn=obj2$fn, gr=obj2$gr, M=Q, y.cur=mle$est)
+  metric <- rotation$metric # update if using auto for printing later
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
   inits <- rotation$x.cur
@@ -282,7 +278,7 @@ as.tmbfit <- function(x, mle, invf, metric){
   ses <- suppressWarnings(sqrt(diag(Qinv)))
   mycor <- suppressWarnings(cov2cor(Qinv))
   if(!all(is.finite(ses))){
-    if(metric=='unit'){
+    if(metric %in% c('unit', 'auto')){
       warning("Some standard errors estimated to be NaN, filling with dummy values so unit metric works. The 'mle' slot will be wrong so do not use it")
       cor <- diag(length(mle))
       ses <- rep(1,length(mle))
@@ -310,11 +306,9 @@ as.tmbfit <- function(x, mle, invf, metric){
   ## First case is a dense mass matrix
   M <- as.matrix(Qinv)
   if(metric=='dense'){
-    if(metric=='dense'){
       if(!matrixcalc::is.symmetric.matrix(M) ||
          !matrixcalc::is.positive.definite(M))
         warning("Estimated dense matrix was not positive definite so may be unreliable. Try different metric or turn on the laplace if there are random effects if it fails.")
-    }
     J <- NULL
     chd <- t(chol(M))               # lower triangular Cholesky decomp.
     chd.inv <- solve(chd)               # inverse
@@ -378,13 +372,73 @@ as.tmbfit <- function(x, mle, invf, metric){
     finv <- function(x){
       t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt")))
     }
-  } else {
+  } else if(metric=='auto'){
+    ## use recursion then pick the right one depending on several criteria
+    if(!is.null(Q)) rsparse <- .rotate_posterior(metric='sparse', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
+    if(!is.null(Qinv))
+      rdiag <- .rotate_posterior(metric='diag', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
+    if(!is.null(Qinv)){
+        rdense <- tryCatch(.rotate_posterior(metric='dense', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur),
+                           error=function(e) "Failed")
+    }
+    runit <- .rotate_posterior(metric='unit', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
+
+    if(is.character(rdense)){
+      message("unit metric selected b/c Qinv was not positive definite")
+      return(runit)
+    }
+
+    if(is.null(Q)){
+      if(is.null(Qinv)){
+        # must be unit since no other option
+        message("unit metric selected b/c no Q or Qinv info available")
+        return(runit)
+      } else {
+        # no Q but does have Qinv, e.g., a model w/o RE or using the LA
+        ## check for high correlations
+        cors <- cov2cor(Qinv)[lower.tri(Qinv, diag=FALSE)]
+        if(max(abs(cors))<.3){
+          message("diag metric selected b/c no Q available and low correlations")
+          return(rdiag)
+        } else {
+          message("dense metric selected b/c no Q availabile and high correlations")
+          return(rdense)
+        }
+      }
+    } else {
+      # has a Q
+      cors <- cov2cor(Qinv)[lower.tri(Qinv, diag=FALSE)]
+      if(max(abs(cors))<.3){
+        message("diag metric selected b/c of and low correlations")
+        return(rdiag)
+      } else {
+        if(!require(microbenchmark)){
+          message("sparse metric selected b/c no timing available -- please install microbenchmark")
+          ## check for speed differences
+          return(rsparse)
+        } else {
+          bench <- microbenchmark::microbenchmark(rdense$gr2(rdense$x.cur),
+                                                  rsparse$gr2(rsparse$x.cur),
+                                                  times = 500)
+          tdense <- summary(bench)$median[1]
+          tsparse <- summary(bench)$median[2]
+          if(tdense < tsparse){
+            message("dense metric selected b/c faster than sparse and high correlations")
+            return(rdense)
+          } else {
+            message("sparse metric selected b/c faster than dense and high correlations")
+            return(rsparse)
+          }
+        }
+      }
+    }
+  }  else {
     stop("Invalid metric")
   }
   ## Redefine these functions
   ## Need to adjust the current parameters so the chain is
   ## continuous. First rotate to be in Y space.
-  return(list(gr2=gr2, fn2=fn2, finv=finv, x.cur=x.cur, chd=chd, J=J))
+  return(list(gr2=gr2, fn2=fn2, finv=finv, x.cur=x.cur, chd=chd, J=J, metric=metric))
 }
 
 

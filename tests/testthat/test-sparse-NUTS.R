@@ -43,8 +43,6 @@ test_that("metrics are robust to model type",{
                             warmup=200, cores=1, chains=1, seed=1,
                             metric='dense'),
                regexp = 'No random effects found')
-
-
   expect_error(sample_sparse_tmb(obj, iter=1000,
                             warmup=200, cores=1, chains=1, seed=1,
                             metric='sparse'),
@@ -82,8 +80,55 @@ test_that("parallel works", {
   fit <- sample_sparse_tmb(obj, iter=1000, warmup=200, cores=4, chains=4, seed=1, metric='sparse')
 })
 
+
+test_that("auto metric selection is robust to model type",{
+  skip_if(skip_TMB)
+  TMB::runExample('simple')
+  ## normal case of RE, with and without laplace
+  fit1 <- sample_sparse_tmb(obj, iter=1000,
+                            warmup=200, cores=1, chains=1, seed=1,
+                            metric='auto')
+  expect_equal(as.numeric(tail(as.data.frame(fit1),1)[1]),-1.802417, tolerance =1e-6)
+  fit2 <- sample_sparse_tmb(obj, iter=1000,  laplace=TRUE,
+                            warmup=200, cores=1, chains=1, seed=1,
+                            metric='auto')
+  expect_equal(as.numeric(tail(as.data.frame(fit2),1)[1]), 51.80767, tolerance =1e-6)
+
+  ## rebuild without RE so it fails: behavior on model w/o mode
+  TMB::runExample('simple')
+  obj <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
+                        map=obj$env$map,
+                        random=NULL, silent=TRUE,
+                        DLL=obj$env$DLL)
+  expect_error(sample_sparse_tmb(obj, iter=1000, laplace=TRUE,
+                                 warmup=200, cores=1, chains=1, seed=1,
+                                 metric='auto'),
+               regexp = 'No random effects found')
+  # this breaks if init='last.par.best' b/c the inits are so bad it can't recover
+  fit3 <- sample_sparse_tmb(obj, iter=1000, laplace=FALSE, init='random',
+                                 warmup=200, cores=1, chains=1, seed=1,
+                                 metric='auto', skip_optimization = TRUE)
+  expect_equal(as.numeric(tail(as.data.frame(fit3),1)[1]), -1.24197, tolerance =1e-6)
+  ## rebuild as penalized ML
+  TMB::runExample('simple')
+  obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
+                         map=list(logsdu=factor(NA)),
+                         random=NULL, silent=TRUE,
+                         DLL=obj$env$DLL)
+  expect_error(sample_sparse_tmb(obj2, iter=1000, laplace=TRUE,
+                                 warmup=200, cores=1, chains=1, seed=1,
+                                 metric='auto'),
+               regexp = 'No random effects found')
+  # this breaks if init='last.par.best' b/c the inits are so bad it can't recover
+  fit5 <- sample_sparse_tmb(obj2, iter=1000,
+                            warmup=200, cores=1, chains=1, seed=1,
+                            metric='auto')
+  #expect_equal(as.numeric(tail(as.data.frame(fit5),1)[1]), -0.8898186, tolerance =1e-6)
+})
+
+
 test_that("RTMB works", {
-  skip_if(TRUE) # not sure why this fails when testing but not locally?
+  skip_if(skip_RTMB) # not sure why this fails when testing but not locally?
   ## from RTMB beginner help page
   ## suppressWarnings(detach("package:TMB", unload = TRUE))
   library(RTMB)

@@ -4,6 +4,7 @@ skip_consistency <- TRUE
 skip_reproducibility <- TRUE
 skip_ADMB <- TRUE
 skip_TMB <- FALSE
+skip_RTMB <- TRUE
 
 ### Skip all this if on CRAN. Otherwise locally or on CI, need to
 ### build the executables and run them so they're available for
