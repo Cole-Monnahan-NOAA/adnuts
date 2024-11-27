@@ -14,7 +14,7 @@ sample_sparse_tmb(
   seed = NULL,
   laplace = FALSE,
   init = c("last.par.best", "random"),
-  metric = c("sparse", "dense", "diag", "unit"),
+  metric = c("auto", "sparse", "dense", "diag", "unit"),
   skip_optimization = FALSE,
   Q = NULL,
   Qinv = NULL,
@@ -54,6 +54,11 @@ using the inverse joint precision matrix as a covariance
 matrix. Note that StanEstimators only allows for the same
 init vector for all chains currently. If a seed is specified
 it will be set and thus the inits used will be reproducible.}
+
+\item{metric}{A character specifying which metric to use.
+Defaults to "auto" which uses an algorithm to select the
+best metric (see details), otherwise one of "sparse",
+"dense", "diag", or "unit"}
 
 \item{skip_optimization}{Whether to skip optimization or not
 (default).}

@@ -4,13 +4,17 @@ test_that("all three metrics work", {
   Q <- sdreport(obj, getJointPrecision = TRUE)$jointPrecision
   M <- as.matrix(solve(Q))
   fits <- list()
-  library(StanEstimators)
-  for(m in c('dense', 'sparse', 'diag')){
+  for(m in c('dense', 'sparse', 'diag', 'unit')){
     fits[[m]] <- sample_sparse_tmb(obj, iter=1000,
                                    warmup=200, cores=1, chains=1, seed=1,
                                    metric=m)
   }
- expect_equal(length(fits),3)
+  expect_equal(length(fits),4)
+  out <- lapply(fits, function(x) as.numeric(tail(as.data.frame(x), n=1)[1]))
+  expect_equal(out$dense,-1.802417, tolerance=1e-5)
+  expect_equal(out$sparse,-1.802417, tolerance=1e-5)
+  expect_equal(out$diag,-0.3480269, tolerance=1e-5)
+  expect_equal(out$unit,-0.0162497, tolerance=1e-5)
 })
 
 test_that("Laplace works", {
@@ -75,7 +79,7 @@ test_that("metrics are robust to model type",{
 test_that("parallel works", {
   skip_if(skip_TMB)
   TMB::runExample('simple')
-  fit <- sample_sparse_tmb(obj, iter=1000, warmup=200, cores=4, chains=4, seed=1)
+  fit <- sample_sparse_tmb(obj, iter=1000, warmup=200, cores=4, chains=4, seed=1, metric='sparse')
 })
 
 test_that("RTMB works", {

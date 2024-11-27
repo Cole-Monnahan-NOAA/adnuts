@@ -2,6 +2,10 @@
 #' @param obj The TMB object with random effects turned on and
 #'   optimized
 #' @param iter Total iterations to run (warmup + sampling)
+#' @param metric A character specifying which metric to use.
+#'   Defaults to "auto" which uses an algorithm to select the
+#'   best metric (see details), otherwise one of "sparse",
+#'   "dense", "diag", or "unit"
 #' @param init Either 'last.par.best' (default) or 'random'. The
 #'   former starts from the joint mode and the latter draws from
 #'   a multivariate t distribution with df=1 centered at the mode
@@ -34,7 +38,7 @@
 sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                               control=NULL, seed=NULL, laplace=FALSE,
                               init=c('last.par.best', 'random'),
-                              metric=c('sparse','dense','diag', 'unit'),
+                              metric=c('auto', 'sparse','dense','diag', 'unit'),
                               skip_optimization=FALSE, Q=NULL,
                               Qinv=NULL,
                               globals=NULL, ...){
@@ -74,15 +78,11 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
     }
   }
 
-  if(metric=='dense') Q <- as.matrix(Qinv)
-  if(metric=='diag') Q <- as.numeric(diag(Qinv))
-  if(metric=='unit') Q <- rep(1, length(mle$nopar))
-  if(metric=='dense'){
-    if(!matrixcalc::is.symmetric.matrix(Q) ||
-       !matrixcalc::is.positive.definite(Q))
-    warning("Estimated dense matrix was not positive definite so may be unreliable. Try different metric or turn on the laplace if there are random effects if it fails.")
-  }
-  rotation <- .rotate_space(fn=obj2$fn, gr=obj2$gr, M=Q, y.cur=mle$est)
+ # if(metric=='dense') Q <- as.matrix(Qinv)
+#  if(metric=='diag') Q <- as.numeric(diag(Qinv))
+#  if(metric=='unit') Q <- rep(1, length(mle$nopar))
+  rotation <- .rotate_posterior(metric=metric, fn=obj2$fn, gr=obj2$gr, Q=Q, Qinv=Qinv, y.cur=mle$est)
+ # rotation <- .rotate_space(fn=obj2$fn, gr=obj2$gr, M=Q, y.cur=mle$est)
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
   inits <- rotation$x.cur
@@ -296,3 +296,95 @@ as.tmbfit <- function(x, mle, invf, metric){
  out <- list(Q=Q, Qinv=Qinv, mle=mle, time.opt=time.opt, time.Qinv=time.Qinv, time.Q=time.Q)
  return(out)
 }
+
+#' Update algorithm for mass matrix.
+#'
+#' @param metric The metric to use
+#' @param fn The current fn function.
+#' @param gr The current gr function
+#' @param y.cur The current parameter vector in unrotated (Y) space.
+#' @param Q The sparse precision matrix
+#' @param Qinv The inverse of Q
+.rotate_posterior <- function(metric, fn, gr, Q,  Qinv, y.cur){
+  ## Rotation done using choleski decomposition
+  ## First case is a dense mass matrix
+  M <- as.matrix(Qinv)
+  if(metric=='dense'){
+    if(metric=='dense'){
+      if(!matrixcalc::is.symmetric.matrix(M) ||
+         !matrixcalc::is.positive.definite(M))
+        warning("Estimated dense matrix was not positive definite so may be unreliable. Try different metric or turn on the laplace if there are random effects if it fails.")
+    }
+    J <- NULL
+    chd <- t(chol(M))               # lower triangular Cholesky decomp.
+    chd.inv <- solve(chd)               # inverse
+    ## Define rotated fn and gr functions
+    fn2 <- function(x) fn(chd %*% x)
+    gr2 <- function(x) {as.vector( gr(chd %*% x) %*% chd )}
+    ## Now rotate back to "x" space using the new mass matrix M
+    x.cur <- as.numeric(chd.inv %*% y.cur)
+    finv <- function(x){
+      t(chd %*% x)
+    }
+  } else if(metric=='diag'){
+    M <- diag(M)
+    ## diagonal but not unit
+      J <- NULL
+      chd <- sqrt(M)
+      fn2 <- function(x) fn(chd * x)
+      gr2 <- function(x) as.vector(gr(chd * x) ) * chd
+      ## Now rotate back to "x" space using the new mass matrix M. M is a
+      ## vector here. Note the big difference in efficiency without the
+      ## matrix operations.
+      x.cur <- (1/chd) * y.cur
+      finv <- function(x) chd*x
+  } else if(metric=='unit') {
+      ## unit metric, change nothing
+      fn2 <- function(x) fn(x)
+      gr2 <- function(x) gr(x)
+      x.cur <- y.cur
+      finv <- function(x) x
+      chd <- J <- NULL
+  } else if(metric=='sparse'){
+    ##  warning( "Use of Q is highly experimental still" )
+    stopifnot(require(Matrix))
+    if(!is(Q,"Matrix")) stop("Q is not a Matrix object, something went wrong")
+        # M is actually Q, i.e., the inverse-mass
+    # Antidiagonal matrix JJ = I
+    J = Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
+    #chd <- Cholesky(M, super=FALSE, perm=FALSE)
+    #chd <- Matrix::Cholesky(M, super=TRUE, perm=FALSE)
+    chd <- Matrix::Cholesky(J%*%Q%*%J, super=TRUE, perm=FALSE) # perm
+    Linv_times_x = function(chd,x){
+      as.numeric(J%*% Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt"))
+    }
+    x_times_Linv = function(chd,x){
+      #x %*% chol()
+      as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, Matrix::t(x%*%J), system="L"), system="Pt"))
+    }
+    fn2 <- function(x){
+      Linv_x = Linv_times_x(chd, x)
+      fn(Linv_x)
+    }
+    gr2 <- function(x){
+      Linv_x = Linv_times_x(chd, x)
+      grad = gr( Linv_x )
+      as.vector(  x_times_Linv(chd, grad) )
+    }
+    ## Now rotate back to "x" space using the new mass matrix M
+    #  solve(t(chol(solve(M)))) ~~ IS EQUAL TO ~~ J%*%chol(M)%*%J
+    # J%*%chol(J%*%prec%*%J) %*% J%*%x
+    x.cur <- as.numeric(J%*%chol(J%*%Q%*%J) %*% J%*%y.cur)
+    finv <- function(x){
+      t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt")))
+    }
+  } else {
+    stop("Invalid metric")
+  }
+  ## Redefine these functions
+  ## Need to adjust the current parameters so the chain is
+  ## continuous. First rotate to be in Y space.
+  return(list(gr2=gr2, fn2=fn2, finv=finv, x.cur=x.cur, chd=chd, J=J))
+}
+
+

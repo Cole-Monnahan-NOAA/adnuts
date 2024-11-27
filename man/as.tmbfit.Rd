@@ -4,7 +4,7 @@
 \alias{as.tmbfit}
 \title{Construtor for tmbfit objects}
 \usage{
-as.tmbfit(x, mle, invf)
+as.tmbfit(x, mle, invf, metric)
 }
 \arguments{
 \item{x}{A fitted MCMC object}
@@ -12,6 +12,8 @@ as.tmbfit(x, mle, invf)
 \item{mle}{A list of MLE parameters}
 
 \item{invf}{The inverse function for the parameters}
+
+\item{metric}{The metric used}
 }
 \description{
 Construtor for tmbfit objects
