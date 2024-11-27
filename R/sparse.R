@@ -43,77 +43,11 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   metric <- match.arg(metric)
   init <- match.arg(init)
   obj$env$beSilent()
-  time.opt <- time.Q <- time.Qinv <- 0
-  if(!skip_optimization){
-    message("Optimizing...")
-    time.opt <-
-      as.numeric(system.time(opt <- with(obj, nlminb(par, fn, gr)))[3])
-  }
-  hasRE <-  !is.null(obj$env$random)
-  if(laplace & !hasRE)
-    stop("No random effects found so laplace=TRUE fails, set to FALSE")
-  if( (laplace | !hasRE) & metric=='sparse')
-    stop("sparse metric only allowed with random effects
-         and laplace=FALSE")
-  if(!laplace){
-    if(is.null(Q) & hasRE){
-      message("Getting Q...")
-      time.Q <- as.numeric(system.time(
-        sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
-      Q <- sdr$jointPrecision
-    }
-    if(is.null(Qinv)){
-      if(!is.null(Q)){
-        ## Q found above
-        message("Inverting Q...")
-        time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
-      } else if(!hasRE){
-        ## fixed effect only model
-        time.Qinv <- as.numeric(system.time(Qinv <- sdreport(obj)$cov.fixed)[3])
-      } else {
-       stop("something wrong here")
-     }
-    }
-    .print.mat.stats(Q)
-    .print.mat.stats(Qinv)
-    mle <- obj$env$last.par.best
-  ## Make parameter names unique if vectors exist
-  parnames <- names(mle)
-  parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
-    temp <- parnames[parnames==x]
-    if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
-  }))))
-  stopifnot(all.equal(length(mle), nrow(Qinv)))
-  } else {
-      message("Getting M for fixed effects...")
-    time.Qinv <- as.numeric(system.time(sdr <- sdreport(obj)))
-    Qinv <- sdr$cov.fixed
-    .print.mat.stats(Qinv)
-    if(is.null(opt))
-      stop("No opt object found, rerun with 'skip_optimization=FALSE'")
-    mle <- opt$par
-    ## Make parameter names unique if vectors exist
-    parnames <- names(mle)
-    parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
-      temp <- parnames[parnames==x]
-      if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
-    }))))
-    stopifnot(all.equal(length(mle), nrow(Qinv)))
-  }
-  ses <- suppressWarnings(sqrt(diag(Qinv)))
-  mycor <- suppressWarnings(cov2cor(Qinv))
-  if(!all(is.finite(ses))){
-    if(metric=='unit'){
-    warning("Some standard errors estimated to be NaN, filling with dummy values so unit metric works. The 'mle' slot will be wrong so do not use it")
-    cor <- diag(length(mle))
-    ses <- rep(1,length(mle))
-    } else {
-      stop("Some standard errors estimated to be NaN, use 'unit' metric for models without a mode or positive definite Hessian")
-    }
-  }
-  mle <- list(nopar=length(mle), est=mle, se=ses,
-              cor=mycor, parnames=parnames, Q=Q,
-              Qinv=Qinv)
+  inputs <- .get_inputs(obj=obj, skip_optimization=skip_optimization,
+                        laplace=laplace, metric=metric, Q=Q, Qinv=Qinv)
+  mle <- inputs$mle
+  Q <- inputs$Q
+  Qinv <- inputs$Qinv
 
   ## prepare to run via StanEstimators
   mydll <- unclass(getLoadedDLLs()[[obj$env$DLL]])$path
@@ -165,6 +99,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
   ## the user must pass data objects
   if(isRTMB) globals2 <- c(globals2,globals)
   message("Starting MCMC sampling...")
+  if(cores>1) message("Preparing parallel workspace...")
   fit <- stan_sample(fn=fsparse, par_inits=inits,
                      grad_fun=gsparse, num_samples=iter,
                      num_warmup=warmup,
@@ -178,7 +113,7 @@ sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
                      parallel_chains=cores, save_warmup=TRUE,
                      num_chains = chains, seed = seed, ...)
   fit2 <- as.tmbfit(fit, mle=mle, invf=finv, metric=metric)
-  fit2$time.Q <- time.Q; fit2$time.Qinv <- time.Qinv; fit2$time.opt <- time.opt
+  fit2$time.Q <- inputs$time.Q; fit2$time.Qinv <- inputs$time.Qinv; fit2$time.opt <- inputs$time.opt
   ## gradient timings to check for added overhead
   if(require(microbenchmark)){
     bench <- microbenchmark(obj2$gr(inits),
@@ -275,4 +210,89 @@ as.tmbfit <- function(x, mle, invf, metric){
   message(nm, " is ", pct.sparsity,
           " % zeroes, with condition factor=",round(ratio,0),
           ' (min=',round(mine,3), ', max=', round(maxe,1),")")
+}
+
+#' Prepare inputs for sparse sampling
+#'  @param obj Object
+#'  @param skip_optimization Whether to skip or not
+#'  @param laplace Whether to due the LA or not
+#'  @param metric Which metric
+#'  @param Q Sparse precision
+#'  @param Qinv Inverse of Q
+#'  @return A list containing Q, Qinv, the mle list, and timings
+.get_inputs <- function(obj, skip_optimization, laplace, metric, Q, Qinv) {
+
+  time.opt <- time.Q <- time.Qinv <- 0
+  if(!skip_optimization){
+    message("Optimizing...")
+    time.opt <-
+      as.numeric(system.time(opt <- with(obj, nlminb(par, fn, gr)))[3])
+  }
+  hasRE <-  !is.null(obj$env$random)
+  if(laplace & !hasRE)
+    stop("No random effects found so laplace=TRUE fails, set to FALSE")
+  if( (laplace | !hasRE) & metric=='sparse')
+    stop("sparse metric only allowed with random effects
+           and laplace=FALSE")
+  if(!laplace){
+    if(is.null(Q) & hasRE){
+      message("Getting Q...")
+      time.Q <- as.numeric(system.time(
+        sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
+      Q <- sdr$jointPrecision
+    }
+    if(is.null(Qinv)){
+      if(!is.null(Q)){
+        ## Q found above
+        message("Inverting Q...")
+        time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
+      } else if(!hasRE){
+        ## fixed effect only model
+        time.Qinv <- as.numeric(system.time(Qinv <- sdreport(obj)$cov.fixed)[3])
+      } else {
+        stop("something wrong here")
+      }
+    }
+    .print.mat.stats(Q)
+    .print.mat.stats(Qinv)
+    mle <- obj$env$last.par.best
+    ## Make parameter names unique if vectors exist
+    parnames <- names(mle)
+    parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
+      temp <- parnames[parnames==x]
+      if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
+    }))))
+    stopifnot(all.equal(length(mle), nrow(Qinv)))
+  } else {
+    message("Getting M for fixed effects...")
+    time.Qinv <- as.numeric(system.time(sdr <- sdreport(obj)))
+    Qinv <- sdr$cov.fixed
+    .print.mat.stats(Qinv)
+    if(is.null(opt))
+      stop("No opt object found, rerun with 'skip_optimization=FALSE'")
+    mle <- opt$par
+    ## Make parameter names unique if vectors exist
+    parnames <- names(mle)
+    parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
+      temp <- parnames[parnames==x]
+      if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
+    }))))
+    stopifnot(all.equal(length(mle), nrow(Qinv)))
+  }
+  ses <- suppressWarnings(sqrt(diag(Qinv)))
+  mycor <- suppressWarnings(cov2cor(Qinv))
+  if(!all(is.finite(ses))){
+    if(metric=='unit'){
+      warning("Some standard errors estimated to be NaN, filling with dummy values so unit metric works. The 'mle' slot will be wrong so do not use it")
+      cor <- diag(length(mle))
+      ses <- rep(1,length(mle))
+    } else {
+      stop("Some standard errors estimated to be NaN, use 'unit' metric for models without a mode or positive definite Hessian")
+    }
+  }
+  mle <- list(nopar=length(mle), est=mle, se=ses,
+              cor=mycor, parnames=parnames, Q=Q,
+              Qinv=Qinv)
+ out <- list(Q=Q, Qinv=Qinv, mle=mle, time.opt=time.opt, time.Qinv=time.Qinv, time.Q=time.Q)
+ return(out)
 }
