@@ -2,7 +2,7 @@
 % Please edit documentation in R/sparse.R
 \name{sample_sparse_tmb}
 \alias{sample_sparse_tmb}
-\title{Fit a TMB model using a sparse inverse mass matrix}
+\title{NUTS sampling for TMB models using a sparse inverse mass matrix (beta)}
 \usage{
 sample_sparse_tmb(
   obj,
@@ -28,7 +28,10 @@ optimized}
 
 \item{iter}{Total iterations to run (warmup + sampling)}
 
-\item{warmup}{Total warmup iterations}
+\item{warmup}{Total warmup iterations. When using dense,
+sparse, or diag metrics a much shorter warmup can be used
+(e.g., 150), especially if paired with a 'unit_e' Stan
+metric.}
 
 \item{cores}{Number of parallel cores to use}
 
@@ -41,7 +44,8 @@ the type of metric adaptation for Stan to do with options
 metrics this usually can be 'unit_e' to skip adaptation.
 NULL values (default) revert to \code{stan_sample} defaults.}
 
-\item{seed}{Random number seed}
+\item{seed}{Random number seed, used for generating inital
+values (if 'random") and for NUTS.}
 
 \item{laplace}{Whether to leave the Laplace approximation on
 and only use NUTS to sample the fixed effects, or turn it
@@ -58,10 +62,14 @@ it will be set and thus the inits used will be reproducible.}
 \item{metric}{A character specifying which metric to use.
 Defaults to "auto" which uses an algorithm to select the
 best metric (see details), otherwise one of "sparse",
-"dense", "diag", or "unit"}
+"dense", "diag", or "unit" can be specified.}
 
 \item{skip_optimization}{Whether to skip optimization or not
 (default).}
+
+\item{Q}{The sparse precision matrix. It is calculated internally if not specified (default).}
+
+\item{Qinv}{The dense matrix (M). It is calculated internally if not specified (default).}
 
 \item{globals}{A named list of objects to pass to new R
 sessions when running in parallel and using RTMB. Typically
@@ -74,5 +82,25 @@ this is the `data` object for now.}
 A fitted MCMC object of class 'adfit'
 }
 \description{
-Fit a TMB model using a sparse inverse mass matrix
+NUTS sampling for TMB models using a sparse inverse mass matrix (beta)
+}
+\details{
+The TMB metric is used to decorrelate/descale the
+  posterior before sampling using the Stan algorithms via the
+  StanEstimator interface. The default is 'auto' which uses an
+  algorithm to determine the optimal metric to use for a
+  particular model. The algorithm depends on whether Q and/or
+  M=Qinv are available, the extent of parameter correlations,
+  and the speed of gradient calculations. The chosen metric
+  and reasoning are printed to the console before NUTS
+  sampling. A sparse and dense matrix will decorrelate and
+  descale the posterior in the same way (up to numerical
+  precision), but the sparse one will be more efficient with
+  high levels of sparsity and larger dimensions. The 'diag'
+  option is to take the marginal SDs from M and thus only
+  descales, while the 'unit' option is the default Stan
+  algorithm and should be used with mass matrix adaptation.
+  Note that the \code{metric} is the TMB metric and distinct
+  from the Stan metric which is controlled via the
+  \code{control} list.
 }

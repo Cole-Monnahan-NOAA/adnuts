@@ -1,11 +1,12 @@
-#' Fit a TMB model using a sparse inverse mass matrix
+#' NUTS sampling for TMB models using a sparse inverse mass matrix (beta)
+#'
 #' @param obj The TMB object with random effects turned on and
 #'   optimized
 #' @param iter Total iterations to run (warmup + sampling)
 #' @param metric A character specifying which metric to use.
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
-#'   "dense", "diag", or "unit"
+#'   "dense", "diag", or "unit" can be specified.
 #' @param init Either 'last.par.best' (default) or 'random'. The
 #'   former starts from the joint mode and the latter draws from
 #'   a multivariate t distribution with df=1 centered at the mode
@@ -13,7 +14,10 @@
 #'   matrix. Note that StanEstimators only allows for the same
 #'   init vector for all chains currently. If a seed is specified
 #'   it will be set and thus the inits used will be reproducible.
-#' @param warmup Total warmup iterations
+#' @param warmup Total warmup iterations. When using dense,
+#'   sparse, or diag metrics a much shorter warmup can be used
+#'   (e.g., 150), especially if paired with a 'unit_e' Stan
+#'   metric.
 #' @param chains Number of chains
 #' @param cores Number of parallel cores to use
 #' @param control NUTS control list, currently available options
@@ -22,26 +26,48 @@
 #'   ('unit_e', 'diag_e', or 'dense_e'). For dense and sparse
 #'   metrics this usually can be 'unit_e' to skip adaptation.
 #'   NULL values (default) revert to \code{stan_sample} defaults.
-#' @param seed Random number seed
+#' @param seed Random number seed, used for generating inital
+#'   values (if 'random") and for NUTS.
 #' @param laplace Whether to leave the Laplace approximation on
 #'   and only use NUTS to sample the fixed effects, or turn it
 #'   off and sample from the joint parameter space (default).
 #' @param skip_optimization Whether to skip optimization or not
 #'   (default).
+#' @param Q The sparse precision matrix. It is calculated internally if not specified (default).
+#' @param Qinv The dense matrix (M). It is calculated internally if not specified (default).
 #' @param globals A named list of objects to pass to new R
 #'   sessions when running in parallel and using RTMB. Typically
 #'   this is the `data` object for now.
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
+#' @details The TMB metric is used to decorrelate/descale the
+#'   posterior before sampling using the Stan algorithms via the
+#'   StanEstimator interface. The default is 'auto' which uses an
+#'   algorithm to determine the optimal metric to use for a
+#'   particular model. The algorithm depends on whether Q and/or
+#'   M=Qinv are available, the extent of parameter correlations,
+#'   and the speed of gradient calculations. The chosen metric
+#'   and reasoning are printed to the console before NUTS
+#'   sampling. A sparse and dense matrix will decorrelate and
+#'   descale the posterior in the same way (up to numerical
+#'   precision), but the sparse one will be more efficient with
+#'   high levels of sparsity and larger dimensions. The 'diag'
+#'   option is to take the marginal SDs from M and thus only
+#'   descales, while the 'unit' option is the default Stan
+#'   algorithm and should be used with mass matrix adaptation.
+#'   Note that the \code{metric} is the TMB metric and distinct
+#'   from the Stan metric which is controlled via the
+#'   \code{control} list.
 #' @export
-sample_sparse_tmb <- function(obj, iter, warmup, cores, chains,
-                              control=NULL, seed=NULL, laplace=FALSE,
-                              init=c('last.par.best', 'random'),
-                              metric=c('auto', 'sparse','dense','diag', 'unit'),
-                              skip_optimization=FALSE, Q=NULL,
-                              Qinv=NULL,
-                              globals=NULL, ...){
+sample_sparse_tmb <-
+  function(obj, iter, warmup, cores, chains,
+           control=NULL, seed=NULL, laplace=FALSE,
+           init=c('last.par.best', 'random'),
+           metric=c('auto', 'sparse','dense','diag', 'unit'),
+           skip_optimization=FALSE, Q=NULL,
+           Qinv=NULL,
+           globals=NULL, ...){
 
   iter <- iter-warmup
   metric <- match.arg(metric)
