@@ -4,7 +4,7 @@
 \alias{as.tmbfit}
 \title{Construtor for tmbfit objects}
 \usage{
-as.tmbfit(x, mle, invf, metric)
+as.tmbfit(x, mle, invf, metric, model = "anonymous")
 }
 \arguments{
 \item{x}{A fitted MCMC object}
@@ -14,6 +14,8 @@ as.tmbfit(x, mle, invf, metric)
 \item{invf}{The inverse function for the parameters}
 
 \item{metric}{The metric used}
+
+\item{model}{A character giving the model name}
 }
 \description{
 Construtor for tmbfit objects

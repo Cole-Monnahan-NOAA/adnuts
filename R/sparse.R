@@ -38,6 +38,9 @@
 #' @param globals A named list of objects to pass to new R
 #'   sessions when running in parallel and using RTMB. Typically
 #'   this is the `data` object for now.
+#' @param model_name An optional character giving the model name.
+#'   If NULL it will use the DLL name which for RTMB models is
+#'   just 'RTMB'. The name is used only for printing.
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
@@ -65,14 +68,18 @@ sample_sparse_tmb <-
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random'),
            metric=c('auto', 'sparse','dense','diag', 'unit'),
-           skip_optimization=FALSE, Q=NULL,
-           Qinv=NULL,
-           globals=NULL, ...){
+           skip_optimization=FALSE, Q=NULL, Qinv=NULL,
+           globals=NULL, model_name=NULL, ...){
 
   iter <- iter-warmup
   metric <- match.arg(metric)
   init <- match.arg(init)
   obj$env$beSilent()
+  if(!is.null(model_name)){
+    stopifnot(is.character(model_name))
+  } else {
+    model_name <- obj$env$DLL
+  }
   inputs <- .get_inputs(obj=obj, skip_optimization=skip_optimization,
                         laplace=laplace, metric=metric, Q=Q, Qinv=Qinv)
   mle <- inputs$mle
@@ -133,8 +140,10 @@ sample_sparse_tmb <-
                      metric=control$metric,
                      max_treedepth=control$max_treedepth,
                      parallel_chains=cores, save_warmup=TRUE,
-                     num_chains = chains, seed = seed, ...)
-  fit2 <- as.tmbfit(fit, mle=mle, invf=finv, metric=metric)
+                     num_chains = chains, seed = seed,
+                     ...)
+
+  fit2 <- as.tmbfit(fit, mle=mle, invf=finv, metric=metric, model=model_name)
   fit2$time.Q <- inputs$time.Q; fit2$time.Qinv <- inputs$time.Qinv; fit2$time.opt <- inputs$time.opt
   ## gradient timings to check for added overhead
   if(require(microbenchmark)){
@@ -186,8 +195,9 @@ get_post <- function(x, invf, parnames, array=FALSE) {
 #' @param mle A list of MLE parameters
 #' @param invf The inverse function for the parameters
 #' @param metric The metric used
+#' @param model A character giving the model name
 #' @export
-as.tmbfit <- function(x, mle, invf, metric){
+as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
   parnames <- mle$parnames
   ## move lp__ to end to match order of draws
   mon <- StanEstimators::summary(x)
@@ -204,7 +214,7 @@ as.tmbfit <- function(x, mle, invf, metric){
   }
   timing <- sapply(x@timing, function(x) unlist(x))
   x <- list(samples=post, sampler_params=spl, mle=mle,
-            monitor=mon, model=obj$env$DLL,
+            monitor=mon, model=model,
             metric=metric,
             par_names=mle$parnames,
             max_treedepth=x@metadata$max_depth,

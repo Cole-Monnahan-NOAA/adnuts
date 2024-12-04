@@ -19,6 +19,7 @@ sample_sparse_tmb(
   Q = NULL,
   Qinv = NULL,
   globals = NULL,
+  model_name = NULL,
   ...
 )
 }
@@ -74,6 +75,10 @@ best metric (see details), otherwise one of "sparse",
 \item{globals}{A named list of objects to pass to new R
 sessions when running in parallel and using RTMB. Typically
 this is the `data` object for now.}
+
+\item{model_name}{An optional character giving the model name.
+If NULL it will use the DLL name which for RTMB models is
+just 'RTMB'. The name is used only for printing.}
 
 \item{...}{Additional arguments to pass to
 \code{\link{StanEstimators::stan_sample}}.}
