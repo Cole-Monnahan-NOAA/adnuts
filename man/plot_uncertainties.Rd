@@ -11,13 +11,13 @@ plot_uncertainties(fit, log = TRUE, plot = TRUE)
 \item{fit}{A fitted object returned by
 \code{\link{sample_admb}}}
 
-\item{log}{Whether to plot the logarithm or not.}
+\item{log}{Whether to plot the axes in log space (default TRUE).}
 
 \item{plot}{Whether to plot it or not.}
 }
 \value{
-Invisibly returns data.frame with parameter name and
-  estimated uncertainties.
+Invisibly returns data.frame with parameter name (row) and
+  estimated uncertainties for each method (columns).
 }
 \description{
 Plot MLE vs MCMC marginal standard deviations for each
