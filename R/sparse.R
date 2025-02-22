@@ -3,6 +3,13 @@
 #' @param obj The TMB object with random effects turned on and
 #'   optimized
 #' @param iter Total iterations to run (warmup + sampling)
+#' @param warmup Total warmup iterations. Defaults to
+#'   \code{iter}/2 based on Stan defaults, but when using dense,
+#'   sparse, or diag metrics a much shorter warmup can be used
+#'   (e.g., 150), especially if paired with a 'unit_e' Stan
+#'   metric. Use \code{\link{plot_sampler_params}} to investigate
+#'   warmup performance and adjust as necessary for subsequent
+#'   runs.
 #' @param metric A character specifying which metric to use.
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
@@ -14,12 +21,9 @@
 #'   matrix. Note that StanEstimators only allows for the same
 #'   init vector for all chains currently. If a seed is specified
 #'   it will be set and thus the inits used will be reproducible.
-#' @param warmup Total warmup iterations. When using dense,
-#'   sparse, or diag metrics a much shorter warmup can be used
-#'   (e.g., 150), especially if paired with a 'unit_e' Stan
-#'   metric.
 #' @param chains Number of chains
-#' @param cores Number of parallel cores to use
+#' @param cores Number of parallel cores to use, defaults to
+#'   \code{chains} so set this to 1 to execute serial chains.
 #' @param control NUTS control list, currently available options
 #'   are 'adapt_delta', 'max_treedepth', and 'metric' which is
 #'   the type of metric adaptation for Stan to do with options
@@ -64,7 +68,8 @@
 #'   \code{control} list.
 #' @export
 sample_sparse_tmb <-
-  function(obj, iter, warmup, cores, chains,
+  function(obj, iter=2000, warmup=floor(iter/2),
+           chains=4, cores=chains,
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random'),
            metric=c('auto', 'sparse','dense','diag', 'unit'),

@@ -6,10 +6,10 @@
 \usage{
 sample_sparse_tmb(
   obj,
-  iter,
-  warmup,
-  cores,
-  chains,
+  iter = 2000,
+  warmup = floor(iter/2),
+  chains = 4,
+  cores = chains,
   control = NULL,
   seed = NULL,
   laplace = FALSE,
@@ -29,14 +29,18 @@ optimized}
 
 \item{iter}{Total iterations to run (warmup + sampling)}
 
-\item{warmup}{Total warmup iterations. When using dense,
+\item{warmup}{Total warmup iterations. Defaults to
+\code{iter}/2 based on Stan defaults, but when using dense,
 sparse, or diag metrics a much shorter warmup can be used
 (e.g., 150), especially if paired with a 'unit_e' Stan
-metric.}
-
-\item{cores}{Number of parallel cores to use}
+metric. Use \code{\link{plot_sampler_params}} to investigate
+warmup performance and adjust as necessary for subsequent
+runs.}
 
 \item{chains}{Number of chains}
+
+\item{cores}{Number of parallel cores to use, defaults to
+\code{chains} so set this to 1 to execute serial chains.}
 
 \item{control}{NUTS control list, currently available options
 are 'adapt_delta', 'max_treedepth', and 'metric' which is
