@@ -245,10 +245,9 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
   nm <- deparse(substitute(x))
   e <- eigen(x,TRUE)
   mine <- min(e$value); maxe <- max(e$value); ratio <- maxe/mine
-  ## why does this return NA without the as.numeric?
-  pct.sparsity <- round(100*mean(as.numeric(x==0)),2)
+  pct.sparsity <- round(100*mean(x[lower.tri(x)] == 0),2)
   message(nm, " is ", pct.sparsity,
-          " % zeroes, with condition factor=",round(ratio,0),
+          "% zeroes, with condition factor=",round(ratio,0),
           ' (min=',round(mine,3), ', max=', round(maxe,1),")")
 }
 
