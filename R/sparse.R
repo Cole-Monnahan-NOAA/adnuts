@@ -45,6 +45,8 @@
 #' @param model_name An optional character giving the model name.
 #'   If NULL it will use the DLL name which for RTMB models is
 #'   just 'RTMB'. The name is used only for printing.
+#' @param refresh How often to print updates to console
+#'   (integer). 0 will turn off printing. The default is 100.
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
@@ -74,7 +76,8 @@ sample_sparse_tmb <-
            init=c('last.par.best', 'random'),
            metric=c('auto', 'sparse','dense','diag', 'unit'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
-           globals=NULL, model_name=NULL, ...){
+           globals=NULL, model_name=NULL, refresh=NULL,
+           ...){
 
   iter <- iter-warmup
   metric <- match.arg(metric)
@@ -146,7 +149,7 @@ sample_sparse_tmb <-
                      max_treedepth=control$max_treedepth,
                      parallel_chains=cores, save_warmup=TRUE,
                      num_chains = chains, seed = seed,
-                     ...)
+                     refresh=refresh, ...)
 
   fit2 <- as.tmbfit(fit, mle=mle, invf=finv, metric=metric, model=model_name)
   fit2$time.Q <- inputs$time.Q; fit2$time.Qinv <- inputs$time.Qinv; fit2$time.opt <- inputs$time.opt

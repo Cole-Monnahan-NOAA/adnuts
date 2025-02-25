@@ -20,6 +20,7 @@ sample_sparse_tmb(
   Qinv = NULL,
   globals = NULL,
   model_name = NULL,
+  refresh = NULL,
   ...
 )
 }
@@ -83,6 +84,9 @@ this is the `data` object for now.}
 \item{model_name}{An optional character giving the model name.
 If NULL it will use the DLL name which for RTMB models is
 just 'RTMB'. The name is used only for printing.}
+
+\item{refresh}{How often to print updates to console
+(integer). 0 will turn off printing. The default is 100.}
 
 \item{...}{Additional arguments to pass to
 \code{\link{StanEstimators::stan_sample}}.}
