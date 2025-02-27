@@ -16,11 +16,11 @@
 #'   "dense", "diag", or "unit" can be specified.
 #' @param init Either 'last.par.best' (default) or 'random'. The
 #'   former starts from the joint mode and the latter draws from
-#'   a multivariate t distribution with df=1 centered at the mode
-#'   using the inverse joint precision matrix as a covariance
-#'   matrix. Note that StanEstimators only allows for the same
-#'   init vector for all chains currently. If a seed is specified
-#'   it will be set and thus the inits used will be reproducible.
+#'   a multivariate normal distribution using the inverse joint
+#'   precision matrix as a covariance matrix. Note that
+#'   StanEstimators only allows for the same init vector for all
+#'   chains currently. If a seed is specified it will be set and
+#'   thus the inits used will be reproducible.
 #' @param chains Number of chains
 #' @param cores Number of parallel cores to use, defaults to
 #'   \code{chains} so set this to 1 to execute serial chains.
@@ -124,11 +124,13 @@ sample_sparse_tmb <-
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
   inits <- rotation$x.cur
   if(init=='random'){
+    if(is.null(Qinv))
+      stop("No Qinv found so cannot use random inits. Try 'last.par.best' instead'")
     if(!is.null(seed)) set.seed(seed)
-    inits <- as.numeric(rotation$x.cur + mvtnorm::rmvt(n=1, sigma=diag(length(inits)), df=1))
+    inits <- as.numeric(rotation$x.cur + mvtnorm::rmvnorm(n=1, sigma=Qinv))
     if(!is.finite(obj2$fn(inits))) {
-      warning("random inits resulted in NaN NLL, trying parameter mode instead")
-      inits <- rotation$x.cur
+      message("random rmvnorm inits resulted in NaN NLL, try 'last.par.best' instead or investigate returned inits")
+      return(inits)
     }
   }
   finv <- rotation$finv
