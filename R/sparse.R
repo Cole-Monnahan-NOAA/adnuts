@@ -14,13 +14,22 @@
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
 #'   "dense", "diag", or "unit" can be specified.
-#' @param init Either 'last.par.best' (default) or 'random'. The
-#'   former starts from the joint mode and the latter draws from
-#'   a multivariate normal distribution using the inverse joint
-#'   precision matrix as a covariance matrix. Note that
-#'   StanEstimators only allows for the same init vector for all
-#'   chains currently. If a seed is specified it will be set and
-#'   thus the inits used will be reproducible.
+#' @param init Either 'last.par.best' (default), 'random',
+#'   'random-t', or 'unif'. The former starts from the joint
+#'   mode, while 'random' and 'random-t' draw from multivariate
+#'   normal or multivariate t with 2 degrees of freedom
+#'   distributions using the inverse joint precision matrix as a
+#'   covariance matrix. 'random-t' is provided to allow for more
+#'   dispersed initial values. 'unif' will draw U(-2,2) samples
+#'   for all parameters, similar ot Stan's default behavior. If
+#'   the joint NLL is undefined at the initial values then the
+#'   model will exit and return the initial vector for further
+#'   investigation by the user, if desired. Note that
+#'   \code{\link{StanEstimators::stan_sample}} only allows for
+#'   the same init vector for all chains currently. If a seed is
+#'   specified it will be set and thus the inits used will be
+#'   reproducible. The inits are also returned in the 'inits'
+#'   slot of the fitted object.
 #' @param chains Number of chains
 #' @param cores Number of parallel cores to use, defaults to
 #'   \code{chains} so set this to 1 to execute serial chains.
@@ -73,7 +82,7 @@ sample_sparse_tmb <-
   function(obj, iter=2000, warmup=floor(iter/2),
            chains=4, cores=chains,
            control=NULL, seed=NULL, laplace=FALSE,
-           init=c('last.par.best', 'random'),
+           init=c('last.par.best', 'random', 'random-t', 'unif'),
            metric=c('auto', 'sparse','dense','diag', 'unit'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
            globals=NULL, model_name=NULL, refresh=NULL,
@@ -123,16 +132,33 @@ sample_sparse_tmb <-
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
   inits <- rotation$x.cur
-  if(init=='random'){
-    if(is.null(Qinv))
-      stop("No Qinv found so cannot use random inits. Try 'last.par.best' instead'")
+  if(init!='last.par.best'){
     if(!is.null(seed)) set.seed(seed)
-    inits <- as.numeric(rotation$x.cur + mvtnorm::rmvnorm(n=1, sigma=Qinv))
-    if(!is.finite(obj2$fn(inits))) {
-      message("random rmvnorm inits resulted in NaN NLL, try 'last.par.best' instead or investigate returned inits")
-      return(inits)
+    if(init=='random-t'){
+      if(is.null(Qinv))
+        stop("No Qinv found so cannot use random inits. Try 'last.par.best' or 'unif' instead'")
+      inits <- as.numeric(rotation$x.cur + mvtnorm::rmvt(n=1, sigma=Qinv, df=2))
+      if(!is.finite(obj2$fn(inits))) {
+        message("random rmvt inits resulted in NaN NLL, try 'random' instead or investigate returned inits")
+        return(inits)
+      }
+    } else if(init=='random'){
+      if(is.null(Qinv))
+        stop("No Qinv found so cannot use random inits. Try 'last.par.best' or 'unif' instead'")
+
+      inits <- as.numeric(rotation$x.cur + mvtnorm::rmvnorm(n=1, sigma=Qinv))
+      if(!is.finite(obj2$fn(inits))) {
+        message("random rmvnorm inits resulted in NaN NLL, try 'last.par.best' instead or investigate returned inits")
+        return(inits)
+      }
+    } else if(init=='unif'){
+      inits <- runif(n=length(rotation$x.cur), min=-2, max=2)
+      if(!is.finite(obj2$fn(inits))) {
+        message("random uniform inits resulted in NaN NLL, try 'last.par.best' or 'random' instead or investigate returned inits")
+        return(inits)
+      }
     }
-  }
+  } # end of random init options
   finv <- rotation$finv
   globals2 <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
   ## the user must pass data objects
@@ -155,6 +181,7 @@ sample_sparse_tmb <-
 
   fit2 <- as.tmbfit(fit, mle=mle, invf=finv, metric=metric, model=model_name)
   fit2$time.Q <- inputs$time.Q; fit2$time.Qinv <- inputs$time.Qinv; fit2$time.opt <- inputs$time.opt
+  fit2$inits <- inits
   ## gradient timings to check for added overhead
   if(require(microbenchmark)){
     bench <- microbenchmark(obj2$gr(inits),

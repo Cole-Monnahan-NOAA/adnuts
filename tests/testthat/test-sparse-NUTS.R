@@ -84,6 +84,7 @@ test_that("parallel works", {
 
 test_that("auto metric selection is robust to model type",{
   skip_if(skip_TMB)
+  rm(obj)
   TMB::runExample('simple')
   ## normal case of RE, with and without laplace
   fit1 <- sample_sparse_tmb(obj, iter=1000,
@@ -96,6 +97,7 @@ test_that("auto metric selection is robust to model type",{
   expect_equal(as.numeric(tail(as.data.frame(fit2),1)[1]), 51.80767, tolerance =1e-6)
 
   ## rebuild without RE so it fails: behavior on model w/o mode
+  rm(obj)
   TMB::runExample('simple')
   obj <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
                         map=obj$env$map,
@@ -106,11 +108,13 @@ test_that("auto metric selection is robust to model type",{
                                  metric='auto'),
                regexp = 'No random effects found')
   # this breaks if init='last.par.best' b/c the inits are so bad it can't recover
-  fit3 <- sample_sparse_tmb(obj, iter=1000, laplace=FALSE, init='random',
+  fit3 <- sample_sparse_tmb(obj, iter=1000, laplace=FALSE, init='unif',
                                  warmup=200, cores=1, chains=1, seed=1,
                                  metric='auto', skip_optimization = TRUE)
-  expect_equal(as.numeric(tail(as.data.frame(fit3),1)[1]), -1.24197, tolerance =1e-6)
+  expect_equal(fit3$metric, 'unit')
+  expect_equal(as.numeric(tail(as.data.frame(fit3),1)[1]), -0.909528, tolerance =1e-6)
   ## rebuild as penalized ML
+  rm(obj) # this test fails if I don't remove obj here WHY??
   TMB::runExample('simple')
   obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
                          map=list(logsdu=factor(NA)),
@@ -120,11 +124,11 @@ test_that("auto metric selection is robust to model type",{
                                  warmup=200, cores=1, chains=1, seed=1,
                                  metric='auto'),
                regexp = 'No random effects found')
-  # this breaks if init='last.par.best' b/c the inits are so bad it can't recover
   fit5 <- sample_sparse_tmb(obj2, iter=1000,
                             warmup=200, cores=1, chains=1, seed=1,
                             metric='auto')
-  #expect_equal(as.numeric(tail(as.data.frame(fit5),1)[1]), -0.8898186, tolerance =1e-6)
+  expect_equal(fit5$metric, 'dense')
+  expect_equal(as.numeric(tail(as.data.frame(fit5),1)[1]), -0.8898186, tolerance =1e-6)
 })
 
 
@@ -168,3 +172,34 @@ test_that("RTMB works", {
   #expect_equal(ncol(as.data.frame(fit)),105)
 })
 
+test_that("random inits work", {
+  # test that different initial values work by forcing NUTS to be
+  # autocorrelated and see the paths
+  skip_if(skip_TMB)
+  rm(obj)
+  TMB::runExample('simple')
+  out <- NULL
+  Q <- sdreport(obj, getJointPrecision = TRUE)$jointPrecision
+  Qinv <- solve(Q) |> as.matrix()
+  obj$par <- opt$par
+  for(seed in 1:20){
+    for(init in c('last.par.best', 'random', 'random-t', 'unif')){
+  tmpfit <- sample_sparse_tmb(obj, iter=150, warmup=100, cores=1,
+                           chains=1, seed=seed, metric='unit',
+                           init=init, refresh=0, Q=Q, Qinv=Qinv,
+                           control=list(max_treedepth=1, adapt_delta=.99))
+  out <- data.frame(init=init, seed=seed, iter=1:150,
+                     lp=extract_samples(tmpfit, inc_warmup=TRUE, inc_lp =TRUE)$lp__)  |>
+    rbind(out)
+    }
+  }
+  out2 <- subset(out, iter==1)
+  mean_lps <- as.numeric(tapply(out2$lp, INDEX=out2$init, FUN=mean))
+  expect_equal(mean_lps,
+               c(-403.24160, -465.89700, -519.89795, -254101.8825),
+               tolerance =1e-6)
+   # library(ggplot2)
+   # ggplot(out2, aes(x=init, y=lp)) + geom_jitter(width=.1, height=0)
+   # ggplot(out, aes(iter, y=lp, color=init, group=interaction(init,seed))) +
+   #   geom_line()
+})
