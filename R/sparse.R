@@ -378,9 +378,10 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
   ## First case is a dense mass matrix
   M <- as.matrix(Qinv)
   if(metric=='dense'){
-      if(!matrixcalc::is.symmetric.matrix(M) ||
-         !matrixcalc::is.positive.definite(M))
-        warning("Estimated dense matrix was not positive definite so may be unreliable. Try different metric or turn on the laplace if there are random effects if it fails.")
+    # took this out b/c it was warning too often, better way to test?
+      #if(!matrixcalc::is.symmetric.matrix(M) ||
+       #  !matrixcalc::is.positive.definite(M))
+        # warning("Estimated dense matrix was not positive definite so may be unreliable. Try different metric or turn on the laplace if there are random effects if it fails.")
     J <- NULL
     chd <- t(chol(M))               # lower triangular Cholesky decomp.
     chd.inv <- solve(chd)               # inverse
