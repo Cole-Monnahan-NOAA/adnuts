@@ -159,6 +159,12 @@ sample_sparse_tmb <-
       }
     }
   } # end of random init options
+  if(!is.null(mle$est)){
+    nll0=round(-obj2$fn(mle$est),3)
+  } else {
+    nll0='NA'
+  }
+  message("log-posterior at inits=", round(-fsparse(inits),3),"; at joint mode=",nll0)
   finv <- rotation$finv
   globals2 <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
   ## the user must pass data objects
@@ -333,7 +339,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     stopifnot(all.equal(length(mle), nrow(Qinv)))
   } else {
     message("Getting M for fixed effects...")
-    time.Qinv <- as.numeric(system.time(sdr <- sdreport(obj)))
+    time.Qinv <- as.numeric(system.time(sdr <- sdreport(obj))[3])
     Qinv <- sdr$cov.fixed
     .print.mat.stats(Qinv)
     if(is.null(opt))
