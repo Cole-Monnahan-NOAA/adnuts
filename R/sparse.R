@@ -33,6 +33,7 @@
 #' @param chains Number of chains
 #' @param cores Number of parallel cores to use, defaults to
 #'   \code{chains} so set this to 1 to execute serial chains.
+#' @param thin The thinning rate (defaults to 1).
 #' @param control NUTS control list, currently available options
 #'   are 'adapt_delta', 'max_treedepth', and 'metric' which is
 #'   the type of metric adaptation for Stan to do with options
@@ -80,7 +81,7 @@
 #' @export
 sample_sparse_tmb <-
   function(obj, iter=2000, warmup=floor(iter/2),
-           chains=4, cores=chains,
+           chains=4, cores=chains, thin=1,
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random', 'random-t', 'unif'),
            metric=c('auto', 'sparse','dense','diag', 'unit'),
@@ -173,7 +174,7 @@ sample_sparse_tmb <-
   if(cores>1) message("Preparing parallel workspace...")
   fit <- stan_sample(fn=fsparse, par_inits=inits,
                      grad_fun=gsparse, num_samples=iter,
-                     num_warmup=warmup,
+                     num_warmup=warmup, thin=thin,
                      globals = globals2, packages=packages,
                      adapt_delta=control$adapt_delta,
                      adapt_window=control$adapt_window,
@@ -256,12 +257,19 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     spl[[chain]] <- as.matrix(sp[sp$.chain==chain,1:6])
   }
   timing <- sapply(x@timing, function(x) unlist(x))
+  thin <- as.numeric(x@metadata$thin)
+  warmup <- ceiling(as.numeric(x@metadata$num_warmup)/thin)
+  iter <- ceiling(as.numeric(x@metadata$num_samples)/thin)
+  if(dim(post)[1] != warmup + iter){
+    stop("Error in output dimensions: iter=",iter, "; warmup=", warmup,
+         "; nrow(post)=", nrow(post))
+  }
   x <- list(samples=post, sampler_params=spl, mle=mle,
             monitor=mon, model=model,
             metric=metric,
             par_names=mle$parnames,
             max_treedepth=x@metadata$max_depth,
-            warmup=as.numeric(x@metadata$num_warmup),
+            warmup=warmup, iter=iter, thin=thin,
             time.warmup=timing[1,],
             time.sampling=timing[2,],
             time.total=timing[1,]+timing[2,],

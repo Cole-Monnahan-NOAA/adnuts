@@ -82,6 +82,17 @@ test_that("parallel works", {
 })
 
 
+test_that("thinning works", {
+  skip_if(skip_TMB)
+  TMB::runExample('simple')
+  fit <- sample_sparse_tmb(obj, iter=1000, warmup=200, cores=4,
+                           chains=4, seed=1, metric='sparse',
+                           thin=2)
+  fit <- sample_sparse_tmb(obj, iter=1000, warmup=200, cores=4,
+                           chains=4, seed=1, metric='sparse',
+                           thin=3)
+  })
+
 test_that("auto metric selection is robust to model type",{
   skip_if(skip_TMB)
   rm(obj)
