@@ -778,10 +778,11 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
     its <- (1:nrow(x[[1]]))[ind]
   }
   y <- do.call(rbind, lapply(1:length(x), function(i){
-    if(length(its) != NROW(x[[i]][ind,]))
+    # drop=FALSE to prevent error when there is a single sample
+    if(length(its) != NROW(x[[i]][ind,,drop=FALSE]))
       warning("Length mismatch in extract_sampler_params: iterations=", length(its),
-              " and draws=", NROW(x[[i]][ind,]))
-    cbind(chain=i, iteration=its, x[[i]][ind,])
+              " and draws=", NROW(x[[i]][ind,,drop=FALSE]))
+    cbind(chain=i, iteration=its, x[[i]][ind,,drop=FALSE])
   }))
   return(invisible(as.data.frame(y)))
 }

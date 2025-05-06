@@ -13,7 +13,7 @@
 #' @param metric A character specifying which metric to use.
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
-#'   "dense", "diag", or "unit" can be specified.
+#'   "dense", "diag", "sparse-naive" or "unit" can be specified.
 #' @param init Either 'last.par.best' (default), 'random',
 #'   'random-t', or 'unif'. The former starts from the joint
 #'   mode, while 'random' and 'random-t' draw from multivariate
@@ -84,7 +84,8 @@ sample_sparse_tmb <-
            chains=4, cores=chains, thin=1,
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random', 'random-t', 'unif'),
-           metric=c('auto', 'sparse','dense','diag', 'unit'),
+           metric=c('auto', 'sparse','dense','diag', 'unit', 'sparse-naive', 'sparse-naive-perm',
+                    'sparse-Jnoperm', 'sparse-Jnoperm-nosuper'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
            globals=NULL, model_name=NULL, refresh=NULL,
            ...){
@@ -426,11 +427,13 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
       x.cur <- y.cur
       finv <- function(x) x
       chd <- J <- NULL
-  } else if(metric=='sparse'){
-    ##  warning( "Use of Q is highly experimental still" )
+  } else if(metric=='sparse-Jnoperm'){
+    # This metric is carefully constructured to match the dense
+    # metric up to numerical precision. But as it is slower it is
+    # not typically used.
     stopifnot(require(Matrix))
     if(!is(Q,"Matrix")) stop("Q is not a Matrix object, something went wrong")
-        # M is actually Q, i.e., the inverse-mass
+    # M is actually Q, i.e., the inverse-mass
     # Antidiagonal matrix JJ = I
     J = Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
     #chd <- Cholesky(M, super=FALSE, perm=FALSE)
@@ -459,7 +462,103 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     finv <- function(x){
       t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt")))
     }
-  } else if(metric=='auto'){
+  } else if(metric=='sparse-naive'){
+    chd <- NULL
+    J <- Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
+    L <- Matrix::t(Matrix::chol(J%*%Q%*%J))
+    #Linv <- solve(L)
+    Ltilde <- Matrix::t(J%*%L%*%J)
+    Ltildeinv <- solve(Ltilde)
+    x.cur <- as.numeric(Ltilde%*%y.cur)
+    fn2 <- function(y) fn(as.numeric(Ltildeinv %*% y))
+    gr2 <- function(y) as.numeric(gr(as.numeric(Ltildeinv %*% y)) %*% Ltildeinv)
+    finv <- function(y) Ltildeinv %*% y
+  } else if(metric=='sparse-naive-perm'){
+    J <- Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
+    Qtilde <- J%*%Q%*%J
+    chd <- Matrix::Cholesky(Qtilde, super=FALSE, perm=TRUE)
+    # this is the optimal permutation for Qtilde
+    perm <- chd@perm+1
+    iperm <- invPerm(perm)
+    # how to convert from perm to perm for Q?
+    P <- as.matrix(0*Q)
+    for(i in 1:length(perm))P[i,perm[i]] <- 1
+    P <- as(P, 'sparseMatrix')
+    A <- Matrix::solve(J) %*% P %*% J
+    Ainv <- Matrix::solve(A)
+    # now reorder Q and the parameters
+    Qperm <- A%*%Q%*%Matrix::t(A)
+    y.cur.perm <- as.numeric(A%*%y.cur)
+    chdperm <- Matrix::Cholesky(J%*%Qperm%*%J, super=FALSE, perm=FALSE)
+    L <- as(chdperm, "sparseMatrix")
+    Ltilde <- Matrix::t(J%*%L%*%J)
+    Ltildeinv <- solve(Ltilde)
+    Atildeinv <- Ainv %*% Ltildeinv
+    x.cur <- as.numeric(Ltilde%*%y.cur.perm)
+    fn2 <- function(y) fn(as.numeric(Atildeinv %*% y))
+    gr2 <- function(y) as.numeric(gr(as.numeric(Atildeinv %*% y)) %*% Atildeinv)
+    finv <- function(y) as.numeric(Ainv %*%as.numeric(Ltildeinv %*% y))
+  } else if(metric=='sparse-perm'){
+    J <- Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
+    Qtilde <- J%*%Q%*%J
+    chd <- Matrix::Cholesky(Qtilde, super=FALSE, perm=TRUE)
+    # this is the optimal permutation for Qtilde
+    perm <- chd@perm+1
+    iperm <- invPerm(perm)
+    # how to convert from perm to perm for Q?
+    P <- as.matrix(0*Q)
+    for(i in 1:length(perm))P[i,perm[i]] <- 1
+    P <- as(P, 'sparseMatrix')
+    A <- Matrix::solve(J) %*% P %*% J
+    Ainv <- Matrix::solve(A)
+    # now reorder Q and the parameters
+    Qperm <- A%*%Q%*%Matrix::t(A)
+    y.cur.perm <- as.numeric(A%*%y.cur)
+    chdperm <- Matrix::Cholesky(J%*%Qperm%*%J, super=FALSE, perm=FALSE)
+    L <- as(chdperm, "sparseMatrix")
+    Ltilde <- Matrix::t(J%*%L%*%J)
+    Ltildeinv <- solve(Ltilde)
+    Atildeinv <- Ainv %*% Ltildeinv
+    x.cur <- as.numeric(Ltilde%*%y.cur.perm)
+    fn2 <- function(y) fn(as.numeric(Atildeinv %*% y))
+    gr2 <- function(y) as.numeric(gr(as.numeric(Atildeinv %*% y)) %*% Atildeinv)
+    finv <- function(y) as.numeric(Ainv %*%as.numeric(Ltildeinv %*% y))
+  } else if(metric=='sparse-Jnoperm-nosuper'){
+    # This metric is carefully constructured to match the dense
+    # metric up to numerical precision. But as it is slower it is
+    # not typically used.
+    stopifnot(require(Matrix))
+    if(!is(Q,"Matrix")) stop("Q is not a Matrix object, something went wrong")
+    # M is actually Q, i.e., the inverse-mass
+    # Antidiagonal matrix JJ = I
+    J = Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
+    #chd <- Cholesky(M, super=FALSE, perm=FALSE)
+    #chd <- Matrix::Cholesky(M, super=TRUE, perm=FALSE)
+    chd <- Matrix::Cholesky(J%*%Q%*%J, super=FALSE, perm=FALSE) # perm
+    Linv_times_x = function(chd,x){
+      as.numeric(J%*% Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt"))
+    }
+    x_times_Linv = function(chd,x){
+      #x %*% chol()
+      as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, Matrix::t(x%*%J), system="L"), system="Pt"))
+    }
+    fn2 <- function(x){
+      Linv_x = Linv_times_x(chd, x)
+      fn(Linv_x)
+    }
+    gr2 <- function(x){
+      Linv_x = Linv_times_x(chd, x)
+      grad = gr( Linv_x )
+      as.vector(  x_times_Linv(chd, grad) )
+    }
+    ## Now rotate back to "x" space using the new mass matrix M
+    #  solve(t(chol(solve(M)))) ~~ IS EQUAL TO ~~ J%*%chol(M)%*%J
+    # J%*%chol(J%*%prec%*%J) %*% J%*%x
+    x.cur <- as.numeric(J%*%chol(J%*%Q%*%J) %*% J%*%y.cur)
+    finv <- function(x){
+      t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt")))
+    }
+  }  else if(metric=='auto'){
     ## use recursion then pick the right one depending on several criteria
     if(!is.null(Q)) rsparse <- .rotate_posterior(metric='sparse', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
     if(!is.null(Qinv))
