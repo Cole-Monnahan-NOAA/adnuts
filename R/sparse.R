@@ -529,3 +529,33 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
 }
 
 
+
+
+#' Make an image plot showing the correlation (lower triangle)
+#' and sparsity (upper triangle).
+#'
+#' @param fit A fitted object
+#' @param Q A sparse matrix. If NULL it will be extracted from
+#'   \code{fit}.
+#'
+#' @details This function is used to visualize the sparsity and
+#'   correlation patterns of the joint model. The upper triangle
+#'   shows whether an element is 0 (white) or not (gray), while
+#'   the lower triangle shows the correlation calculated from
+#'   \code{cov2cor(solve(Q))}.
+#' @return A plot created by \code{Matrix::image}.
+#' @export
+plot_Q <- function(fit, Q=NULL){
+  if(is.null(Q)){
+    if(!is.adfit(fit)) stop("fit is not a valid fitted object")
+    if(is.null(fit$mle$Q)) return(NULL)
+    nn <- length(fit$par_names)
+    corr <- cov2cor(fit$mle$Qinv)
+    Q <- fit$mle$Q
+  } else {
+    corr <- cov2cor(solve(Q))
+  }
+  Q[Q!=0] <- 1e-10
+  Q[lower.tri(Q,TRUE)] <- corr[lower.tri(Q,TRUE)]
+  Matrix::image(Q, useRaster=TRUE, at=seq(-1,1, len=50))
+}

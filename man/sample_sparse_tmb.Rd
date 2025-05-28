@@ -10,6 +10,7 @@ sample_sparse_tmb(
   warmup = floor(iter/2),
   chains = 4,
   cores = chains,
+  thin = 1,
   control = NULL,
   seed = NULL,
   laplace = FALSE,
@@ -42,6 +43,8 @@ runs.}
 
 \item{cores}{Number of parallel cores to use, defaults to
 \code{chains} so set this to 1 to execute serial chains.}
+
+\item{thin}{The thinning rate (defaults to 1).}
 
 \item{control}{NUTS control list, currently available options
 are 'adapt_delta', 'max_treedepth', and 'metric' which is
