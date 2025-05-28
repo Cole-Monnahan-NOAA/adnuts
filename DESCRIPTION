@@ -32,5 +32,7 @@ Suggests:
     rmarkdown,
     withr,
     testthat (>= 2.1.0)
+Remotes:
+    andrjohns/StanEstimators@main
 Imports: ellipse, rstan, R2admb, ggplot2, rlang
 VignetteBuilder: knitr
