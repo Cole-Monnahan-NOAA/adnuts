@@ -13,7 +13,8 @@
 #' @param metric A character specifying which metric to use.
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
-#'   "dense", "diag", "sparse-naive" or "unit" can be specified.
+#'   "dense", "diag", "unit", "sparse-J", or "RTMBtape" can be
+#'   specified.
 #' @param init Either 'last.par.best' (default), 'random',
 #'   'random-t', or 'unif'. The former starts from the joint
 #'   mode, while 'random' and 'random-t' draw from multivariate
@@ -69,25 +70,24 @@
 #'   and the speed of gradient calculations. The chosen metric
 #'   and reasoning are printed to the console before NUTS
 #'   sampling. A sparse and dense matrix will decorrelate and
-#'   descale the posterior in the same way (up to numerical
-#'   precision), but the sparse one will be more efficient with
-#'   high levels of sparsity and larger dimensions. The 'diag'
-#'   option is to take the marginal SDs from M and thus only
-#'   descales, while the 'unit' option is the default Stan
-#'   algorithm and should be used with mass matrix adaptation.
-#'   Note that the \code{metric} is the TMB metric and distinct
-#'   from the Stan metric which is controlled via the
-#'   \code{control} list.
+#'   descale the posterior in the same way, but the sparse one
+#'   will be more efficient with high levels of sparsity and
+#'   larger dimensions. The 'diag' option is to take the marginal
+#'   SDs from M and thus only descales, while the 'unit' option
+#'   is the default Stan algorithm and should be used with mass
+#'   matrix adaptation. Note that the \code{metric} is the TMB
+#'   metric and distinct from the Stan metric which is controlled
+#'   via the \code{control} list.
 #' @export
 sample_sparse_tmb <-
   function(obj, iter=2000, warmup=floor(iter/2),
            chains=4, cores=chains, thin=1,
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random', 'random-t', 'unif'),
-           metric=c('auto', 'sparse','dense','diag', 'unit', 'sparse-naive', 'sparse-naive-perm',
-                    'sparse-Jnoperm', 'sparse-Jnoperm-nosuper'),
+           metric=c('auto', 'unit', 'diag', 'dense',  'sparse', 'sparse-J', 'RTMBtape'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
            globals=NULL, model_name=NULL, refresh=NULL,
+           rotation_only=FALSE,
            ...){
 
   iter <- iter-warmup
@@ -129,7 +129,8 @@ sample_sparse_tmb <-
                               DLL=obj$env$DLL)
     }
   }
-  rotation <- .rotate_posterior(metric=metric, fn=obj2$fn, gr=obj2$gr, Q=Q, Qinv=Qinv, y.cur=mle$est)
+  rotation <- .rotate_posterior(metric=metric, fn=obj2$fn, gr=obj2$gr, Q=Q, Qinv=Qinv, y.cur=mle$est, obj=obj2)
+  if(rotation_only) return(rotation)
   metric <- rotation$metric # update if using auto for printing later
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
@@ -388,7 +389,8 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
 #' @param y.cur The current parameter vector in unrotated (Y) space.
 #' @param Q The sparse precision matrix
 #' @param Qinv The inverse of Q
-.rotate_posterior <- function(metric, fn, gr, Q,  Qinv, y.cur){
+#' @param obj The object for the tape metric
+.rotate_posterior <- function(metric, fn, gr, Q,  Qinv, y.cur, obj=NULL){
   ## Rotation done using choleski decomposition
   ## First case is a dense mass matrix
   M <- as.matrix(Qinv)
@@ -427,7 +429,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
       x.cur <- y.cur
       finv <- function(x) x
       chd <- J <- NULL
-  } else if(metric=='sparse-Jnoperm'){
+  } else if(metric=='sparse-J'){
     # This metric is carefully constructured to match the dense
     # metric up to numerical precision. But as it is slower it is
     # not typically used.
@@ -462,109 +464,49 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     finv <- function(x){
       t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt")))
     }
-  } else if(metric=='sparse-naive'){
-    chd <- NULL
-    J <- Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
-    L <- Matrix::t(Matrix::chol(J%*%Q%*%J))
-    #Linv <- solve(L)
-    Ltilde <- Matrix::t(J%*%L%*%J)
-    Ltildeinv <- solve(Ltilde)
-    x.cur <- as.numeric(Ltilde%*%y.cur)
-    fn2 <- function(y) fn(as.numeric(Ltildeinv %*% y))
-    gr2 <- function(y) as.numeric(gr(as.numeric(Ltildeinv %*% y)) %*% Ltildeinv)
-    finv <- function(y) Ltildeinv %*% y
-  } else if(metric=='sparse-naive-perm'){
-    J <- Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
-    Qtilde <- J%*%Q%*%J
-    chd <- Matrix::Cholesky(Qtilde, super=FALSE, perm=TRUE)
-    # this is the optimal permutation for Qtilde
-    perm <- chd@perm+1
-    iperm <- invPerm(perm)
-    # how to convert from perm to perm for Q?
+  } else if(metric=='RTMBtape'){
+    J <- NULL
+    chd <- Matrix::Cholesky(Q, super=TRUE, perm=TRUE)
+    L <- as(chd, "sparseMatrix")
+    perm <- chd@perm + 1L
+    iperm <- Matrix::invPerm(perm)
+    F <- RTMB::GetTape(obj)
+    ## Q[perm,perm] = L %*% t(L)
+    ## Q = L[iperm, ] %*% t(L[iperm, ])
+    obj3 <- RTMB::MakeADFun(function(y) {
+      x <- Matrix::solve(Matrix::t(L), y)[iperm] #+ xhat
+      RTMB::REPORT(x)
+      F(x)
+    }, numeric(nrow(Q)))
+    obj3$env$beSilent()
+    fn2 <- function(x) obj3$fn(x)
+    gr2 <- function(x) obj3$gr(x)
+    x.cur <- as.vector(Matrix::t(L) %*% y.cur[perm])
+    finv <- function(x) as.numeric(obj3$report(x)$x)
+  } else if(metric=='sparse'){
+    J <- NULL
+    chd <- Matrix::Cholesky(Q, super=TRUE, perm=TRUE)
+    L <- as(chd, "sparseMatrix")
+    perm <- chd@perm + 1L
+    iperm <- Matrix::invPerm(perm)
+    x.cur <- as.vector(Matrix::t(L) %*% y.cur[perm])
+    fn2 <- function(y) -fn(as.numeric(Matrix::solve(Pt, Matrix::solve(Lt,y, system='L'), system='P')))
+      #fn(solve(Lt, y)[iperm])
     P <- as.matrix(0*Q)
-    for(i in 1:length(perm))P[i,perm[i]] <- 1
+    for(i in 1:length(iperm))P[i,iperm[i]] <- 1
     P <- as(P, 'sparseMatrix')
-    A <- Matrix::solve(J) %*% P %*% J
-    Ainv <- Matrix::solve(A)
-    # now reorder Q and the parameters
-    Qperm <- A%*%Q%*%Matrix::t(A)
-    y.cur.perm <- as.numeric(A%*%y.cur)
-    chdperm <- Matrix::Cholesky(J%*%Qperm%*%J, super=FALSE, perm=FALSE)
-    L <- as(chdperm, "sparseMatrix")
-    Ltilde <- Matrix::t(J%*%L%*%J)
-    Ltildeinv <- solve(Ltilde)
-    Atildeinv <- Ainv %*% Ltildeinv
-    x.cur <- as.numeric(Ltilde%*%y.cur.perm)
-    fn2 <- function(y) fn(as.numeric(Atildeinv %*% y))
-    gr2 <- function(y) as.numeric(gr(as.numeric(Atildeinv %*% y)) %*% Atildeinv)
-    finv <- function(y) as.numeric(Ainv %*%as.numeric(Ltildeinv %*% y))
-  } else if(metric=='sparse-perm'){
-    J <- Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
-    Qtilde <- J%*%Q%*%J
-    chd <- Matrix::Cholesky(Qtilde, super=FALSE, perm=TRUE)
-    # this is the optimal permutation for Qtilde
-    perm <- chd@perm+1
-    iperm <- invPerm(perm)
-    # how to convert from perm to perm for Q?
-    P <- as.matrix(0*Q)
-    for(i in 1:length(perm))P[i,perm[i]] <- 1
-    P <- as(P, 'sparseMatrix')
-    A <- Matrix::solve(J) %*% P %*% J
-    Ainv <- Matrix::solve(A)
-    # now reorder Q and the parameters
-    Qperm <- A%*%Q%*%Matrix::t(A)
-    y.cur.perm <- as.numeric(A%*%y.cur)
-    chdperm <- Matrix::Cholesky(J%*%Qperm%*%J, super=FALSE, perm=FALSE)
-    L <- as(chdperm, "sparseMatrix")
-    Ltilde <- Matrix::t(J%*%L%*%J)
-    Ltildeinv <- solve(Ltilde)
-    Atildeinv <- Ainv %*% Ltildeinv
-    x.cur <- as.numeric(Ltilde%*%y.cur.perm)
-    fn2 <- function(y) fn(as.numeric(Atildeinv %*% y))
-    gr2 <- function(y) as.numeric(gr(as.numeric(Atildeinv %*% y)) %*% Atildeinv)
-    finv <- function(y) as.numeric(Ainv %*%as.numeric(Ltildeinv %*% y))
-  } else if(metric=='sparse-Jnoperm-nosuper'){
-    # This metric is carefully constructured to match the dense
-    # metric up to numerical precision. But as it is slower it is
-    # not typically used.
-    stopifnot(require(Matrix))
-    if(!is(Q,"Matrix")) stop("Q is not a Matrix object, something went wrong")
-    # M is actually Q, i.e., the inverse-mass
-    # Antidiagonal matrix JJ = I
-    J = Matrix::sparseMatrix( i=1:nrow(Q), j=nrow(Q):1 )
-    #chd <- Cholesky(M, super=FALSE, perm=FALSE)
-    #chd <- Matrix::Cholesky(M, super=TRUE, perm=FALSE)
-    chd <- Matrix::Cholesky(J%*%Q%*%J, super=FALSE, perm=FALSE) # perm
-    Linv_times_x = function(chd,x){
-      as.numeric(J%*% Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt"))
-    }
-    x_times_Linv = function(chd,x){
-      #x %*% chol()
-      as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, Matrix::t(x%*%J), system="L"), system="Pt"))
-    }
-    fn2 <- function(x){
-      Linv_x = Linv_times_x(chd, x)
-      fn(Linv_x)
-    }
-    gr2 <- function(x){
-      Linv_x = Linv_times_x(chd, x)
-      grad = gr( Linv_x )
-      as.vector(  x_times_Linv(chd, grad) )
-    }
-    ## Now rotate back to "x" space using the new mass matrix M
-    #  solve(t(chol(solve(M)))) ~~ IS EQUAL TO ~~ J%*%chol(M)%*%J
-    # J%*%chol(J%*%prec%*%J) %*% J%*%x
-    x.cur <- as.numeric(J%*%chol(J%*%Q%*%J) %*% J%*%y.cur)
-    finv <- function(x){
-      t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt")))
-    }
+    Pt <- Matrix::t(P)
+    Lt <- Matrix::t(L)
+    gr2 <- function(y)
+      -Matrix::solve(L, as.numeric(Matrix::solve(P,Matrix::t(gr(as.numeric(Matrix::solve(Pt,Matrix::solve(Lt,y, system='L'), system='P')))))), system='Pt')
+    finv <- function(x)   as.numeric(Matrix::solve(Lt, x)[iperm])
   }  else if(metric=='auto'){
     ## use recursion then pick the right one depending on several criteria
     if(!is.null(Q)) rsparse <- .rotate_posterior(metric='sparse', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
     if(!is.null(Qinv))
       rdiag <- .rotate_posterior(metric='diag', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
     if(!is.null(Qinv)){
-        rdense <- tryCatch(.rotate_posterior(metric='dense', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur),
+      rdense <- tryCatch(.rotate_posterior(metric='dense', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur),
                            error=function(e) "Failed")
     }
     runit <- .rotate_posterior(metric='unit', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)

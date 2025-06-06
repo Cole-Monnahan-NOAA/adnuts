@@ -10,17 +10,19 @@ sample_sparse_tmb(
   warmup = floor(iter/2),
   chains = 4,
   cores = chains,
+  thin = 1,
   control = NULL,
   seed = NULL,
   laplace = FALSE,
   init = c("last.par.best", "random", "random-t", "unif"),
-  metric = c("auto", "sparse", "dense", "diag", "unit"),
+  metric = c("auto", "unit", "diag", "dense", "sparse", "sparse-J", "RTMBtape"),
   skip_optimization = FALSE,
   Q = NULL,
   Qinv = NULL,
   globals = NULL,
   model_name = NULL,
   refresh = NULL,
+  rotation_only = FALSE,
   ...
 )
 }
@@ -42,6 +44,8 @@ runs.}
 
 \item{cores}{Number of parallel cores to use, defaults to
 \code{chains} so set this to 1 to execute serial chains.}
+
+\item{thin}{The thinning rate (defaults to 1).}
 
 \item{control}{NUTS control list, currently available options
 are 'adapt_delta', 'max_treedepth', and 'metric' which is
@@ -77,7 +81,8 @@ slot of the fitted object.}
 \item{metric}{A character specifying which metric to use.
 Defaults to "auto" which uses an algorithm to select the
 best metric (see details), otherwise one of "sparse",
-"dense", "diag", or "unit" can be specified.}
+"dense", "diag", "unit", "sparse-J", or "RTMBtape" can be
+specified.}
 
 \item{skip_optimization}{Whether to skip optimization or not
 (default).}
@@ -116,13 +121,12 @@ The TMB metric is used to decorrelate/descale the
   and the speed of gradient calculations. The chosen metric
   and reasoning are printed to the console before NUTS
   sampling. A sparse and dense matrix will decorrelate and
-  descale the posterior in the same way (up to numerical
-  precision), but the sparse one will be more efficient with
-  high levels of sparsity and larger dimensions. The 'diag'
-  option is to take the marginal SDs from M and thus only
-  descales, while the 'unit' option is the default Stan
-  algorithm and should be used with mass matrix adaptation.
-  Note that the \code{metric} is the TMB metric and distinct
-  from the Stan metric which is controlled via the
-  \code{control} list.
+  descale the posterior in the same way, but the sparse one
+  will be more efficient with high levels of sparsity and
+  larger dimensions. The 'diag' option is to take the marginal
+  SDs from M and thus only descales, while the 'unit' option
+  is the default Stan algorithm and should be used with mass
+  matrix adaptation. Note that the \code{metric} is the TMB
+  metric and distinct from the Stan metric which is controlled
+  via the \code{control} list.
 }
