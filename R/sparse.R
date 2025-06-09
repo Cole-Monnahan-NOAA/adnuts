@@ -490,7 +490,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     perm <- chd@perm + 1L
     iperm <- Matrix::invPerm(perm)
     x.cur <- as.vector(Matrix::t(L) %*% y.cur[perm])
-    fn2 <- function(y) -fn(as.numeric(Matrix::solve(Pt, Matrix::solve(Lt,y, system='L'), system='P')))
+    fn2 <- function(y) fn(as.numeric(Matrix::solve(Pt, Matrix::solve(Lt,y, system='L'), system='P')))
       #fn(solve(Lt, y)[iperm])
     P <- as.matrix(0*Q)
     for(i in 1:length(iperm))P[i,iperm[i]] <- 1
@@ -498,7 +498,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     Pt <- Matrix::t(P)
     Lt <- Matrix::t(L)
     gr2 <- function(y)
-      -Matrix::solve(L, as.numeric(Matrix::solve(P,Matrix::t(gr(as.numeric(Matrix::solve(Pt,Matrix::solve(Lt,y, system='L'), system='P')))))), system='Pt')
+      Matrix::solve(L, as.numeric(Matrix::solve(P,Matrix::t(gr(as.numeric(Matrix::solve(Pt,Matrix::solve(Lt,y, system='L'), system='P')))))), system='Pt')
     finv <- function(x)   as.numeric(Matrix::solve(Lt, x)[iperm])
   }  else if(metric=='auto'){
     ## use recursion then pick the right one depending on several criteria
