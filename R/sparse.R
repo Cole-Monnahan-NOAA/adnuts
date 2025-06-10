@@ -483,24 +483,24 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     gr2 <- function(x) obj3$gr(x)
     x.cur <- as.vector(Matrix::t(L) %*% y.cur[perm])
     finv <- function(x) as.numeric(obj3$report(x)$x)
-  } else if(metric=='sparse'){
+  }  else if(metric=='sparse'){
+    # Do Cholesky on Q permuted directly
     J <- NULL
     chd <- Matrix::Cholesky(Q, super=TRUE, perm=TRUE)
     L <- as(chd, "sparseMatrix")
     perm <- chd@perm + 1L
     iperm <- Matrix::invPerm(perm)
+    # Drop all numerical zeros and convert to triangular storage
+    L <- tril(drop0(L)) ## class(L) == "dtCMatrix"
+    Lt <- Matrix::t(L) ## class(Lt) == "dtCMatrix"
     x.cur <- as.vector(Matrix::t(L) %*% y.cur[perm])
-    fn2 <- function(y) fn(as.numeric(Matrix::solve(Pt, Matrix::solve(Lt,y, system='L'), system='P')))
-      #fn(solve(Lt, y)[iperm])
-    P <- as.matrix(0*Q)
-    for(i in 1:length(iperm))P[i,iperm[i]] <- 1
-    P <- as(P, 'sparseMatrix')
-    Pt <- Matrix::t(P)
-    Lt <- Matrix::t(L)
-    gr2 <- function(y)
-      Matrix::solve(L, as.numeric(Matrix::solve(P,Matrix::t(gr(as.numeric(Matrix::solve(Pt,Matrix::solve(Lt,y, system='L'), system='P')))))), system='Pt')
+    fn2 <- function(y)  fn(Matrix::solve(Lt, y)[iperm])
+    gr2 <- function(y){
+      x <- Matrix::solve(Lt, y)[iperm]
+      Matrix::solve(L, as.numeric(gr(x))[perm])
+    }
     finv <- function(x)   as.numeric(Matrix::solve(Lt, x)[iperm])
-  }  else if(metric=='auto'){
+  } else if(metric=='auto'){
     ## use recursion then pick the right one depending on several criteria
     if(!is.null(Q)) rsparse <- .rotate_posterior(metric='sparse', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
     if(!is.null(Qinv))
