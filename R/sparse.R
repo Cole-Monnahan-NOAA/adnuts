@@ -1,4 +1,5 @@
-#' NUTS sampling for TMB models using a sparse inverse mass matrix (beta)
+#' NUTS sampling for TMB models using a sparse inverse mass
+#' matrix (beta)
 #'
 #' @param obj The TMB object with random effects turned on and
 #'   optimized
@@ -13,8 +14,7 @@
 #' @param metric A character specifying which metric to use.
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
-#'   "dense", "diag", "unit", "sparse-J", or "RTMBtape" can be
-#'   specified.
+#'   "dense", "diag", "unit", or "sparse-J" can be specified.
 #' @param init Either 'last.par.best' (default), 'random',
 #'   'random-t', or 'unif'. The former starts from the joint
 #'   mode, while 'random' and 'random-t' draw from multivariate
@@ -48,8 +48,10 @@
 #'   off and sample from the joint parameter space (default).
 #' @param skip_optimization Whether to skip optimization or not
 #'   (default).
-#' @param Q The sparse precision matrix. It is calculated internally if not specified (default).
-#' @param Qinv The dense matrix (M). It is calculated internally if not specified (default).
+#' @param Q The sparse precision matrix. It is calculated
+#'   internally if not specified (default).
+#' @param Qinv The dense matrix (M). It is calculated internally
+#'   if not specified (default).
 #' @param globals A named list of objects to pass to new R
 #'   sessions when running in parallel and using RTMB. Typically
 #'   this is the `data` object for now.
@@ -75,7 +77,10 @@
 #'   larger dimensions. The 'diag' option is to take the marginal
 #'   SDs from M and thus only descales, while the 'unit' option
 #'   is the default Stan algorithm and should be used with mass
-#'   matrix adaptation. Note that the \code{metric} is the TMB
+#'   matrix adaptation. The 'sparse-J' is constructued to be
+#'   mathematically equivalent to 'dense' but computiontally
+#'   faster, but generally shoudl only be used for
+#'   testing/exploration. Note that the \code{metric} is the TMB
 #'   metric and distinct from the Stan metric which is controlled
 #'   via the \code{control} list.
 #' @export
@@ -84,7 +89,7 @@ sample_sparse_tmb <-
            chains=4, cores=chains, thin=1,
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random', 'random-t', 'unif'),
-           metric=c('auto', 'unit', 'diag', 'dense',  'sparse', 'sparse-J', 'RTMBtape'),
+           metric=c('auto', 'unit', 'diag', 'dense',  'sparse', 'sparse-J'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
            globals=NULL, model_name=NULL, refresh=NULL,
            rotation_only=FALSE,
@@ -389,16 +394,15 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
 #' @param y.cur The current parameter vector in unrotated (Y) space.
 #' @param Q The sparse precision matrix
 #' @param Qinv The inverse of Q
-#' @param obj The object for the tape metric
-.rotate_posterior <- function(metric, fn, gr, Q,  Qinv, y.cur, obj=NULL){
+.rotate_posterior <- function(metric, fn, gr, Q,  Qinv, y.cur){
   ## Rotation done using choleski decomposition
   ## First case is a dense mass matrix
   M <- as.matrix(Qinv)
   if(metric=='dense'){
     # took this out b/c it was warning too often, better way to test?
-      #if(!matrixcalc::is.symmetric.matrix(M) ||
-       #  !matrixcalc::is.positive.definite(M))
-        # warning("Estimated dense matrix was not positive definite so may be unreliable. Try different metric or turn on the laplace if there are random effects if it fails.")
+    #if(!matrixcalc::is.symmetric.matrix(M) ||
+    #  !matrixcalc::is.positive.definite(M))
+    # warning("Estimated dense matrix was not positive definite so may be unreliable. Try different metric or turn on the laplace if there are random effects if it fails.")
     J <- NULL
     chd <- t(chol(M))               # lower triangular Cholesky decomp.
     chd.inv <- solve(chd)               # inverse
@@ -423,12 +427,12 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
       x.cur <- (1/chd) * y.cur
       finv <- function(x) chd*x
   } else if(metric=='unit') {
-      ## unit metric, change nothing
-      fn2 <- function(x) fn(x)
-      gr2 <- function(x) gr(x)
-      x.cur <- y.cur
-      finv <- function(x) x
-      chd <- J <- NULL
+    ## unit metric, change nothing
+    fn2 <- function(x) fn(x)
+    gr2 <- function(x) gr(x)
+    x.cur <- y.cur
+    finv <- function(x) x
+    chd <- J <- NULL
   } else if(metric=='sparse-J'){
     # This metric is carefully constructured to match the dense
     # metric up to numerical precision. But as it is slower it is
@@ -464,26 +468,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     finv <- function(x){
       t(as.numeric(J%*%Matrix::solve(chd, Matrix::solve(chd, J%*%x, system="Lt"), system="Pt")))
     }
-  } else if(metric=='RTMBtape'){
-    J <- NULL
-    chd <- Matrix::Cholesky(Q, super=TRUE, perm=TRUE)
-    L <- as(chd, "sparseMatrix")
-    perm <- chd@perm + 1L
-    iperm <- Matrix::invPerm(perm)
-    F <- RTMB::GetTape(obj)
-    ## Q[perm,perm] = L %*% t(L)
-    ## Q = L[iperm, ] %*% t(L[iperm, ])
-    obj3 <- RTMB::MakeADFun(function(y) {
-      x <- Matrix::solve(Matrix::t(L), y)[iperm] #+ xhat
-      RTMB::REPORT(x)
-      F(x)
-    }, numeric(nrow(Q)))
-    obj3$env$beSilent()
-    fn2 <- function(x) obj3$fn(x)
-    gr2 <- function(x) obj3$gr(x)
-    x.cur <- as.vector(Matrix::t(L) %*% y.cur[perm])
-    finv <- function(x) as.numeric(obj3$report(x)$x)
-  }  else if(metric=='sparse'){
+  } else if(metric=='sparse'){
     # Do Cholesky on Q permuted directly
     J <- NULL
     chd <- Matrix::Cholesky(Q, super=TRUE, perm=TRUE)
@@ -507,7 +492,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
       rdiag <- .rotate_posterior(metric='diag', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
     if(!is.null(Qinv)){
       rdense <- tryCatch(.rotate_posterior(metric='dense', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur),
-                           error=function(e) "Failed")
+                         error=function(e) "Failed")
     }
     runit <- .rotate_posterior(metric='unit', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
 
