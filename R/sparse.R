@@ -224,7 +224,7 @@ sample_sparse_tmb <-
 #'   which is used in constructing other objects downstream
 #' @export
 get_post <- function(x, invf, parnames, array=FALSE) {
-  p <- unconstrain_draws(x) |> as.data.frame()
+  p <- constrain_draws(x) |> as.data.frame()
   q <- subset(p, select=-c(lp__, .iteration, .draw, .chain))
   names(q) <- parnames
   q <- as.data.frame(t(apply(q, 1, invf))) |> cbind(p$lp__)

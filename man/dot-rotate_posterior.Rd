@@ -4,7 +4,7 @@
 \alias{.rotate_posterior}
 \title{Update algorithm for mass matrix.}
 \usage{
-.rotate_posterior(metric, fn, gr, Q, Qinv, y.cur, obj = NULL)
+.rotate_posterior(metric, fn, gr, Q, Qinv, y.cur)
 }
 \arguments{
 \item{metric}{The metric to use}
@@ -18,8 +18,6 @@
 \item{Qinv}{The inverse of Q}
 
 \item{y.cur}{The current parameter vector in unrotated (Y) space.}
-
-\item{obj}{The object for the tape metric}
 }
 \description{
 Update algorithm for mass matrix.

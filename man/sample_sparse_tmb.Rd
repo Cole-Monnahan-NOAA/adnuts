@@ -2,7 +2,8 @@
 % Please edit documentation in R/sparse.R
 \name{sample_sparse_tmb}
 \alias{sample_sparse_tmb}
-\title{NUTS sampling for TMB models using a sparse inverse mass matrix (beta)}
+\title{NUTS sampling for TMB models using a sparse inverse mass
+matrix (beta)}
 \usage{
 sample_sparse_tmb(
   obj,
@@ -15,7 +16,7 @@ sample_sparse_tmb(
   seed = NULL,
   laplace = FALSE,
   init = c("last.par.best", "random", "random-t", "unif"),
-  metric = c("auto", "unit", "diag", "dense", "sparse", "sparse-J", "RTMBtape"),
+  metric = c("auto", "unit", "diag", "dense", "sparse", "sparse-J"),
   skip_optimization = FALSE,
   Q = NULL,
   Qinv = NULL,
@@ -81,15 +82,16 @@ slot of the fitted object.}
 \item{metric}{A character specifying which metric to use.
 Defaults to "auto" which uses an algorithm to select the
 best metric (see details), otherwise one of "sparse",
-"dense", "diag", "unit", "sparse-J", or "RTMBtape" can be
-specified.}
+"dense", "diag", "unit", or "sparse-J" can be specified.}
 
 \item{skip_optimization}{Whether to skip optimization or not
 (default).}
 
-\item{Q}{The sparse precision matrix. It is calculated internally if not specified (default).}
+\item{Q}{The sparse precision matrix. It is calculated
+internally if not specified (default).}
 
-\item{Qinv}{The dense matrix (M). It is calculated internally if not specified (default).}
+\item{Qinv}{The dense matrix (M). It is calculated internally
+if not specified (default).}
 
 \item{globals}{A named list of objects to pass to new R
 sessions when running in parallel and using RTMB. Typically
@@ -109,7 +111,8 @@ just 'RTMB'. The name is used only for printing.}
 A fitted MCMC object of class 'adfit'
 }
 \description{
-NUTS sampling for TMB models using a sparse inverse mass matrix (beta)
+NUTS sampling for TMB models using a sparse inverse mass
+matrix (beta)
 }
 \details{
 The TMB metric is used to decorrelate/descale the
@@ -126,7 +129,10 @@ The TMB metric is used to decorrelate/descale the
   larger dimensions. The 'diag' option is to take the marginal
   SDs from M and thus only descales, while the 'unit' option
   is the default Stan algorithm and should be used with mass
-  matrix adaptation. Note that the \code{metric} is the TMB
+  matrix adaptation. The 'sparse-J' is constructued to be
+  mathematically equivalent to 'dense' but computiontally
+  faster, but generally shoudl only be used for
+  testing/exploration. Note that the \code{metric} is the TMB
   metric and distinct from the Stan metric which is controlled
   via the \code{control} list.
 }
