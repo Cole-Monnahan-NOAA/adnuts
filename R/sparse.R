@@ -134,7 +134,7 @@ sample_sparse_tmb <-
                               DLL=obj$env$DLL)
     }
   }
-  rotation <- .rotate_posterior(metric=metric, fn=obj2$fn, gr=obj2$gr, Q=Q, Qinv=Qinv, y.cur=mle$est, obj=obj2)
+  rotation <- .rotate_posterior(metric=metric, fn=obj2$fn, gr=obj2$gr, Q=Q, Qinv=Qinv, y.cur=mle$est)
   if(rotation_only) return(rotation)
   metric <- rotation$metric # update if using auto for printing later
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
