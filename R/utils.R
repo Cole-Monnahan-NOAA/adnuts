@@ -732,6 +732,11 @@ extract_samples <- function(fit, inc_warmup=FALSE, inc_lp=FALSE,
     y <-  lapply(1:dim(x)[2], function(i) x[ind, i,])
   } else {
     y <-  lapply(1:dim(x)[2], function(i) x[ind, i, -dim(x)[3]])
+    # case with only a single column (parameter) need to recover array
+    if(is.null(dim(y[[1]]))){
+      y <- lapply(y, function(ytmp)
+        array(ytmp, dim=c(length(ytmp),1), dimnames=list(NULL, dimnames(x)[[3]][1])))
+    }
   }
   if(as.list){
     return(invisible(y))
