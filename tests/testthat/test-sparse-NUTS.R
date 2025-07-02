@@ -159,18 +159,18 @@ test_that("RTMB works", {
     b=rep(0, 50)    ## Random intercept by chick
   )
   f <- function(parms) {
-    getAll(ChickWeight, parms, warn=FALSE)
+    RTMB::getAll(ChickWeight, parms, warn=FALSE)
     ## Optional (enables extra RTMB features)
     weight <- OBS(weight)
     ## Initialize joint negative log likelihood
     nll <- 0
     ## Random slopes
-    nll <- nll - sum(dnorm(a, mean=mua, sd=sda, log=TRUE))
+    nll <- nll - sum(RTMB::dnorm(a, mean=mua, sd=sda, log=TRUE))
     ## Random intercepts
-    nll <- nll - sum(dnorm(b, mean=mub, sd=sdb, log=TRUE))
+    nll <- nll - sum(RTMB::dnorm(b, mean=mub, sd=sdb, log=TRUE))
     ## Data
     predWeight <- a[Chick] * Time + b[Chick]
-    nll <- nll - sum(dnorm(weight, predWeight, sd=sdeps, log=TRUE))
+    nll <- nll - sum(RTMB::dnorm(weight, predWeight, sd=sdeps, log=TRUE))
     ## Get predicted weight uncertainties
     ADREPORT(predWeight)
     ## Return
@@ -213,4 +213,46 @@ test_that("random inits work", {
    # ggplot(out2, aes(x=init, y=lp)) + geom_jitter(width=.1, height=0)
    # ggplot(out, aes(iter, y=lp, color=init, group=interaction(init,seed))) +
    #   geom_line()
+})
+
+
+test_that("small models work", {
+  skip_if(skip_RTMB) # not sure why this fails when testing but not locally?
+  library(RTMB)
+  f <- function(params){
+    RTMB::getAll(params)
+    -sum(RTMB::dnorm(x,0,1,TRUE))
+  }
+  params <- list(x=1)
+  f(params)
+  obj <- RTMB::MakeADFun(f, params)
+  # single parameter single chain
+  fit <- sample_sparse_tmb(obj, iter=300, warmup=200, chains=1, cores=1, seed=1)
+  post1 <- as.data.frame(fit)
+  post2 <- extract_samples(fit, inc_lp=TRUE)
+  expect_true(is.data.frame(post1))
+  expect_true(is.data.frame(post2))
+  expect_equal(names(post1), 'x')
+  expect_equal(names(post2), c('x', 'lp__'))
+  expect_equal(post1$x[5], post2$x[5])
+ # repeat with 2 chains
+  fit <- sample_sparse_tmb(obj, iter=300, warmup=200, chains=2, cores=1, seed=1)
+  post1 <- as.data.frame(fit)
+  post2 <- extract_samples(fit, inc_lp=TRUE)
+  expect_true(is.data.frame(post1))
+  expect_true(is.data.frame(post2))
+  expect_equal(names(post1), 'x')
+  expect_equal(names(post2), c('x', 'lp__'))
+  expect_equal(post1$x[5], post2$x[5])
+
+  ## now with two parameters
+  params <- list(x=c(1,2))
+  obj <- RTMB::MakeADFun(f, params)
+  # single parameter single chain
+  fit <- sample_sparse_tmb(obj, iter=300, warmup=200, chains=1, cores=1, seed=1)
+  post1 <- as.data.frame(fit)
+  post2 <- extract_samples(fit, inc_lp=TRUE)
+  expect_true(is.data.frame(post1))
+  expect_true(is.data.frame(post2))
+  expect_equal(post1[1,5], post2[1,5])
 })

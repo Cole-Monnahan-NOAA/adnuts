@@ -224,10 +224,14 @@ sample_sparse_tmb <-
 #'   which is used in constructing other objects downstream
 #' @export
 get_post <- function(x, invf, parnames, array=FALSE) {
-  p <- constrain_draws(x) |> as.data.frame()
+  p <- x@draws |> as.data.frame()
   q <- subset(p, select=-c(lp__, .iteration, .draw, .chain))
   names(q) <- parnames
-  q <- as.data.frame(t(apply(q, 1, invf))) |> cbind(p$lp__)
+  if(ncol(q)==1){
+    q <- as.data.frame(apply(q, 1, invf)) |> cbind(p$lp__)
+  } else {
+    q <- as.data.frame(t(apply(q, 1, invf))) |> cbind(p$lp__)
+  }
   colnames(q) <- c(parnames, 'lp__')
   ## build array
   if(array){
@@ -292,6 +296,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
 #'
 .print.mat.stats <- function(x){
   if(is.null(x)) return(NULL)
+  if(NROW(x)==1) return(NULL) # not a matrix!
   nm <- deparse(substitute(x))
   e <- eigen(x,TRUE)
   mine <- min(e$value); maxe <- max(e$value); ratio <- maxe/mine
