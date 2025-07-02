@@ -492,14 +492,19 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     finv <- function(x)   as.numeric(Matrix::solve(Lt, x)[iperm])
   } else if(metric=='auto'){
     ## use recursion then pick the right one depending on several criteria
-    if(!is.null(Q)) rsparse <- .rotate_posterior(metric='sparse', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
+    if(!is.null(Q) && NROW(Q)>1) rsparse <- .rotate_posterior(metric='sparse', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
     if(!is.null(Qinv))
       rdiag <- .rotate_posterior(metric='diag', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
-    if(!is.null(Qinv)){
+    if(!is.null(Qinv) && NROW(Qinv)>1){
       rdense <- tryCatch(.rotate_posterior(metric='dense', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur),
                          error=function(e) "Failed")
     }
     runit <- .rotate_posterior(metric='unit', fn=fn, gr=gr, Q=Q, Qinv=Qinv, y.cur=y.cur)
+
+    if(NROW(Qinv)==1){
+      message("diag metric selected b/c only 1 parameter")
+      return(rdiag)
+    }
 
     if(is.character(rdense)){
       message("unit metric selected b/c Qinv was not positive definite")
@@ -515,7 +520,10 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
         # no Q but does have Qinv, e.g., a model w/o RE or using the LA
         ## check for high correlations
         cors <- cov2cor(Qinv)[lower.tri(Qinv, diag=FALSE)]
-        if(max(abs(cors))<.3){
+        if(NROW(cors)==1) {
+          message("diag metric selected b/c only a single parameter")
+          return(rdiag)
+        } else if(max(abs(cors))<.3){
           message("diag metric selected b/c no Q available and low correlations")
           return(rdiag)
         } else {

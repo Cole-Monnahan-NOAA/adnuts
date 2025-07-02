@@ -3,7 +3,7 @@
 skip_consistency <- TRUE
 skip_reproducibility <- TRUE
 skip_ADMB <- TRUE
-skip_TMB <- TRUE
+skip_TMB <- FALSE
 skip_RTMB <- FALSE
 
 ### Skip all this if on CRAN. Otherwise locally or on CI, need to
