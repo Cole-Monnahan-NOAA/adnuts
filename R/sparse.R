@@ -60,6 +60,7 @@
 #'   just 'RTMB'. The name is used only for printing.
 #' @param refresh How often to print updates to console
 #'   (integer). 0 will turn off printing. The default is 100.
+#' @param print Whether to print summary of run (default) or not
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
@@ -92,6 +93,7 @@ sample_sparse_tmb <-
            metric=c('auto', 'unit', 'diag', 'dense',  'sparse', 'sparse-J'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
            globals=NULL, model_name=NULL, refresh=NULL,
+           print=TRUE,
            rotation_only=FALSE,
            ...){
 
@@ -211,8 +213,8 @@ sample_sparse_tmb <-
       as.numeric(system.time(trash <- replicate(1000, gsparse(inits)))[3])
   }
   cat('\n\n')
-  print(fit2)
-  fit2
+  if(print) print(fit2)
+  return(invisible(fit2))
 }
 
 
