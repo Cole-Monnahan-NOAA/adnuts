@@ -23,6 +23,7 @@ sample_sparse_tmb(
   globals = NULL,
   model_name = NULL,
   refresh = NULL,
+  print = TRUE,
   rotation_only = FALSE,
   ...
 )
@@ -103,6 +104,8 @@ just 'RTMB'. The name is used only for printing.}
 
 \item{refresh}{How often to print updates to console
 (integer). 0 will turn off printing. The default is 100.}
+
+\item{print}{Whether to print summary of run (default) or not}
 
 \item{...}{Additional arguments to pass to
 \code{\link{StanEstimators::stan_sample}}.}
