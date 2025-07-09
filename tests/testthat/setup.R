@@ -6,6 +6,13 @@ skip_ADMB <- TRUE
 skip_TMB <- FALSE
 skip_RTMB <- FALSE
 
+suppressWarnings(library(TMB))
+
+get_simple_obj <- function() suppressWarnings(suppressMessages(TMB::runExample('simple')))
+
+get_simple_obj()
+obj.simple <- obj
+
 ### Skip all this if on CRAN. Otherwise locally or on CI, need to
 ### build the executables and run them so they're available for
 ### the tests. Then cleanup. On CRAN only a .RDS file is read in
