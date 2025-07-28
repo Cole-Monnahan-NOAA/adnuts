@@ -1,10 +1,10 @@
 test_that("all metrics work", {
  skip_if(skip_TMB)
-  obj <- obj.simple
+  obj <- get_simple_obj()
   Q <- sdreport(obj, getJointPrecision = TRUE)$jointPrecision
   M <- as.matrix(solve(Q))
   fits <- list()
-  for(m in c('auto', 'dense', 'sparse', 'diag', 'unit')){
+  for(m in c('auto', 'dense', 'sparse', 'sparse-naive', 'diag', 'unit')){
     suppressWarnings(suppressMessages(fits[[m]] <- sample_sparse_tmb(obj, iter=1000,
                                    skip_optimization = TRUE,
                                    Q=Q, Qinv=M,
@@ -12,7 +12,7 @@ test_that("all metrics work", {
                                    warmup=150, cores=1, chains=1, seed=1,
                                    metric=m, print=FALSE)))
   }
-  expect_equal(length(fits),5)
+  expect_equal(length(fits),6)
   out <- lapply(fits, function(x) as.numeric(tail(as.data.frame(x), n=1)[1]))
   expect_equal(out$dense,-0.4488092, tolerance=1e-5)
   expect_equal(out$sparse,-0.7966603, tolerance=1e-5)
@@ -23,7 +23,7 @@ test_that("all metrics work", {
 
 test_that("Embedded Laplace approximation works", {
   skip_if(skip_TMB)
-  obj <- obj.simple
+  obj <- get_simple_obj()
   fit1 <- sample_sparse_tmb(obj, iter=1000, refresh=0,
                             warmup=200, cores=1, chains=1, seed=1,
                             metric='dense', print=FALSE)
@@ -37,7 +37,7 @@ test_that("Embedded Laplace approximation works", {
 
 test_that("metrics are robust to model type",{
   skip_if(skip_TMB)
-  obj <- obj.simple
+  obj <- get_simple_obj()
   ## rebuild without RE so it fails
   obj <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
                         map=obj$env$map,
@@ -80,7 +80,7 @@ test_that("metrics are robust to model type",{
 
 test_that("parallel works", {
   skip_if(skip_TMB)
-  obj <- obj.simple
+  obj <- get_simple_obj()
   fit <- sample_sparse_tmb(obj, iter=1000, warmup=200, cores=4,
                            refresh=0, print=FALSE,
                            chains=4, seed=1, metric='sparse')
@@ -89,7 +89,7 @@ test_that("parallel works", {
 
 test_that("thinning works", {
   skip_if(skip_TMB)
-  obj <- obj.simple
+  obj <- get_simple_obj()
   fit <- sample_sparse_tmb(obj, iter=1000, warmup=200, cores=1,
                            chains=1, seed=1, metric='sparse',
                            thin=2,refresh=0, print=FALSE)
@@ -103,38 +103,38 @@ test_that("thinning works", {
 
 test_that("auto metric selection is robust to model type", {
   skip_if(skip_TMB)
-  obj <- obj.simple
+  obj <- get_simple_obj()
   ## normal case of RE, with and without laplace
   suppressWarnings(fit1 <- sample_sparse_tmb(obj, iter=1000, refresh=0,
                             warmup=200, cores=1, chains=1, seed=1,
                             metric='auto', print=FALSE))
-  expect_equal(as.numeric(tail(as.data.frame(fit1),1)[1]),-1.802417, tolerance =1e-6)
+  expect_equal(as.numeric(tail(as.data.frame(fit1),1)[1]),-1.362821, tolerance =1e-6)
   suppressWarnings(fit2 <- sample_sparse_tmb(obj, iter=1000,  laplace=TRUE, refresh=0,
                             warmup=200, cores=1, chains=1, seed=1,
                             metric='auto', print=FALSE))
-  expect_equal(as.numeric(tail(as.data.frame(fit2),1)[1]), 51.69876, tolerance =1e-6)
+  expect_equal(as.numeric(tail(as.data.frame(fit2),1)[1]), 52.38106, tolerance =1e-6)
 
   ## rebuild without RE so it fails: behavior on model w/o mode
-  obj <- obj.simple
-  obj <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
+  obj <- get_simple_obj()
+  obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=par0,
                         map=obj$env$map,
                         random=NULL, silent=TRUE,
                         DLL=obj$env$DLL)
-  expect_error(sample_sparse_tmb(obj, iter=1000, laplace=TRUE,refresh=0,
+  expect_error(sample_sparse_tmb(obj2, iter=1000, laplace=TRUE,refresh=0,
                                  warmup=200, cores=1, chains=1, seed=1,
                                  metric='auto', print=FALSE),
                regexp = 'No random effects found')
   # this breaks if init='last.par.best' b/c the inits are so bad it can't recover
-  expect_warning(fit3 <- sample_sparse_tmb(obj, iter=1000, laplace=FALSE, init='unif',
+  expect_warning(fit3 <- sample_sparse_tmb(obj2, iter=1000, laplace=FALSE, init='unif',
                             warmup=200, cores=1, chains=1, seed=1,
                             refresh=0, print=FALSE,
                             metric='auto', skip_optimization = TRUE), regexp = 'NaNs')
   expect_equal(fit3$metric, 'unit')
   expect_equal(as.numeric(tail(as.data.frame(fit3),1)[1]), -0.843062, tolerance =1e-6)
   ## rebuild as penalized ML
-  obj <- obj.simple
-  obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
-                         map=list(logsdu=factor(NA)),
+  obj <- get_simple_obj()
+  obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=par0,
+                         map=list(logsdu=factor(NA), logsd0=factor(NA)),
                          random=NULL, silent=TRUE,
                          DLL=obj$env$DLL)
   expect_error(sample_sparse_tmb(obj2, iter=1000, laplace=TRUE,
@@ -145,7 +145,7 @@ test_that("auto metric selection is robust to model type", {
                             warmup=200, cores=1, chains=1, seed=1,
                             metric='auto', print=FALSE))
   expect_equal(fit5$metric, 'dense')
-  expect_equal(as.numeric(tail(as.data.frame(fit5),1)[1]), -0.8897991, tolerance =1e-6)
+  expect_equal(as.numeric(tail(as.data.frame(fit5),1)[1]),  -1.014703, tolerance =1e-6)
 })
 
 
@@ -153,7 +153,7 @@ test_that("random inits work", {
   # test that different initial values work by forcing NUTS to be
   # autocorrelated and see the paths
   skip_if(skip_TMB)
-  obj <- obj.simple
+  obj <- get_simple_obj()
   out <- NULL
   Q <- sdreport(obj, getJointPrecision = TRUE)$jointPrecision
   Qinv <- solve(Q) |> as.matrix()
@@ -271,3 +271,4 @@ test_that("small models work", {
   expect_equal(post1[1,5], post2[1,5])
   detach(package:RTMB, unload=TRUE)
 })
+

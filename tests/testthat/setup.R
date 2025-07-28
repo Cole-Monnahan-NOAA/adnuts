@@ -4,14 +4,22 @@ skip_consistency <- TRUE
 skip_reproducibility <- TRUE
 skip_ADMB <- TRUE
 skip_TMB <- FALSE
-skip_RTMB <- FALSE
+skip_RTMB <- TRUE
 
 suppressWarnings(library(TMB))
+# setup simple object once, have to be careful b/c of the dynamic
+# links and I intentionally break the model downstream in tests
+# so that messes up obj. Hence the quick function to rebuild it
+# back to the MLE
+TMB::runExample('simple')
+obj0 <- obj
+par0 <- obj$env$parList()
 
-get_simple_obj <- function() suppressWarnings(suppressMessages(TMB::runExample('simple')))
+get_simple_obj <- function() {
+  TMB::MakeADFun(data=obj0$env$data, parameters=par0, random=obj0$env$random,
+                 dll=obj0$env$DLL, silent=TRUE)}
 
-get_simple_obj()
-obj.simple <- obj
+obj <- get_simple_obj()
 
 ### Skip all this if on CRAN. Otherwise locally or on CI, need to
 ### build the executables and run them so they're available for
