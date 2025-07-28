@@ -14,7 +14,7 @@
 #' @param metric A character specifying which metric to use.
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
-#'   "dense", "diag", "unit", or "sparse-J" can be specified.
+#'   "dense", "diag", "unit", or "sparse-naive" can be specified.
 #' @param init Either 'last.par.best' (default), 'random',
 #'   'random-t', or 'unif'. The former starts from the joint
 #'   mode, while 'random' and 'random-t' draw from multivariate
@@ -61,6 +61,8 @@
 #' @param refresh How often to print updates to console
 #'   (integer). 0 will turn off printing. The default is 100.
 #' @param print Whether to print summary of run (default) or not
+#' @param rotation_only Whether to return only the rotation object
+#'  (for debugging purposes)
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
@@ -78,9 +80,9 @@
 #'   larger dimensions. The 'diag' option is to take the marginal
 #'   SDs from M and thus only descales, while the 'unit' option
 #'   is the default Stan algorithm and should be used with mass
-#'   matrix adaptation. The 'sparse-J' is constructued to be
+#'   matrix adaptation. The 'sparse-naive' is constructued to be
 #'   mathematically equivalent to 'dense' but computiontally
-#'   faster, but generally shoudl only be used for
+#'   faster, but generally should only be used for
 #'   testing/exploration. Note that the \code{metric} is the TMB
 #'   metric and distinct from the Stan metric which is controlled
 #'   via the \code{control} list.
@@ -90,7 +92,7 @@ sample_sparse_tmb <-
            chains=4, cores=chains, thin=1,
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random', 'random-t', 'unif'),
-           metric=c('auto', 'unit', 'diag', 'dense',  'sparse', 'sparse-J'),
+           metric=c('auto', 'unit', 'diag', 'dense',  'sparse', 'sparse-naive'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
            globals=NULL, model_name=NULL, refresh=NULL,
            print=TRUE,
@@ -440,7 +442,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     x.cur <- y.cur
     finv <- function(x) x
     chd <- J <- NULL
-  } else if(metric=='sparse-J'){
+  } else if(metric=='sparse-naive'){
     # This metric is carefully constructured to match the dense
     # metric up to numerical precision. But as it is slower it is
     # not typically used.
