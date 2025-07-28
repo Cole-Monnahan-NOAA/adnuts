@@ -1,5 +1,5 @@
-#' NUTS sampling for TMB models using a sparse inverse mass
-#' matrix (beta)
+
+#' NUTS sampling for TMB models using a sparse metric (BETA).
 #'
 #' @param obj The TMB object with random effects turned on and
 #'   optimized
@@ -41,7 +41,7 @@
 #'   ('unit_e', 'diag_e', or 'dense_e'). For dense and sparse
 #'   metrics this usually can be 'unit_e' to skip adaptation.
 #'   NULL values (default) revert to \code{stan_sample} defaults.
-#' @param seed Random number seed, used for generating inital
+#' @param seed Random number seed, used for generating initial
 #'   values (if 'random") and for NUTS.
 #' @param laplace Whether to leave the Laplace approximation on
 #'   and only use NUTS to sample the fixed effects, or turn it
@@ -87,7 +87,7 @@
 #'   metric and distinct from the Stan metric which is controlled
 #'   via the \code{control} list.
 #' @export
-sample_sparse_tmb <-
+sample_snuts <-
   function(obj, iter=2000, warmup=floor(iter/2),
            chains=4, cores=chains, thin=1,
            control=NULL, seed=NULL, laplace=FALSE,
@@ -217,6 +217,11 @@ sample_sparse_tmb <-
   cat('\n\n')
   if(print) print(fit2)
   return(invisible(fit2))
+}
+
+sample_sparse_tmb <- function(...){
+  .Deprecated('sample_snuts', package='adnuts')
+  sample_snuts(...)
 }
 
 

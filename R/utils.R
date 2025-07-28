@@ -662,7 +662,7 @@ check_identifiable <- function(model, path=getwd()){
 }
 
 #' Launch shinystan for a TMB fit.
-#'
+#' @export
 #' @param fit A named list returned by \code{sample_tmb}.
 #' @seealso \code{launch_shinyadmb}
 launch_shinytmb <- function(fit){
