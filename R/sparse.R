@@ -14,7 +14,8 @@
 #' @param metric A character specifying which metric to use.
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
-#'   "dense", "diag", "unit", or "sparse-naive" can be specified.
+#'   "dense", "diag", "unit", "Stan", or "sparse-naive" can be
+#'   specified.
 #' @param init Either 'last.par.best' (default), 'random',
 #'   'random-t', or 'unif'. The former starts from the joint
 #'   mode, while 'random' and 'random-t' draw from multivariate
@@ -66,33 +67,57 @@
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
-#' @details The TMB metric is used to decorrelate/descale the
-#'   posterior before sampling using the Stan algorithms via the
-#'   StanEstimator interface. The default is 'auto' which uses an
-#'   algorithm to determine the optimal metric to use for a
-#'   particular model. The algorithm depends on whether Q and/or
-#'   M=Qinv are available, the extent of parameter correlations,
-#'   and the speed of gradient calculations. The chosen metric
-#'   and reasoning are printed to the console before NUTS
-#'   sampling. A sparse and dense matrix will decorrelate and
-#'   descale the posterior in the same way, but the sparse one
-#'   will be more efficient with high levels of sparsity and
-#'   larger dimensions. The 'diag' option is to take the marginal
-#'   SDs from M and thus only descales, while the 'unit' option
-#'   is the default Stan algorithm and should be used with mass
-#'   matrix adaptation. The 'sparse-naive' is constructued to be
-#'   mathematically equivalent to 'dense' but computiontally
-#'   faster, but generally should only be used for
-#'   testing/exploration. Note that the \code{metric} is the TMB
-#'   metric and distinct from the Stan metric which is controlled
-#'   via the \code{control} list.
+#'
+#' @details
+#' The \strong{TMB metric} is used to decorrelate and descale the posterior
+#' distribution before sampling with Stan's algorithms. The chosen metric
+#' and the reasoning for its selection are printed to the console before
+#' sampling begins.
+#'
+#' \strong{Metric Options}
+#' \itemize{
+#'  \item{\code{'auto'}: This is the default setting. It uses an internal
+#'    algorithm to determine the optimal metric for the model. The choice
+#'    depends on the availability of the precision matrix (\eqn{Q}) and/or
+#'    the covariance matrix (\eqn{M=Q^{-1}}), the extent of parameter
+#'    correlations, and the speed of gradient calculations.}
+#'  \item{\code{'dense'} and \code{'sparse'}: Both of these options
+#'    decorrelate and descale the posterior. However, the
+#'    \code{'sparse'} metric is more computationally efficient
+#'    for models with high-dimensional, sparse precision matrices.
+#'    For models without random effects the \code{'sparse'} option
+#'    is not available}
+#'  \item{\code{'diag'}: This option only descales the posterior, using the
+#'    marginal standard deviations derived from the covariance matrix
+#'    \eqn{M}. It does not account for correlations.}
+#'  \item{\code{'unit'}: This option uses an identity matrix, which is the
+#'    default behavior in Stan. Unlike the \code{'Stan'} option below, the
+#'    model is still optimized to find the mode, and the \eqn{Q} matrix is
+#'    calculated. This ensures that a full \code{mle} object (containing the
+#'    mode, standard errors, and correlations) is returned.}
+#'  \item{\code{'sparse-naive'}: This metric is constructed to be
+#'    mathematically equivalent to \code{'dense'} but is often
+#'    computationally faster. It is generally recommended only for testing
+#'    and exploration.}
+#'  \item{\code{'stan'}: This is a special flag that reverts the sampler to
+#'    the standard Stan behavior. It skips the optimization and all \eqn{Q}
+#'    matrix calculations and ensures that Stan's mass matrix adaptation is
+#'    engaged during warmup.}
+#' }
+#'
+#' \strong{Important Distinction}
+#'
+#' Note that the \code{metric} parameter described here is specific to
+#' \strong{TMB} and is distinct from the Stan metric, which is controlled
+#' via the \code{control} list argument in the sampling function.
 #' @export
 sample_snuts <-
   function(obj, iter=2000, warmup=floor(iter/2),
            chains=4, cores=chains, thin=1,
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random', 'random-t', 'unif'),
-           metric=c('auto', 'unit', 'diag', 'dense',  'sparse', 'sparse-naive'),
+           metric=c('auto', 'unit', 'diag', 'dense',
+                    'sparse', 'stan', 'sparse-naive'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
            globals=NULL, model_name=NULL, refresh=NULL,
            print=TRUE,
@@ -107,6 +132,10 @@ sample_snuts <-
     stopifnot(is.character(model_name))
   } else {
     model_name <- obj$env$DLL
+  }
+  if(metric=='stan'){
+    skip_optimization <- TRUE
+    laplace <- FALSE
   }
   inputs <- .get_inputs(obj=obj, skip_optimization=skip_optimization,
                         laplace=laplace, metric=metric, Q=Q, Qinv=Qinv)
@@ -138,13 +167,22 @@ sample_snuts <-
                               DLL=obj$env$DLL)
     }
   }
-  rotation <- .rotate_posterior(metric=metric, fn=obj2$fn, gr=obj2$gr, Q=Q, Qinv=Qinv, y.cur=mle$est)
+
+
+  rotation <- .rotate_posterior(metric=metric, fn=obj2$fn,
+                                gr=obj2$gr, Q=Q, Qinv=Qinv,
+                                y.cur=mle$est)
   if(rotation_only) return(rotation)
   metric <- rotation$metric # update if using auto for printing later
   fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
   gsparse <- function(v) -as.numeric(rotation$gr2(v))
   inits <- rotation$x.cur
-  if(init!='last.par.best'){
+  if(init=='stan'){
+    inits <- obj$env$last.par.best
+  } else if(init=='last.par.best'){
+    inits <- rotation$mle
+  } else {
+    # will be randomly generated
     if(!is.null(seed)) set.seed(seed)
     if(init=='random-t'){
       if(is.null(Qinv))
@@ -176,6 +214,7 @@ sample_snuts <-
   } else {
     nll0='NA'
   }
+  browser()
   message("log-posterior at inits=", round(-fsparse(inits),3),"; at joint mode=",nll0)
   finv <- rotation$finv
   globals2 <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
@@ -326,6 +365,13 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
 .get_inputs <- function(obj, skip_optimization, laplace, metric, Q, Qinv) {
 
   time.opt <- time.Q <- time.Qinv <- 0
+  if(metric=='stan'){
+    mle <- list(nopar=length(obj$env$last.par.best),
+                parnames=names(obj$env$last.par.best))
+    out <- list(Q=NULL, Qinv=NULL, mle=mle, time.opt=time.opt,
+                time.Qinv=time.Qinv, time.Q=time.Q)
+    return(out)
+  }
   if(!skip_optimization){
     message("Optimizing...")
     time.opt <-
@@ -396,7 +442,8 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
   mle <- list(nopar=length(mle), est=mle, se=ses,
               cor=mycor, parnames=parnames, Q=Q,
               Qinv=Qinv)
- out <- list(Q=Q, Qinv=Qinv, mle=mle, time.opt=time.opt, time.Qinv=time.Qinv, time.Q=time.Q)
+ out <- list(Q=Q, Qinv=Qinv, mle=mle, time.opt=time.opt,
+             time.Qinv=time.Qinv, time.Q=time.Q)
  return(out)
 }
 
@@ -410,9 +457,9 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
 #' @param Qinv The inverse of Q
 .rotate_posterior <- function(metric, fn, gr, Q,  Qinv, y.cur){
   ## Rotation done using choleski decomposition
-  ## First case is a dense mass matrix
-  M <- as.matrix(Qinv)
   if(metric=='dense'){
+    ## First case is a dense mass matrix
+    M <- as.matrix(Qinv)
     # took this out b/c it was warning too often, better way to test?
     #if(!matrixcalc::is.symmetric.matrix(M) ||
     #  !matrixcalc::is.positive.definite(M))
@@ -429,18 +476,18 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
       t(chd %*% x)
     }
   } else if(metric=='diag'){
-    M <- diag(M)
+    M <- diag(as.matrix(M))
     ## diagonal but not unit
-      J <- NULL
-      chd <- sqrt(M)
-      fn2 <- function(x) fn(chd * x)
-      gr2 <- function(x) as.vector(gr(chd * x) ) * chd
-      ## Now rotate back to "x" space using the new mass matrix M. M is a
-      ## vector here. Note the big difference in efficiency without the
-      ## matrix operations.
-      x.cur <- (1/chd) * y.cur
-      finv <- function(x) chd*x
-  } else if(metric=='unit') {
+    J <- NULL
+    chd <- sqrt(M)
+    fn2 <- function(x) fn(chd * x)
+    gr2 <- function(x) as.vector(gr(chd * x) ) * chd
+    ## Now rotate back to "x" space using the new mass matrix M. M is a
+    ## vector here. Note the big difference in efficiency without the
+    ## matrix operations.
+    x.cur <- (1/chd) * y.cur
+    finv <- function(x) chd*x
+  } else if(metric=='unit' | metric=='stan') {
     ## unit metric, change nothing
     fn2 <- function(x) fn(x)
     gr2 <- function(x) gr(x)
