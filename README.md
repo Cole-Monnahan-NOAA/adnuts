@@ -5,14 +5,22 @@ dev: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CM
 [![](https://www.r-pkg.org/badges/version/adnuts)](https://www.r-pkg.org/pkg/adnuts)
 [![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/adnuts)](https://www.r-pkg.org/pkg/adnuts)
 
-The aim of 'adnuts' (pronounced A-D NUTS like A-D MB) is to provide
-advanced MCMC sampling for 'ADMB' and 'TMB' models. It mimics 'Stan' in
-functionality and feel, specifically providing no-U-turn (NUTS) sampling
-with adaptive mass matrix and parallel execution.
+The aim of 'adnuts' (pronounced A-D nuts) is to provide advanced
+MCMC sampling for 'TMB' and 'ADMB' models. For TMB models it uses
+the sparse NUTS (SNUTS; Monnahan et al. (in prep)) algorithm to
+decorrelate the posterior using the joint precision matrix. The R
+package 'tmbstan' (available on CRAN) provides an alternative for
+TMB which more closely links to Stan. Until the development of
+SNUTS adnuts was primarily used for ADMB models. For the
+foreseeable future SNUTS via 'adnuts' is likely to be the best
+general option for TMB users. 
 
-The R package 'tmbstan' (available on CRAN) has largely replaced the TMB
-capabilities since original development. As such, adnuts is primarily used
-for ADMB models. See the following paper for an introduction to the package
+For ADMB it mimics 'Stan' in functionality and feel, specifically
+providing no-U-turn (NUTS) sampling with adaptive mass matrix and
+parallel execution. Development of ADMB features is winding down,
+but functionality expected to be maintained in the coming years.
+
+See the following paper for an introduction to the package
 capabilities, and contrast with tmbstan:
 
 Monnahan CC, Kristensen K (2018) No-U-turn sampling for fast Bayesian
@@ -20,16 +28,48 @@ inference in ADMB and TMB: Introducing the adnuts and tmbstan R
 packages. PLoS ONE 13(5):e0197954. 
 https://doi.org/10.1371/journal.pone.0197954
 
-'adnuts' was designed specifically for use in fisheries stock assessments,
-and interested authors are referred to:
-
-Monnahan, C.C., T.A. Branch, J.T. Thorson, I.J. Stewart, C.S. Szuwalksi
-(2020) Overcoming long Bayesian run times in integrated fisheries stock
-assessments. ICES Journal of Marine
-Science. https://dx.doi.org/10.1093/icesjms/fsz059
+Monnahan CC, Thorson, J.T., Kristensen, K, and Carpenter, B (in
+prep). Leveraging sparsity to improve no-u-turn sampling
+efficiency of hierarchical Bayesian models.
 
 
-## Usage
+## Installation
+To use SNUTS with TMB the development version must be installed, as well as the [StanEstimators](https://github.com/andrjohns/StanEstimators) package which is not on CRAN but can be installed as:
+
+`
+# we recommend running this is a fresh R session or restarting your current session
+install.packages('StanEstimators', repos = c('https://andrjohns.r-universe.dev', 'https://cloud.r-project.org'))
+
+`
+
+The development version **is required for SNUTS functionality**.
+`devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='dev')`
+
+A very basic example can be run as:
+````
+library(TMB)
+runExample('simple')
+mcmc <- sample_snuts(obj)
+````
+
+A brief [demonstration
+file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo_SNUTS.R)
+is the best place to help get you started, and there is also a user guide:
+`vignette('adnuts')` for more detailed information.
+
+## ADMB Installation and Usage
+As of July 2025 package 'adnuts' is primarily designed for TMB
+models and sampling with the sparse NUTS algorithm. ADMB
+functionality still exists and how to install and use it can be
+found below.
+
+The adnuts R package version 1.1.2 can be installed from CRAN:
+`install.packages('adnuts')`. Future minor releases [listed
+here](https://github.com/Cole-Monnahan-NOAA/adnuts/releases) may not be
+released on CRAN so the latest stable version can be installed as:
+
+`devtools::install_github('Cole-Monnahan-NOAA/adnuts')`
+
 The 'sample_rwm' and 'sample_nuts' functions draw posterior samples from an
 ADMB model using an MCMC algorithm (random walk Metropolis or no-U-turn
 sampler). The returned fitted object contains samples and other
@@ -39,11 +79,22 @@ samples (post warmup and thinning) into a data frame for inference, while
 'ShinyStan'.
 
 A brief [demonstration
-file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo.R)
+file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo_ADMB.R)
 is the best place to help get you started, and there is also a user guide:
 `vignette('adnuts')` for more detailed information.
 
-## Installation
+
+'adnuts' was designed specifically for use in ADMB fisheries stock assessments,
+and interested authors are referred to:
+
+Monnahan, C.C., T.A. Branch, J.T. Thorson, I.J. Stewart, C.S. Szuwalksi
+(2020) Overcoming long Bayesian run times in integrated fisheries stock
+assessments. ICES Journal of Marine
+Science. https://dx.doi.org/10.1093/icesjms/fsz059
+
+
+
+## ADMB Installation
 
 To use the ADMB functionality you need to build your model with version
 12.0 (released December 2017) or later, otherwise this functionality is not
@@ -55,15 +106,7 @@ compared to 12.0. You can check the ADMB version of a compiled model from
 the command line with a command `model.exe -version` which prints the
 version among other things.
 
-The adnuts R package version 1.1.2 can be installed from CRAN:
-`install.packages('adnuts')`. Future minor releases [listed
-here](https://github.com/Cole-Monnahan-NOAA/adnuts/releases) may not be
-released on CRAN so the latest stable version can be installed as:
 
-`devtools::install_github('Cole-Monnahan-NOAA/adnuts')`
-
-The development version can be installed as:
-`devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='dev')`
 
 ## Known issues
 Windows users may experience issues if their model name is too long. In
