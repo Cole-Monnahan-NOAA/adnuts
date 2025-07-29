@@ -1,263 +1,4 @@
 
-#' NUTS sampling for TMB models using a sparse metric (BETA).
-#'
-#' @param obj The TMB object with random effects turned on and
-#'   optimized
-#' @param iter Total iterations to run (warmup + sampling)
-#' @param warmup Total warmup iterations. Defaults to
-#'   \code{iter}/2 based on Stan defaults, but when using dense,
-#'   sparse, or diag metrics a much shorter warmup can be used
-#'   (e.g., 150), especially if paired with a 'unit_e' Stan
-#'   metric. Use \code{\link{plot_sampler_params}} to investigate
-#'   warmup performance and adjust as necessary for subsequent
-#'   runs.
-#' @param metric A character specifying which metric to use.
-#'   Defaults to "auto" which uses an algorithm to select the
-#'   best metric (see details), otherwise one of "sparse",
-#'   "dense", "diag", "unit", "Stan", or "sparse-naive" can be
-#'   specified.
-#' @param init Either 'last.par.best' (default), 'random',
-#'   'random-t', or 'unif'. The former starts from the joint
-#'   mode, while 'random' and 'random-t' draw from multivariate
-#'   normal or multivariate t with 2 degrees of freedom
-#'   distributions using the inverse joint precision matrix as a
-#'   covariance matrix. 'random-t' is provided to allow for more
-#'   dispersed initial values. 'unif' will draw U(-2,2) samples
-#'   for all parameters, similar ot Stan's default behavior. If
-#'   the joint NLL is undefined at the initial values then the
-#'   model will exit and return the initial vector for further
-#'   investigation by the user, if desired. Note that
-#'   \code{\link{StanEstimators::stan_sample}} only allows for
-#'   the same init vector for all chains currently. If a seed is
-#'   specified it will be set and thus the inits used will be
-#'   reproducible. The inits are also returned in the 'inits'
-#'   slot of the fitted object.
-#' @param chains Number of chains
-#' @param cores Number of parallel cores to use, defaults to
-#'   \code{chains} so set this to 1 to execute serial chains.
-#' @param thin The thinning rate (defaults to 1).
-#' @param control NUTS control list, currently available options
-#'   are 'adapt_delta', 'max_treedepth', and 'metric' which is
-#'   the type of metric adaptation for Stan to do with options
-#'   ('unit_e', 'diag_e', or 'dense_e'). For dense and sparse
-#'   metrics this usually can be 'unit_e' to skip adaptation.
-#'   NULL values (default) revert to \code{stan_sample} defaults.
-#' @param seed Random number seed, used for generating initial
-#'   values (if 'random") and for NUTS.
-#' @param laplace Whether to leave the Laplace approximation on
-#'   and only use NUTS to sample the fixed effects, or turn it
-#'   off and sample from the joint parameter space (default).
-#' @param skip_optimization Whether to skip optimization or not
-#'   (default).
-#' @param Q The sparse precision matrix. It is calculated
-#'   internally if not specified (default).
-#' @param Qinv The dense matrix (M). It is calculated internally
-#'   if not specified (default).
-#' @param globals A named list of objects to pass to new R
-#'   sessions when running in parallel and using RTMB. Typically
-#'   this is the `data` object for now.
-#' @param model_name An optional character giving the model name.
-#'   If NULL it will use the DLL name which for RTMB models is
-#'   just 'RTMB'. The name is used only for printing.
-#' @param refresh How often to print updates to console
-#'   (integer). 0 will turn off printing. The default is 100.
-#' @param print Whether to print summary of run (default) or not
-#' @param rotation_only Whether to return only the rotation object
-#'  (for debugging purposes)
-#' @param ... Additional arguments to pass to
-#'   \code{\link{StanEstimators::stan_sample}}.
-#' @return A fitted MCMC object of class 'adfit'
-#'
-#' @details
-#' The \strong{TMB metric} is used to decorrelate and descale the posterior
-#' distribution before sampling with Stan's algorithms. The chosen metric
-#' and the reasoning for its selection are printed to the console before
-#' sampling begins.
-#'
-#' \strong{Metric Options}
-#' \itemize{
-#'  \item{\code{'auto'}: This is the default setting. It uses an internal
-#'    algorithm to determine the optimal metric for the model. The choice
-#'    depends on the availability of the precision matrix (\eqn{Q}) and/or
-#'    the covariance matrix (\eqn{M=Q^{-1}}), the extent of parameter
-#'    correlations, and the speed of gradient calculations.}
-#'  \item{\code{'dense'} and \code{'sparse'}: Both of these options
-#'    decorrelate and descale the posterior. However, the
-#'    \code{'sparse'} metric is more computationally efficient
-#'    for models with high-dimensional, sparse precision matrices.
-#'    For models without random effects the \code{'sparse'} option
-#'    is not available}
-#'  \item{\code{'diag'}: This option only descales the posterior, using the
-#'    marginal standard deviations derived from the covariance matrix
-#'    \eqn{M}. It does not account for correlations.}
-#'  \item{\code{'unit'}: This option uses an identity matrix, which is the
-#'    default behavior in Stan. Unlike the \code{'Stan'} option below, the
-#'    model is still optimized to find the mode, and the \eqn{Q} matrix is
-#'    calculated. This ensures that a full \code{mle} object (containing the
-#'    mode, standard errors, and correlations) is returned.}
-#'  \item{\code{'sparse-naive'}: This metric is constructed to be
-#'    mathematically equivalent to \code{'dense'} but is often
-#'    computationally faster. It is generally recommended only for testing
-#'    and exploration.}
-#'  \item{\code{'stan'}: This is a special flag that reverts the sampler to
-#'    the standard Stan behavior. It skips the optimization and all \eqn{Q}
-#'    matrix calculations and ensures that Stan's mass matrix adaptation is
-#'    engaged during warmup.}
-#' }
-#'
-#' \strong{Important Distinction}
-#'
-#' Note that the \code{metric} parameter described here is specific to
-#' \strong{TMB} and is distinct from the Stan metric, which is controlled
-#' via the \code{control} list argument in the sampling function.
-#' @export
-sample_snuts <-
-  function(obj, iter=2000, warmup=floor(iter/2),
-           chains=4, cores=chains, thin=1,
-           control=NULL, seed=NULL, laplace=FALSE,
-           init=c('last.par.best', 'random', 'random-t', 'unif'),
-           metric=c('auto', 'unit', 'diag', 'dense',
-                    'sparse', 'stan', 'sparse-naive'),
-           skip_optimization=FALSE, Q=NULL, Qinv=NULL,
-           globals=NULL, model_name=NULL, refresh=NULL,
-           print=TRUE,
-           rotation_only=FALSE,
-           ...){
-
-  iter <- iter-warmup
-  metric <- match.arg(metric)
-  init <- match.arg(init)
-  obj$env$beSilent()
-  if(!is.null(model_name)){
-    stopifnot(is.character(model_name))
-  } else {
-    model_name <- obj$env$DLL
-  }
-  if(metric=='stan'){
-    skip_optimization <- TRUE
-    laplace <- FALSE
-  }
-  inputs <- .get_inputs(obj=obj, skip_optimization=skip_optimization,
-                        laplace=laplace, metric=metric, Q=Q, Qinv=Qinv)
-  mle <- inputs$mle
-  Q <- inputs$Q
-  Qinv <- inputs$Qinv
-
-  ## prepare to run via StanEstimators
-  mydll <- unclass(getLoadedDLLs()[[obj$env$DLL]])$path
-  isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
-  if(!isRTMB){
-    packages <- c("TMB", "Matrix")
-    obj2 <- obj
-    if(!laplace){
-      message("Rebuilding TMB obj without random effects...")
-      obj2 <- TMB::MakeADFun(data=obj$env$data, parameters=obj$env$parList(),
-                             map=obj$env$map,
-                             random=NULL, silent=TRUE,
-                             DLL=obj$env$DLL)
-    }
-  } else {
-    packages <- c("RTMB", "Matrix")
-    obj2 <- obj
-    if(!laplace){
-      message("Rebuilding RTMB obj without random effects...")
-      obj2 <- RTMB::MakeADFun(func=obj$env$data, parameters=obj$env$parList(),
-                              map=obj$env$map,
-                              random=NULL, silent=TRUE,
-                              DLL=obj$env$DLL)
-    }
-  }
-
-
-  rotation <- .rotate_posterior(metric=metric, fn=obj2$fn,
-                                gr=obj2$gr, Q=Q, Qinv=Qinv,
-                                y.cur=mle$est)
-  if(rotation_only) return(rotation)
-  metric <- rotation$metric # update if using auto for printing later
-  fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
-  gsparse <- function(v) -as.numeric(rotation$gr2(v))
-  inits <- rotation$x.cur
-  if(init=='stan'){
-    inits <- obj$env$last.par.best
-  } else if(init=='last.par.best'){
-    inits <- rotation$mle
-  } else {
-    # will be randomly generated
-    if(!is.null(seed)) set.seed(seed)
-    if(init=='random-t'){
-      if(is.null(Qinv))
-        stop("No Qinv found so cannot use random inits. Try 'last.par.best' or 'unif' instead'")
-      inits <- as.numeric(rotation$x.cur + mvtnorm::rmvt(n=1, sigma=Qinv, df=2))
-      if(!is.finite(obj2$fn(inits))) {
-        message("random rmvt inits resulted in NaN NLL, try 'random' instead or investigate returned inits")
-        return(inits)
-      }
-    } else if(init=='random'){
-      if(is.null(Qinv))
-        stop("No Qinv found so cannot use random inits. Try 'last.par.best' or 'unif' instead'")
-
-      inits <- as.numeric(rotation$x.cur + mvtnorm::rmvnorm(n=1, sigma=Qinv))
-      if(!is.finite(obj2$fn(inits))) {
-        message("random rmvnorm inits resulted in NaN NLL, try 'last.par.best' instead or investigate returned inits")
-        return(inits)
-      }
-    } else if(init=='unif'){
-      inits <- runif(n=length(rotation$x.cur), min=-2, max=2)
-      if(!is.finite(obj2$fn(inits))) {
-        message("random uniform inits resulted in NaN NLL, try 'last.par.best' or 'random' instead or investigate returned inits")
-        return(inits)
-      }
-    }
-  } # end of random init options
-  if(!is.null(mle$est)){
-    nll0=round(-obj2$fn(mle$est),3)
-  } else {
-    nll0='NA'
-  }
-  browser()
-  message("log-posterior at inits=", round(-fsparse(inits),3),"; at joint mode=",nll0)
-  finv <- rotation$finv
-  globals2 <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
-  ## the user must pass data objects
-  if(isRTMB) globals2 <- c(globals2,globals)
-  message("Starting MCMC sampling...")
-  if(cores>1) message("Preparing parallel workspace...")
-  fit <- stan_sample(fn=fsparse, par_inits=inits,
-                     grad_fun=gsparse, num_samples=iter,
-                     num_warmup=warmup, thin=thin,
-                     globals = globals2, packages=packages,
-                     adapt_delta=control$adapt_delta,
-                     adapt_window=control$adapt_window,
-                     adapt_init_buffer=control$adapt_init_buffer,
-                     adapt_term_buffer=control$adapt_term_buffer,
-                     metric=control$metric,
-                     max_treedepth=control$max_treedepth,
-                     parallel_chains=cores, save_warmup=TRUE,
-                     num_chains = chains, seed = seed,
-                     refresh=refresh, ...)
-
-  fit2 <- as.tmbfit(fit, mle=mle, invf=finv, metric=metric, model=model_name)
-  fit2$time.Q <- inputs$time.Q; fit2$time.Qinv <- inputs$time.Qinv; fit2$time.opt <- inputs$time.opt
-  fit2$inits <- inits
-  ## gradient timings to check for added overhead
-  if(require(microbenchmark)){
-    bench <- microbenchmark(obj2$gr(inits),
-                            gsparse(inits),
-                            times=500, unit='s')
-    fit2$time.gr <- summary(bench)$median[1]
-    fit2$time.gr2 <- summary(bench)$median[2]
-  } else {
-    warning("Package microbenchmark required to do accurate gradient timings, using system.time() instead")
-    fit2$time.gr <-
-      as.numeric(system.time(trash <- replicate(1000, obj2$gr(inits)))[3])
-    fit2$time.gr2 <-
-      as.numeric(system.time(trash <- replicate(1000, gsparse(inits)))[3])
-  }
-  cat('\n\n')
-  if(print) print(fit2)
-  return(invisible(fit2))
-}
-
 sample_sparse_tmb <- function(...){
   .Deprecated('sample_snuts', package='adnuts')
   sample_snuts(...)
@@ -369,7 +110,8 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     mle <- list(nopar=length(obj$env$last.par.best),
                 parnames=names(obj$env$last.par.best))
     out <- list(Q=NULL, Qinv=NULL, mle=mle, time.opt=time.opt,
-                time.Qinv=time.Qinv, time.Q=time.Q)
+                time.Qinv=time.Qinv, time.Q=time.Q,
+                laplace=laplace, metric=metric)
     return(out)
   }
   if(!skip_optimization){
@@ -440,12 +182,63 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     }
   }
   mle <- list(nopar=length(mle), est=mle, se=ses,
-              cor=mycor, parnames=parnames, Q=Q,
-              Qinv=Qinv)
+              cor=mycor, parnames=parnames)#, Q=Q,              Qinv=Qinv)
  out <- list(Q=Q, Qinv=Qinv, mle=mle, time.opt=time.opt,
-             time.Qinv=time.Qinv, time.Q=time.Q)
+             time.Qinv=time.Qinv, time.Q=time.Q,
+             laplace=laplace, metric=metric)
  return(out)
 }
+
+
+
+#' Get a single initial value vector in untransformed model space
+#' @param init The initial value strategy
+#' @param obj2 The joint TMB model
+#' @param seed RNG seed
+#' @param inputs A list as returned by \code{.get_inputs}.
+.get_inits <- function(init, metric, obj2, seed, inputs) {
+  # only certain combinations of metrics and inputs can work
+  metric <- inputs$metric
+  if(metric=='stan' & init %in% c('random', 'random-t'))
+    stop("'stan' metric not allowed with 'random' or 'random-t' init b/c no Qinv")
+  if((is.null(inputs$Qinv | is.null(inputs$mle$est))) &
+     init %in% c('random', 'random-t'))
+    stop("Cannot use random inits b/c mode or Qinv does not exist, use a different init")
+  if(!is.null(seed)) set.seed(seed)
+  # this will be the mode if skip_optimization=FALSE in .get_inputs
+  lpb <- obj2$env$last.par.best
+  if(inputs$laplace){
+    # joint vector needs to collapse down to just the fixed
+    # effects when doing ELA
+    lpb <- lpb[!obj2$env$lrandom()]
+  }
+  npars <- length(lpb)
+  for(ii in 1:10){
+    inits <-
+      switch(init,
+      'last.par.best' = lpb,
+      'random-t'      = inputs$mle$est + mvtnorm::rmvt(n=1, sigma=inputs$Qinv, df=2),
+      'random'        = inputs$mle$est + mvtnorm::rmvnorm(n=1, sigma=inputs$Qinv),
+      'unif'          = runif(n=npars, min=-2, max=2))
+    inits <- as.numeric(inits)
+    if(length(inits)!=npars)
+      stop("Wrong vector length for inits:", length(inits), " when should be", npars)
+    # if(init=='last.par.best')
+    #   inits <- obj2$env$last.par.best
+    # if(init=='random-t')
+    #   inits <- as.numeric(inputs$mle$est + mvtnorm::rmvt(n=1, sigma=inputs$Qinv, df=2))
+    # if(init=='random')
+    #   inits <- as.numeric(inputs$mle$est + mvtnorm::rmvnorm(n=1, sigma=inputs$Qinv))
+    # if(init=='unif')
+    #   inits <- as.numeric(runif(n=length(rotation$x.cur), min=-2, max=2))
+    success <- is.finite(obj2$fn(inits)) & is.finite(sum(obj2$gr(inits)))
+    if(success) break
+  }
+  if(!success)
+    stop(init, " inits resulted in NaN log-posterior after 10 tries, try another method or investigate model")
+  return(inits)
+}
+
 
 #' Update algorithm for mass matrix.
 #'
@@ -476,7 +269,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
       t(chd %*% x)
     }
   } else if(metric=='diag'){
-    M <- diag(as.matrix(M))
+    M <- diag(as.matrix(Qinv))
     ## diagonal but not unit
     J <- NULL
     chd <- sqrt(M)
@@ -626,6 +419,8 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
 
 
 
+
+
 #' Make an image plot showing the correlation (lower triangle)
 #' and sparsity (upper triangle).
 #'
@@ -654,3 +449,4 @@ plot_Q <- function(fit, Q=NULL){
   Q[lower.tri(Q,TRUE)] <- corr[lower.tri(Q,TRUE)]
   Matrix::image(Q, useRaster=TRUE, at=seq(-1,1, len=50))
 }
+

@@ -1,10 +1,10 @@
 ## Skip consistency and reproducibility tests? Only need to run
 ## these locally when ADMB changes.
-skip_consistency <- TRUE
-skip_reproducibility <- TRUE
-skip_ADMB <- TRUE
+skip_consistency <- skip_reproducibility <- skip_ADMB <- TRUE
+
+# Only TMB is tested as of July 2025
 skip_TMB <- FALSE
-skip_RTMB <- TRUE
+skip_RTMB <- FALSE
 
 suppressWarnings(library(TMB))
 # setup simple object once, have to be careful b/c of the dynamic

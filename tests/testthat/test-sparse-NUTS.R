@@ -4,7 +4,7 @@ test_that("all metrics work", {
   Q <- sdreport(obj, getJointPrecision = TRUE)$jointPrecision
   M <- as.matrix(solve(Q))
   fits <- list()
-  for(m in c('auto', 'dense', 'sparse', 'sparse-naive', 'diag', 'unit')){
+  for(m in c('auto', 'dense', 'sparse', 'stan', 'sparse-naive', 'diag', 'unit')){
     suppressWarnings(suppressMessages(fits[[m]] <- sample_snuts(obj, iter=1000,
                                    skip_optimization = TRUE,
                                    Q=Q, Qinv=M,
@@ -12,7 +12,7 @@ test_that("all metrics work", {
                                    warmup=150, cores=1, chains=1, seed=1,
                                    metric=m, print=FALSE)))
   }
-  expect_equal(length(fits),6)
+  expect_equal(length(fits),7)
   out <- lapply(fits, function(x) as.numeric(tail(as.data.frame(x), n=1)[1]))
   expect_equal(out$dense,-0.4488092, tolerance=1e-5)
   expect_equal(out$sparse,-0.7966603, tolerance=1e-5)
@@ -84,6 +84,7 @@ test_that("parallel works", {
   fit <- sample_snuts(obj, iter=1000, warmup=200, cores=4,
                            refresh=0, print=FALSE,
                            chains=4, seed=1, metric='sparse')
+  expect_equal(sum(as.data.frame(fit)),  259212.9483)
 })
 
 
@@ -227,7 +228,7 @@ test_that("RTMB works", {
 
 
 test_that("small models work", {
-  skip_if(skip_RTMB) # not sure why this fails when testing but not locally?
+  skip_if(skip_RTMB)
   if('TMB' %in% .packages()) detach(package:TMB, unload=TRUE)
   suppressWarnings(library(RTMB))
   f <- function(params){
