@@ -206,8 +206,9 @@ sample_snuts <-
                        num_chains = chains, seed = seed,
                        refresh=refresh, ...)
 
-    fit2 <- as.tmbfit(fit, mle=inputs$mle, invf=rotation$finv,
-                      metric=rotation$metric, model=model_name)
+    fit2 <- as.tmbfit(fit, parnames=inputs$parnames, mle=inputs$mle,
+                      invf=rotation$finv, metric=rotation$metric,
+                      model=model_name)
     fit2$time.Q <- inputs$time.Q; fit2$time.Qinv <- inputs$time.Qinv;
     fit2$time.opt <- inputs$time.opt
     fit2$inits <- inits

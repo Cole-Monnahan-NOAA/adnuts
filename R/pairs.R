@@ -116,8 +116,9 @@ pairs.adfit <- function(fit, pars=NULL,
   if(order=='orig'){
     ## do nothing
   } else if(order %in% c('slow', 'fast')){
-    if(is.null(ess)) stop("No effective sample sizes found so cannot order by slow/fast.")
-    if(!is.numeric(pars[1])){
+    if(is.null(ess))
+      stop("No effective sample sizes found so cannot order by slow/fast.")
+    if(is.character(pars[1])){
       warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
     } else {
       ## Get slowest or fastest parameter names
@@ -125,9 +126,10 @@ pairs.adfit <- function(fit, pars=NULL,
       par.names <- par.names[ind]
     }
   } else if(order=='mismatch'){
-    if(!is.numeric(pars[1])){
+    if(is.character(pars[1])){
       warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
     } else {
+      if(is.null(fit$mle$se)) stop("SEs unavailable so mismatch option fails")
       tmp <- plot_uncertainties(fit, log=FALSE, plot=FALSE)
       x <- abs((tmp$sd.mle-tmp$sd.post)/tmp$sd.post)
       ind <- order(x, decreasing=TRUE)
@@ -141,13 +143,8 @@ pairs.adfit <- function(fit, pars=NULL,
   ## indices OR a vector of characters. Want to force lp__ to be the very
   ## last one stylistically, and b/c there is no ellipse for it.
   if(is.null(pars)){
-    ## Use all or first 10
-    if(NCOL(posterior)>10){
-      warning("Only showing first 10 parameters, use 'pars' argument to adjust")
-      pars <- par.names[1:10]
-    } else {
-      pars <- par.names[1:NCOL(posterior)]
-    }
+    ## Use all or first 5
+    pars <- par.names[1:min(5,NCOL(posterior))]
   } else if(is.numeric(pars[1])){
     ## Index can be used instead of character names. Note this
     ## can be sorted from above
@@ -164,7 +161,7 @@ pairs.adfit <- function(fit, pars=NULL,
   ## subset when looping
   pars.ind <- match(x=pars, table=names(posterior))
   n <- length(pars.ind)
-  n.mle <- ifelse(is.null(mle), 0, nrow(mle$cor))
+  n.mle <- ifelse(is.null(mle$cor), 0, NROW(mle$cor))
   if(n==1) stop("This function is only meaningful for >1 parameter")
   if(is.null(ymult)) ymult <- rep(1.3, n)
   ## If no limits given, calculate the max range of the posterior samples and

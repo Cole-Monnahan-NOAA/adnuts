@@ -954,3 +954,16 @@ extract_sampler_params <- function(fit, inc_warmup=FALSE){
                  est=est, se=std, cor=cor[1:nopar,1:nopar])
   return(result)
 }
+
+
+#' Function to take a character vector of parameter names and
+#' force them to be unique by appending numbers in square
+#' brackets as needed
+#' @param x Character vector
+.make_unique_names <- function(x){
+  stopifnot(is.character(x))
+  as.vector((unlist(sapply(unique(x),
+                           function(y){
+  temp <- x[x==y]
+  if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
+}))))}

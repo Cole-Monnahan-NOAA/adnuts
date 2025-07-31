@@ -4,10 +4,12 @@
 \alias{as.tmbfit}
 \title{Construtor for tmbfit objects}
 \usage{
-as.tmbfit(x, mle, invf, metric, model = "anonymous")
+as.tmbfit(x, parnames, mle, invf, metric, model = "anonymous")
 }
 \arguments{
 \item{x}{A fitted MCMC object}
+
+\item{parnames}{A character vector of unique par names}
 
 \item{mle}{A list of MLE parameters}
 

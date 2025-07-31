@@ -36,13 +36,13 @@ get_post <- function(x, invf, parnames, array=FALSE) {
 
 #' Construtor for tmbfit objects
 #' @param x A fitted MCMC object
+#' @param parnames A character vector of unique par names
 #' @param mle A list of MLE parameters
 #' @param invf The inverse function for the parameters
 #' @param metric The metric used
 #' @param model A character giving the model name
 #' @export
-as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
-  parnames <- mle$parnames
+as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
   ## move lp__ to end to match order of draws
   mon <- StanEstimators::summary(x)
   mon$variable <- c('lp__', parnames)
@@ -67,7 +67,7 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
   x <- list(samples=post, sampler_params=spl, mle=mle,
             monitor=mon, model=model,
             metric=metric,
-            par_names=mle$parnames,
+            par_names=parnames,
             max_treedepth=x@metadata$max_depth,
             warmup=warmup, iter=iter, thin=thin,
             time.warmup=timing[1,],
@@ -107,10 +107,12 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
 
   time.opt <- time.Q <- time.Qinv <- 0
   if(metric=='stan'){
-    mle <- list(nopar=length(obj$env$last.par.best),
-                parnames=names(obj$env$last.par.best))
-    out <- list(Q=NULL, Qinv=NULL, mle=mle, time.opt=time.opt,
+    parnames <- .make_unique_names(names(obj$env$last.par.best))
+    # mle <- list(nopar=length(obj$env$last.par.best),
+    #             parnames=parnames)
+    out <- list(time.opt=time.opt,
                 time.Qinv=time.Qinv, time.Q=time.Q,
+                parnames=parnames,
                 laplace=laplace, metric=metric)
     return(out)
   }
@@ -126,12 +128,16 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     stop("sparse metric only allowed with random effects
            and laplace=FALSE")
   if(!laplace){
+    mle <- obj$env$last.par.best
+    ## Make parameter names unique if vectors exist
+    parnames <- .make_unique_names(names(mle))
     if(is.null(Q) & hasRE){
       message("Getting Q...")
       time.Q <- as.numeric(system.time(
         sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
       Q <- sdr$jointPrecision
     }
+    if(!is.null(Q))  dimnames(Q) <- list(parnames, parnames)
     if(is.null(Qinv)){
       if(!is.null(Q)){
         ## Q found above
@@ -144,35 +150,28 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
         stop("something wrong here")
       }
     }
+    dimnames(Qinv) <- list(parnames,parnames)
     .print.mat.stats(Q)
-    .print.mat.stats(Qinv)
-    mle <- obj$env$last.par.best
-    ## Make parameter names unique if vectors exist
-    parnames <- names(mle)
-    parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
-      temp <- parnames[parnames==x]
-      if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
-    }))))
+    #.print.mat.stats(Qinv)
     stopifnot(all.equal(length(mle), nrow(Qinv)))
-  } else {
+  } else { #laplace is turned on
     message("Getting M for fixed effects...")
     time.Qinv <- as.numeric(system.time(sdr <- sdreport(obj))[3])
     Qinv <- sdr$cov.fixed
     .print.mat.stats(Qinv)
-    if(is.null(opt))
-      stop("No opt object found, rerun with 'skip_optimization=FALSE'")
-    mle <- opt$par
+    if(is.null(opt)){
+      mle <- opt$par
+    } else {
+      mle <- obj$par
+    }
     ## Make parameter names unique if vectors exist
-    parnames <- names(mle)
-    parnames <- as.vector((unlist(sapply(unique(parnames), function(x){
-      temp <- parnames[parnames==x]
-      if(length(temp)>1) paste0(temp,'[',1:length(temp),']') else temp
-    }))))
+    parnames <- .make_unique_names(names(mle))
     stopifnot(all.equal(length(mle), nrow(Qinv)))
   }
   ses <- suppressWarnings(sqrt(diag(Qinv)))
   mycor <- suppressWarnings(cov2cor(Qinv))
-  if(!all(is.finite(ses))){
+
+    if(!all(is.finite(ses))){
     if(metric %in% c('unit', 'auto')){
       warning("Some standard errors estimated to be NaN, filling with dummy values so unit metric works. The 'mle' slot will be wrong so do not use it")
       cor <- diag(length(mle))
@@ -180,11 +179,12 @@ as.tmbfit <- function(x, mle, invf, metric, model='anonymous'){
     } else {
       stop("Some standard errors estimated to be NaN, use 'unit' metric for models without a mode or positive definite Hessian")
     }
-  }
+    }
+  names(mle) <- parnames
   mle <- list(nopar=length(mle), est=mle, se=ses,
-              cor=mycor, parnames=parnames)#, Q=Q,              Qinv=Qinv)
+              cor=mycor, Q=Q)#,              Qinv=Qinv)
  out <- list(Q=Q, Qinv=Qinv, mle=mle, time.opt=time.opt,
-             time.Qinv=time.Qinv, time.Q=time.Q,
+             time.Qinv=time.Qinv, time.Q=time.Q, parnames=parnames,
              laplace=laplace, metric=metric)
  return(out)
 }

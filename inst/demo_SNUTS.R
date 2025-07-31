@@ -4,6 +4,10 @@ library(TMB)
 
 TMB::runExample('simple')
 fit <- sample_snuts(obj)
+pairs(fit)
+pairs(fit, order='slow')
+pairs(fit, order='mismatch')
+pairs(fit, order='fast')
 print(fit)
 
 # quick plots to explore output
