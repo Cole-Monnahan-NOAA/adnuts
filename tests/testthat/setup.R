@@ -21,6 +21,16 @@ get_simple_obj <- function() {
 
 obj <- get_simple_obj()
 
+#
+# # dummy model for testing
+# pars <- list(x1=0,x2=0,x3=0)
+# f <- function(pars) {sum(-dnorm(c(pars$x1,pars$x2,pars$x3),0, 1,log=TRUE))}
+# f(pars)
+# obj <- RTMB::MakeADFun(func = f, parameters=pars, random=c('x2', 'x3'))
+# fit <- sample_snuts(obj, iter=200, warmup=100, chains=1)
+# pairs(fit)
+
+
 ### Skip all this if on CRAN. Otherwise locally or on CI, need to
 ### build the executables and run them so they're available for
 ### the tests. Then cleanup. On CRAN only a .RDS file is read in

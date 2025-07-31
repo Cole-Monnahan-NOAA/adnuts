@@ -226,7 +226,6 @@ test_that("RTMB works", {
 })
 
 
-
 test_that("small models work", {
   skip_if(skip_RTMB)
   if('TMB' %in% .packages()) detach(package:TMB, unload=TRUE)
