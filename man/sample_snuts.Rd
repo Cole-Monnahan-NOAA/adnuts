@@ -6,6 +6,8 @@
 \usage{
 sample_snuts(
   obj,
+  num_samples = 1000,
+  num_warmup = NULL,
   iter = 2000,
   warmup = floor(iter/2),
   chains = 4,
@@ -30,11 +32,18 @@ sample_snuts(
 }
 \arguments{
 \item{obj}{The TMB object with random effects turned on and
-optimized}
+optimized.}
 
-\item{iter}{Total iterations to run (warmup + sampling)}
+\item{num_samples}{The number of post-warmup iterations to
+run per chain.}
 
-\item{warmup}{Total warmup iterations. Defaults to
+\item{num_warmup}{The number of warmup iterations to run per
+chain. The default of NULL indicates to automatically
+determine it based on other settings (recommended).}
+
+\item{iter}{(Deprecated) Total iterations to run (warmup + sampling)}
+
+\item{warmup}{(Deprecated) Total warmup iterations. Defaults to
 \code{iter}/2 based on Stan defaults, but when using dense,
 sparse, or diag metrics a much shorter warmup can be used
 (e.g., 150), especially if paired with a 'unit_e' Stan

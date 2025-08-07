@@ -2,9 +2,14 @@
 #' NUTS sampling for TMB models using a sparse metric (BETA).
 #'
 #' @param obj The TMB object with random effects turned on and
-#'   optimized
-#' @param iter Total iterations to run (warmup + sampling)
-#' @param warmup Total warmup iterations. Defaults to
+#'   optimized.
+#' @param num_samples The number of post-warmup iterations to
+#' run per chain.
+#' @param num_warmup The number of warmup iterations to run per
+#'   chain. The default of NULL indicates to automatically
+#'   determine it based on other settings (recommended).
+#' @param iter (Deprecated) Total iterations to run (warmup + sampling)
+#' @param warmup (Deprecated) Total warmup iterations. Defaults to
 #'   \code{iter}/2 based on Stan defaults, but when using dense,
 #'   sparse, or diag metrics a much shorter warmup can be used
 #'   (e.g., 150), especially if paired with a 'unit_e' Stan
@@ -125,7 +130,8 @@
 #' warmup period to account for this adaptive procedure.
 #' @export
 sample_snuts <-
-  function(obj, iter=2000, warmup=floor(iter/2),
+  function(obj, num_samples=1000, num_warmup=NULL,
+           iter=2000, warmup=floor(iter/2),
            chains=4, cores=chains, thin=1,
            adapt_stan_metric=NULL,
            control=NULL, seed=NULL, laplace=FALSE,
@@ -138,7 +144,12 @@ sample_snuts <-
            rotation_only=FALSE,
            ...){
 
-    iter <- iter-warmup
+    if(!missing(iter)){
+      warning("The arguments iter and warmup are deprecated in favor of num_samples and num_warmup")
+      if(is.null(warmup)) warmup <- floor(iter/2)
+      num_samples <- iter-warmup
+      num_warmup <- warmup
+    }
     metric <- match.arg(metric)
     init <- match.arg(init)
     obj$env$beSilent()
@@ -214,12 +225,14 @@ sample_snuts <-
       # if not doing M
       control$metric <- 'unit_e' # Stan metric, not TMB's
       control$adapt_window <- 0
+      if(is.null(num_warmup)) num_warmup <- 150
     }
+    if(is.null(num_warmup)) num_warmup <- num_samples
     message("Starting MCMC sampling...")
     if(cores>1) message("Preparing parallel workspace...")
     fit <- stan_sample(fn=fsparse, par_inits=inits,
-                       grad_fun=gsparse, num_samples=iter,
-                       num_warmup=warmup, thin=thin,
+                       grad_fun=gsparse, num_samples=num_samples,
+                       num_warmup=num_warmup, thin=thin,
                        globals = globals2, packages=packages,
                        adapt_delta=control$adapt_delta,
                        adapt_window=control$adapt_window,
