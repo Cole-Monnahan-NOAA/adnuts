@@ -36,6 +36,10 @@
 #' @param cores Number of parallel cores to use, defaults to
 #'   \code{chains} so set this to 1 to execute serial chains.
 #' @param thin The thinning rate (defaults to 1).
+#' @param adapt_stan_metric A boolean whether Stan should engage
+#'   diagonal mass matrix adaptation. The default of NULL
+#'   indicates to automatically select depending on other
+#'   settings. See details.
 #' @param control NUTS control list, currently available options
 #'   are 'adapt_delta', 'max_treedepth', and 'metric' which is
 #'   the type of metric adaptation for Stan to do with options
@@ -107,13 +111,23 @@
 #'
 #' \strong{Important Distinction}
 #'
-#' Note that the \code{metric} parameter described here is specific to
-#' \strong{TMB} and is distinct from the Stan metric, which is controlled
-#' via the \code{control} list argument in the sampling function.
+#' Note that the \code{metric} parameter described here is
+#' specific to \strong{TMB} and is distinct from the Stan metric,
+#' which is controlled via the \code{control} list argument in
+#' the sampling function. Stan by default adapts a diagonal mass
+#' matrix (metric_e) using a series of expanding windows. If Q is
+#' a good estimate of the global covariance then this is not
+#' needed and disabling Stan's metric adaptation is recommended.
+#' This can be done by setting `adapt_stan_metric=FALSE`. If left
+#' at NULL Stan's adaptation will only be done for metrics 'stan'
+#' and 'unit' because those two options do not descale the
+#' posterior. In this case, it is recommended to use a longer
+#' warmup period to account for this adaptive procedure.
 #' @export
 sample_snuts <-
   function(obj, iter=2000, warmup=floor(iter/2),
            chains=4, cores=chains, thin=1,
+           adapt_stan_metric=NULL,
            control=NULL, seed=NULL, laplace=FALSE,
            init=c('last.par.best', 'random', 'random-t', 'unif'),
            metric=c('auto', 'unit', 'diag', 'dense',
@@ -190,6 +204,17 @@ sample_snuts <-
     globals2 <- list(obj2 = obj2, mydll=mydll, rotation=rotation)
     ## the user must pass data objects
     if(isRTMB) globals2 <- c(globals2,globals)
+    if(is.null(adapt_stan_metric)){
+      adapt_stan_metric <- ifelse(metric %in% c('stan', 'unit'), TRUE, FALSE)
+    }
+
+    if(!adapt_stan_metric){
+      # this turns off diagonal mass matrix adaptation and
+      # disables windowed step size adaptation which is wasteful
+      # if not doing M
+      control$metric <- 'unit_e' # Stan metric, not TMB's
+      control$adapt_window <- 0
+    }
     message("Starting MCMC sampling...")
     if(cores>1) message("Preparing parallel workspace...")
     fit <- stan_sample(fn=fsparse, par_inits=inits,
@@ -200,7 +225,7 @@ sample_snuts <-
                        adapt_window=control$adapt_window,
                        adapt_init_buffer=control$adapt_init_buffer,
                        adapt_term_buffer=control$adapt_term_buffer,
-                       metric=control$metric,
+                       metric=control$metric, #Stan metric!
                        max_treedepth=control$max_treedepth,
                        parallel_chains=cores, save_warmup=TRUE,
                        num_chains = chains, seed = seed,

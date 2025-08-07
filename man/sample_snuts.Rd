@@ -11,6 +11,7 @@ sample_snuts(
   chains = 4,
   cores = chains,
   thin = 1,
+  adapt_stan_metric = NULL,
   control = NULL,
   seed = NULL,
   laplace = FALSE,
@@ -47,6 +48,11 @@ runs.}
 \code{chains} so set this to 1 to execute serial chains.}
 
 \item{thin}{The thinning rate (defaults to 1).}
+
+\item{adapt_stan_metric}{A boolean whether Stan should engage
+diagonal mass matrix adaptation. The default of NULL
+indicates to automatically select depending on other
+settings. See details.}
 
 \item{control}{NUTS control list, currently available options
 are 'adapt_delta', 'max_treedepth', and 'metric' which is
@@ -158,7 +164,16 @@ sampling begins.
 
 \strong{Important Distinction}
 
-Note that the \code{metric} parameter described here is specific to
-\strong{TMB} and is distinct from the Stan metric, which is controlled
-via the \code{control} list argument in the sampling function.
+Note that the \code{metric} parameter described here is
+specific to \strong{TMB} and is distinct from the Stan metric,
+which is controlled via the \code{control} list argument in
+the sampling function. Stan by default adapts a diagonal mass
+matrix (metric_e) using a series of expanding windows. If Q is
+a good estimate of the global covariance then this is not
+needed and disabling Stan's metric adaptation is recommended.
+This can be done by setting `adapt_stan_metric=FALSE`. If left
+at NULL Stan's adaptation will only be done for metrics 'stan'
+and 'unit' because those two options do not descale the
+posterior. In this case, it is recommended to use a longer
+warmup period to account for this adaptive procedure.
 }
