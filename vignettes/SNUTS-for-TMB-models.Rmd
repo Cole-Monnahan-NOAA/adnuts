@@ -1,0 +1,402 @@
+---
+title: "Sparse NUTS for TMB models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Sparse NUTS for TMB models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE}
+library(adnuts)
+library(ggplot2)
+library(dplyr)
+```
+
+## Differences between TMB and RTMB
+`adnuts` implements the sparse no-u-turn sampler (SNUTS) as introduced and detailed in [@monnahan2025]. This only works for TMB models because Stan currently has no way to pass and use a sparse metric. Both TMB and RTMB can be used in parallel. The `sample_snuts` function will detect which is used internally and adjust accordingly. If the RTMB model uses external functions or data sets then they must be passed through via a list in the `globals` argument so they are available to rebuild the 'obj' in the parallel R sessions. Optionally, the `model_name` can be specified in the call, otherwise your model will be labeled "RTMB" in the output. TMB models do not require a globals input and the model name is pulled from the DLL name, but can be overridden if desired.  
+
+## SNUTS for TMB models from existing packages (sdmTMB, glmmTMB, etc.)
+`adnuts` works for custom TMB and RTMB models developed locally, but also for those that come in packages. Most packages will return the TMB 'obj' which can then be passed into `sample_snuts`. 
+
+For instance the `glmmTMB` package can be run like this:
+
+````{r glmmTMB, eval=FALSE}
+library(glmmTMB)
+data(Salamanders)
+obj <- glmmTMB(count~spp * mined + (1|site), Salamanders, family="nbinom2")$obj
+````
+
+## Basic usage
+
+The recommended usage for TMB users is to let the `sample_snuts` function automatically detect the metric to use and the length of warmup, especially for pilot runs during model development. 
+
+I demonstrate basic usage using a very simple RTMB version of the eight schools model that has been examined extensively in the Bayesian literature. The first step is to build the TMB object 'obj' that incorporates priors and Jacobians for parameter transformations. Note that the R function returns the negative un-normalized log-posterior density. 
+
+```{r schools-obj}
+library(RTMB)
+dat <- list(y=c(28,  8, -3,  7, -1,  1, 18, 12),
+            sigma=c(15, 10, 16, 11,  9, 11, 10, 18))
+pars <- list(mu=0, logtau=0, eta=rep(1,8))
+f <- function(pars){
+  getAll(dat, pars)
+  theta <- mu + exp(logtau) * eta;
+  lp <- sum(dnorm(eta, 0,1, log=TRUE))+ # prior
+    sum(dnorm(y,theta,sigma,log=TRUE))+ #likelihood
+    logtau                          # jacobian
+  REPORT(theta)
+  return(-lp)
+}
+obj <- MakeADFun(func=f, parameters=pars,
+                 random="eta", silent=TRUE)
+```
+
+### Posterior sampling with SNUTS
+The most common task is to draw samples from the posterior density defined by this model. This is done with the `sample_snuts` function as follows:
+
+```{r schools-integrate}
+fit <- sample_snuts(obj, refresh=0, seed=1,
+                    model_name = 'schools',
+                    cores=1, chains=1,
+                    globals=list(dat=dat))
+
+```
+The returned object `fit` (an object of 'adfit' S3 class) contains the posterior samples and other relevant information for a Bayesian analysis.
+
+Notice that no optimization was done before calling `sample_snuts`. When the model has already been optimized, you can skip that by setting `skip_optimization=TRUE`, and even pass in $Q$ and $\Sigma=Q^{-1}$ via arguments `Q` and `Qinv` to bypass this step and save some run time. The returned fitted object contains a slot called `mle` which has the conditional mode ('est'), the marginal standard errors 'se', and a joint correlation matrix ('cor').
+
+````{r}
+str(fit$mle)
+````
+
+
+### Diagnostics
+The common MCMC diagnostics potential scale reduction (Rhat) and minimum ESS, as well as the NUTS divergences (see [diagnostics section](https://mc-stan.org/docs/reference-manual/analysis.html) of the rstan manual), are printed to console by default or can be accessed in more depth via the `monitor` slot:
+````{r diagnostics-schools}
+print(fit)
+
+fit$monitor |> str()
+````
+
+A specialized `pairs` plotting function is available (formally called `pairs_admb`) to examine pair-wise behavior of the posteriors. This can be useful to help diagnose particularly slow mixing parameters. This function also displays the conditional mode (point) and 95% bivariate confidence region (ellipses) as calculated from the approximate covariance matrix $\Sigma=Q^{-1}$. The parameters to show can be specified either vie a character vector like `pars=c('mu', 'logtau', 'eta[1]')` or an integer vector like `pars=1:3`, and when using the latter the parameters can be ordered by slowest mixing ('slow'), fastest mixing ('fast') or by the largest discrepancies in the approximate marginal variance from $Q$ and the posterior samples ('mismatch'). NUTS divergences are shown as green points. See help and further information at `?pairs.adfit`. 
+
+````{r pairs-schools}
+pairs(fit, order='slow')
+
+
+````
+
+In some cases it is useful to diagnose the NUTS behavior by examining the "sampler parameters", which contain information about the individual NUTS trajectories. 
+````{r sp-schools}
+extract_sampler_params(fit) |> str()
+## or plot them directly
+plot_sampler_params(fit)
+````
+
+The ShinyStan tool is also available and provides a convenient, interactive way to check diagnostics via the function `launch_shinytmb(obj)`, but also explore estimates and other important quantities. This is a key tool for a workflow with 'adnuts'.
+
+
+### Bayesian inference
+After checking for signs of non-convergence the results can be used for inference. Posterior samples for parameters can be extracted and examined in R by casting the fitted object to an R data.frame. These posterior samples can then be put back into the TMB object `report()` function to extract any desired "generated quantity" in Stan terminology. 
+
+````{r inference-schools}
+post <- as.data.frame(fit)
+post |> str()
+## now get a generated quantity, here theta which is a vector of
+## length 8 so becomes a matrix of posterior samples
+theta <- apply(post,1, \(x) obj$report(x)$theta) |> t()
+theta |> str()
+````
+ 
+Likewise, marginal distributions can be explored visually and compared to the approximate estimate from the conditional mode and $\Sigma$ (red lines):
+````{r marginals-schools}
+plot_marginals(fit)
+````
+
+## A more complicated example
+To demonstrate more than the basic usage I will use a more complicated model. I modified the ChickWeight random slopes and intercepts example from the RTMB introduction. Modifications include: switching SD parameters to log space and adding a Jacobian, adding broad priors for these SDs, and adding a 'loglik' vector for PSIS-LOO (below).
+ 
+````{r chicks-model}
+ 
+parameters <- list(
+  mua=0,          ## Mean slope
+  logsda=0,          ## Std of slopes
+  mub=0,          ## Mean intercept
+  logsdb=0,          ## Std of intercepts
+  logsdeps=1,        ## Residual Std
+  a=rep(0, 50),   ## Random slope by chick
+  b=rep(0, 50)    ## Random intercept by chick
+)
+
+f <- function(parms) {
+  require(RTMB) # for tmbstan
+  getAll(ChickWeight, parms, warn=FALSE)
+  sda <- exp(logsda)
+  sdb <- exp(logsdb)
+  sdeps <- exp(logsdeps)
+  ## Optional (enables extra RTMB features)
+  weight <- OBS(weight)
+  predWeight <- a[Chick] * Time + b[Chick]
+  loglik <- dnorm(weight, predWeight, sd=sdeps, log=TRUE)
+  
+  # calculate the target density
+  lp <-   sum(loglik)+ # likelihood
+    # random effect vectors
+    sum(dnorm(a, mean=mua, sd=sda, log=TRUE)) + 
+    sum(dnorm(b, mean=mub, sd=sdb, log=TRUE)) +
+    # broad half-normal priors on SD pars
+    dnorm(sda, 0, 10, log=TRUE) + 
+    dnorm(sdb, 0, 10, log=TRUE) + 
+    dnorm(sdeps, 0, 10, log=TRUE) + 
+    # jacobian adjustments
+    logsda + logsdb + logsdeps
+  
+  # reporting
+  REPORT(loglik)       # for PSIS-LOO
+  ADREPORT(predWeight) # delta method
+  REPORT(predWeight)   # standard report
+  
+  return(-lp) # negative log-posterior density
+}
+
+obj <- MakeADFun(f, parameters, random=c("a", "b"), silent=TRUE)
+````
+
+## Asymptotic (frequentist) approximatation vs full posterior
+Instead of sampling from the posterior with MCMC (SNUTS), I can use asymptotic tools from TMB to get a quick approximation of the parameters, their covariances, but also uncertainties of generated quantities via the generalized delta method. See the TMB documentation for more background. Briefly, the marginal posterior mode is found and a joint precision matrix $Q$ determined at the conditional mode. $\Sigma=Q{-1}$ is the covariance of the parameters.
+
+First I optimize the model and call TMB's `sdreport` function to get approximate uncertainties via the delta method and the joint precision matrix $Q$.
+
+
+````{r}
+# optimize
+opt <- with(obj, nlminb(par, fn, gr))
+# get generalized delta method results and Q
+sdrep <- sdreport(obj, getJointPrecision=TRUE)
+
+# get the generalized delta method estimates of asymptotic
+# standard errors
+est <-as.list(sdrep, 'Estimate', report=TRUE)$predWeight
+se <- as.list(sdrep, 'Std. Error', report=TRUE)$predWeight
+
+Q <- sdrep$jointPrecision
+# can get the joint covariance and correlation like this
+Sigma <- as.matrix(solve(Q))
+cor <- cov2cor(Sigma)
+plot_Q(Q=Q)
+````
+
+Now I run SNUTS on it and get posterior samples to compare to.
+````{r}
+# some very strong negative correlations so I expect a dense or
+# sparse metric to be selected with SNUTS. Because I optimized
+# above can skip that
+mcmc <- sample_snuts(obj, chains=1, init='random', seed=1234,
+                     refresh=0, skip_optimization=TRUE,
+                     Q=Q, Qinv=Sigma)
+post <- as.data.frame(mcmc)
+
+plot_uncertainties(mcmc)
+
+## get posterior of generated quantities
+predWeight <- apply(post,1, \(x) obj$report(x)$predWeight) |> 
+  t()
+predWeight |> str()
+
+# compare asymptotic vs posterior intervals of first few chicks
+par(mfrow=c(2,3))
+for(ii in 1:6){
+  y <- predWeight[,ii]
+  x <- seq(min(y), max(y), len=200)
+  y2 <- dnorm(x,est[ii], se[ii])
+  hist(y, freq=FALSE, ylim=c(0,max(y2)))
+  lines(x, y2, col=2, lwd=2)
+}
+
+dev.off()
+````
+
+## Simulation of parameters and data
+Simulation of data can be done directly in R. Specialized simulation functionality exists for TMB, and to a lesser degree RTMB, but I keep it simple here for demonstration purposes.
+
+Both data and parameters can be simulated and I explore that below. 
+
+### Prior and posterior predictive distributions
+
+````{r}
+# simulation of data sets can be done manually in R. For instance
+# to get posterior predictive I loop through each posterior
+# sample and draw new data.
+set.seed(351231)
+simdat <- apply(post,1, \(x){
+   yhat <- obj$report(x)$predWeight
+   ysim <- rnorm(n=length(yhat), yhat, sd=exp(x['logsdeps']))
+}) |> t()
+boxplot(simdat[,1:24], main='Posterior predictive')
+points(ChickWeight$weight[1:24], col=2, cex=2, pch=16)
+````
+
+Prior predictive sampling would be done in the same way but is not shown here.
+
+### Joint precision sampling
+Samples can be drawn from $Q$, assuming multivariate normality, as follows:
+````{r}
+# likewise I can simulate draws from Q to get approximate samples
+postQ <- mvtnorm::rmvnorm(1000, mean=mcmc$mle$est, sigma=Sigma)
+````
+
+These samples could be put back into the `report` function to get a distribution of a generated quantity, for instance.
+
+## Model selection with PSIS-LOO
+PSIS-LOO is the recommended way to compare predictive performance of Bayesian models. I use it to compare a simplified Chicks model below using the `map` argument to turn off estimation of the random intercepts ('b'). All this requires is for the vector of log-likelihood values to be available for each posterior draw. I facilitate this via a `REPORT(loglik)` call above. 
+
+
+````{r}
+library(loo)
+options(mc.cores=parallel::detectCores())
+loglik <- apply(post,1, \(x) obj$report(x)$loglik) |> 
+  t()
+
+loo1 <- loo(loglik, cores=4)
+print(loo1)
+plot(loo1)
+
+# I can compare that to a simpler model which doesn't have
+# random effects on the slope
+obj2 <- MakeADFun(f, parameters, random=c("a"), silent=TRUE,
+                  map=list(b=factor(rep(NA, length(parameters$b))), 
+                           logsdb=factor(NA),
+                           mub=factor(NA)))
+mcmc2 <- sample_snuts(obj2, chains=1, seed=1215, refresh=0)
+post2 <- as.data.frame(mcmc2)
+loglik2 <- apply(post2,1, \(x) obj2$report(x)$loglik) |> 
+  t()
+loo2 <- loo(loglik2, cores=4)
+print(loo2)
+loo_compare(loo1, loo2)
+````
+
+## Advanced features
+### Adaptation of Stan diagonal mass matrix
+When the estimate of $Q$ does not well approximate the posterior surface, then it may be advantageous to adapt a diagonal mass matrix to account for changes in scale. This can be controlled via the `adapt_stan_metric` argument. This argument is automatically set to FALSE when using a metric other than 'stan' and 'unit' since all other metrics in theory already descale the posterior. This can be overridden by setting it equal to TRUE
+
+Here I run three versions of the model and compare the NUTS stepsize. The model version without adaptation uses a shorter warmup period
+````{r}
+adapted1 <- sample_snuts(obj, chains=1, seed=1234, refresh=0,
+                        skip_optimization=TRUE, Q=Q, Qinv=Sigma,
+                        metric='auto', adapt_stan_metric = TRUE)
+adapted2 <- sample_snuts(obj, chains=1, seed=1234, refresh=0,
+                     skip_optimization=TRUE, Q=Q, Qinv=Sigma,
+                     metric='stan', adapt_stan_metric = TRUE)
+sp1 <- extract_sampler_params(mcmc, inc_warmup = TRUE) |>
+  subset(iteration <= 1050) |> 
+  cbind(type='descaled + not adapted')
+sp2 <- extract_sampler_params(adapted1, inc_warmup = TRUE) |>
+  subset(iteration <= 1050) |> 
+  cbind(type='descaled + adapted')
+sp3 <- extract_sampler_params(adapted2, inc_warmup = TRUE) |>
+  subset(iteration <= 1050) |> 
+  cbind(type='adapted')
+sp <- rbind(sp1, sp2, sp3)
+ggplot(sp, aes(x=iteration, y=stepsize__, color=type)) + geom_line() +
+  scale_y_log10() + theme_bw() + theme(legend.position = 'top') +
+  labs(color=NULL, x='warmup')
+
+````
+
+It is apparent that during the first warmup phase the model with Stan defaults ('adapted' in the above plot) has a large adjustment in stepsize and this corresponds to very long trajectory lengths and thus increased computational time. If descaled using $Q$ the adaptation does nothing ('descaled + adapted'), which is why such a short warmup period can be used with SNUTS ('descaled + not adapted') in this case, and often which is why the default warmup is short and adaptation disabled for SNUTS.
+
+In other cases a longer warmup and mass matrix adaptation will make a difference, see for example the 'wildf' model in @monnahan2025.
+
+
+### Embedded Laplace approximation SNUTS
+This approach uses NUTS (or SNUTS) to sample from the marginal posterior using the Laplace approximation to integrate the random effects. This was first explored in @monnahan2018 and later in more detail in @margossian2020 who called it the 'embedded Laplace approximation'. @monnahan2025 applied this to a much larger set of models and found mixed results. 
+
+It is trivial to try in SNUTS by simply declaring `laplace=TRUE`.
+
+````{r}
+ela <- sample_snuts(obj, chains=1, laplace=TRUE, refresh=0)
+````
+
+Here I can see there are only 5 model parameters (the fixed effects), and that a diagonal metric was chosen due to minimal correlations among these parameters. ELA will typically take longer to run, but have higher minESS and so it is best to compare the efficiency (minESS per time) which I do not do here.
+
+Exploring ELA is a good opportunity to show how SNUTS can fail. I demonstrate this with the notoriously difficult 'funnel' model which is a hierarchical model without any data. This model has strongly varying curvature and thus is **not** well-approximated by $Q$ so SNUTS mixes poorly. But after turning on ELA, it mixes fine and recovers the 
+
+````{r funnel}
+# Funnel example ported to RTMB from
+# https://mc-stan.org/docs/cmdstan-guide/diagnose_utility.html#running-the-diagnose-command
+## the (negative) posterior density as a function in R
+f <- function(pars){
+  getAll(pars)
+  lp <- dnorm(y, 0, 3, log=TRUE) + # prior
+    sum(dnorm(x, 0, exp(y/2), log=TRUE)) # likelihood
+  return(-lp) # TMB expects negative log posterior
+}
+obj <- RTMB::MakeADFun(f, list(y=-1.12, x=rep(0,9)), random='x', silent=TRUE)
+
+### Now SNUTS
+# devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='sparse_M')
+fit <- sample_snuts(obj, seed=1213, refresh=0, init='random')
+pairs(fit, pars=1:2)
+# hasn't recovered the prior b/c it's not converged, particularly
+# for small y values
+post <- as.data.frame(fit)
+hist(post$y, freq=FALSE, xlim=c(-10,10))
+lines(x<-seq(-10,10, len=200), dnorm(x,0,3))
+abline(v=fit$mle$est[1], col=2, lwd=2)
+
+# Now turn on ELA and it easily recovers the prior on y
+fit.ela <- sample_snuts(obj, laplace=TRUE, refresh=0, init='random', seed=12312)
+# you just get the prior back b/c the Laplace approximation is
+# accurate
+pairs(fit.ela)
+post.ela <- as.data.frame(fit.ela)
+hist(post.ela$y, freq=FALSE, breaks=30)
+lines(x<-seq(-10,10, len=200), dnorm(x,0,3))
+````
+
+
+## Linking to other Stan algorithms via StanEstimators
+`sample_snuts` links to the `StanEstimators::stan_sample` function for NUTS sampling. However, this package provides other algorithms given a model and these may be of interest to some users. I focus on the Pathfinder algorithm and an RTMB model.
+
+````{r pathfinder}
+# Construct a joint model (no random effects)
+obj2 <- MakeADFun(func=obj$env$data, parameters=obj$env$parList(), 
+                  map=obj$env$map, random=NULL, silent=TRUE)
+# TMB does negative log densities so convert to form used by Stan
+fn <- function(x) -obj2$fn(x)
+grad_fun <- function(x) -obj2$gr(x)
+pf <- stan_pathfinder(fn=fn, grad_fun=grad_fun, refresh=100,
+                      par_inits = obj$env$last.par.best)
+
+````
+
+## Linking to other Bayesian tools
+It is straightforward to pass `adnuts` output into other Bayesian R packages. I demonstrate this with `bayesplot`. 
+
+````{r bayesplot}
+library(bayesplot)
+library(tidyr)
+post <- as.data.frame(mcmc)
+pars <- mcmc$par_names[1:6]
+mcmc_areas(post, pars=pars)
+mcmc_trace(post, pars=pars)
+color_scheme_set("red")
+np <- extract_sampler_params(fit) %>%
+  pivot_longer(-c(chain, iteration), names_to='Parameter', values_to='Value') %>%
+  select(Iteration=iteration, Parameter, Value, Chain=chain) %>%
+  mutate(Parameter=factor(Parameter),
+         Iteration=as.integer(Iteration),
+         Chain=as.integer(Chain)) %>% as.data.frame()
+mcmc_nuts_energy(np) + ggtitle("NUTS Energy Diagnostic") + theme_minimal()
+
+# finally, posterior predictive for first 24 observations
+ppc_intervals(y=ChickWeight$weight[1:24], yrep=simdat[,1:24])
+````
