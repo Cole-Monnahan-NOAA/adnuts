@@ -1,4 +1,6 @@
 
+#' Deprecated version of sample_snuts
+#' @export
 sample_sparse_tmb <- function(...){
   .Deprecated('sample_snuts', package='adnuts')
   sample_snuts(...)
@@ -372,19 +374,20 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
         if(NROW(cors)==1) {
           message("diag metric selected b/c only a single parameter")
           return(rdiag)
-        } else if(max(abs(cors))<.3){
-          message("diag metric selected b/c no Q available and low correlations")
+        } else if(max(abs(cors))<.8){
+          message("diag metric selected b/c low correlations")
           return(rdiag)
         } else {
-          message("dense metric selected b/c no Q availabile and high correlations")
+          message("dense metric selected b/c high correlation (",
+                  round(max(abs(cors)),4), ")")
           return(rdense)
         }
       }
     } else {
       # has a Q
       cors <- cov2cor(Qinv)[lower.tri(Qinv, diag=FALSE)]
-      if(max(abs(cors))<.3){
-        message("diag metric selected b/c of and low correlations")
+      if(max(abs(cors))<.8){
+        message("diag metric selected b/c of low correlations")
         return(rdiag)
       } else {
         if(!require(microbenchmark)){
@@ -398,10 +401,14 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
           tdense <- summary(bench)$median[1]
           tsparse <- summary(bench)$median[2]
           if(tdense < tsparse){
-            message("dense metric selected b/c faster than sparse and high correlations")
+            message("dense metric selected b/c faster than sparse
+                    and high correlation (",
+                    round(max(abs(cors)),4), ")")
             return(rdense)
           } else {
-            message("sparse metric selected b/c faster than dense and high correlations")
+            message("sparse metric selected b/c faster than sparse
+                    and high correlation (",
+                    round(max(abs(cors)),4), ")")
             return(rsparse)
           }
         }
@@ -440,7 +447,11 @@ plot_Q <- function(fit, Q=NULL){
     if(!is.adfit(fit)) stop("fit is not a valid fitted object")
     if(is.null(fit$mle$Q)) return(NULL)
     nn <- length(fit$par_names)
-    corr <- cov2cor(fit$mle$Qinv)
+    if(is.null(fit$mle$Qinv)){
+      corr <- cov2cor(as.matrix(Matrix::solve(fit$mle$Q)))
+    } else {
+      corr <- cov2cor(fit$mle$Qinv)
+    }
     Q <- fit$mle$Q
   } else {
     corr <- cov2cor(solve(Q))

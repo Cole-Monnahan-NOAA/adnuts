@@ -112,12 +112,12 @@ test_that("auto metric selection is robust to model type", {
                             num_warmup=200, cores=1, chains=1, seed=1,
                             adapt_stan_metric = TRUE,
                             metric='auto', print=FALSE))
-  expect_equal(as.numeric(tail(as.data.frame(fit1),1)[1]),-1.362821, tolerance =1e-6)
+  expect_equal(as.numeric(tail(as.data.frame(fit1),1)[1]),0.09347223, tolerance =1e-6)
   suppressWarnings(fit2 <- sample_snuts(obj, num_samples=800,  laplace=TRUE, refresh=0,
                             num_warmup=200, cores=1, chains=1, seed=1,
                             adapt_stan_metric = TRUE,
                             metric='auto', print=FALSE))
-  expect_equal(as.numeric(tail(as.data.frame(fit2),1)[1]), 52.38106, tolerance =1e-6)
+  expect_equal(as.numeric(tail(as.data.frame(fit2),1)[1]), 51.76209, tolerance =1e-6)
 
   ## rebuild without RE so it fails: behavior on model w/o mode
   obj <- get_simple_obj()
@@ -150,8 +150,8 @@ test_that("auto metric selection is robust to model type", {
                             num_warmup=200, cores=1, chains=1, seed=1,
                             adapt_stan_metric = TRUE,
                             metric='auto', print=FALSE))
-  expect_equal(fit5$metric, 'dense')
-  expect_equal(as.numeric(tail(as.data.frame(fit5),1)[1]),  -1.014703, tolerance =1e-6)
+  expect_equal(fit5$metric, 'diag')
+  expect_equal(as.numeric(tail(as.data.frame(fit5),1)[1]),  -0.694378, tolerance =1e-6)
 })
 
 
