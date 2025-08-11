@@ -8,8 +8,6 @@ sample_snuts(
   obj,
   num_samples = 1000,
   num_warmup = NULL,
-  iter = 2000,
-  warmup = floor(iter/2),
   chains = 4,
   cores = chains,
   thin = 1,
@@ -27,6 +25,8 @@ sample_snuts(
   refresh = NULL,
   print = TRUE,
   rotation_only = FALSE,
+  iter = 2000,
+  warmup = floor(iter/2),
   ...
 )
 }
@@ -40,16 +40,6 @@ run per chain.}
 \item{num_warmup}{The number of warmup iterations to run per
 chain. The default of NULL indicates to automatically
 determine it based on other settings (recommended).}
-
-\item{iter}{(Deprecated) Total iterations to run (warmup + sampling)}
-
-\item{warmup}{(Deprecated) Total warmup iterations. Defaults to
-\code{iter}/2 based on Stan defaults, but when using dense,
-sparse, or diag metrics a much shorter warmup can be used
-(e.g., 150), especially if paired with a 'unit_e' Stan
-metric. Use \code{\link{plot_sampler_params}} to investigate
-warmup performance and adjust as necessary for subsequent
-runs.}
 
 \item{chains}{Number of chains}
 
@@ -124,6 +114,16 @@ just 'RTMB'. The name is used only for printing.}
 
 \item{rotation_only}{Whether to return only the rotation object
 (for debugging purposes)}
+
+\item{iter}{(Deprecated) Total iterations to run (warmup + sampling)}
+
+\item{warmup}{(Deprecated) Total warmup iterations. Defaults to
+\code{iter}/2 based on Stan defaults, but when using dense,
+sparse, or diag metrics a much shorter warmup can be used
+(e.g., 150), especially if paired with a 'unit_e' Stan
+metric. Use \code{\link{plot_sampler_params}} to investigate
+warmup performance and adjust as necessary for subsequent
+runs.}
 
 \item{...}{Additional arguments to pass to
 \code{\link{StanEstimators::stan_sample}}.}

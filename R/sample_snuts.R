@@ -8,14 +8,6 @@
 #' @param num_warmup The number of warmup iterations to run per
 #'   chain. The default of NULL indicates to automatically
 #'   determine it based on other settings (recommended).
-#' @param iter (Deprecated) Total iterations to run (warmup + sampling)
-#' @param warmup (Deprecated) Total warmup iterations. Defaults to
-#'   \code{iter}/2 based on Stan defaults, but when using dense,
-#'   sparse, or diag metrics a much shorter warmup can be used
-#'   (e.g., 150), especially if paired with a 'unit_e' Stan
-#'   metric. Use \code{\link{plot_sampler_params}} to investigate
-#'   warmup performance and adjust as necessary for subsequent
-#'   runs.
 #' @param metric A character specifying which metric to use.
 #'   Defaults to "auto" which uses an algorithm to select the
 #'   best metric (see details), otherwise one of "sparse",
@@ -73,6 +65,14 @@
 #' @param print Whether to print summary of run (default) or not
 #' @param rotation_only Whether to return only the rotation object
 #'  (for debugging purposes)
+#' @param iter (Deprecated) Total iterations to run (warmup + sampling)
+#' @param warmup (Deprecated) Total warmup iterations. Defaults to
+#'   \code{iter}/2 based on Stan defaults, but when using dense,
+#'   sparse, or diag metrics a much shorter warmup can be used
+#'   (e.g., 150), especially if paired with a 'unit_e' Stan
+#'   metric. Use \code{\link{plot_sampler_params}} to investigate
+#'   warmup performance and adjust as necessary for subsequent
+#'   runs.
 #' @param ... Additional arguments to pass to
 #'   \code{\link{StanEstimators::stan_sample}}.
 #' @return A fitted MCMC object of class 'adfit'
@@ -131,7 +131,6 @@
 #' @export
 sample_snuts <-
   function(obj, num_samples=1000, num_warmup=NULL,
-           iter=2000, warmup=floor(iter/2),
            chains=4, cores=chains, thin=1,
            adapt_stan_metric=NULL,
            control=NULL, seed=NULL, laplace=FALSE,
@@ -140,10 +139,12 @@ sample_snuts <-
                     'sparse', 'stan', 'sparse-naive'),
            skip_optimization=FALSE, Q=NULL, Qinv=NULL,
            globals=NULL, model_name=NULL, refresh=NULL,
-           print=TRUE,
-           rotation_only=FALSE,
+           print=TRUE, rotation_only=FALSE,
+           iter=2000, warmup=floor(iter/2),
            ...){
 
+    if(!is.list(obj)) stop("obj appears not to be a valid TMB object")
+    if(is.null(obj$env$DLL)) stop("obj appears not to be a valid TMB object")
     if(!missing(iter)){
       warning("The arguments iter and warmup are deprecated in favor of num_samples and num_warmup")
       if(is.null(warmup)) warmup <- floor(iter/2)
@@ -194,13 +195,13 @@ sample_snuts <-
     if(!is.null(inputs$mle$est)) dummy <- obj2$fn(inputs$mle$est)
     # this is the initial value in the untransformed (original)
     # parameter space
-    inits <- .get_inits(init=init, obj2=obj2,
+    yinits <- .get_inits(init=init, obj2=obj2,
                         seed=seed, inputs=inputs)
     # now can transform the parameter space via the metric selected
     rotation <- .rotate_posterior(metric=metric, fn=obj2$fn,
                                   gr=obj2$gr, Q=inputs$Q,
                                   Qinv=inputs$Qinv,
-                                  y.cur=inits)
+                                  y.cur=yinits)
     if(rotation_only) return(rotation)
     fsparse <- function(v) {dyn.load(mydll); -rotation$fn2(v)}
     gsparse <- function(v) -as.numeric(rotation$gr2(v))
@@ -249,7 +250,7 @@ sample_snuts <-
                       model=model_name)
     fit2$time.Q <- inputs$time.Q; fit2$time.Qinv <- inputs$time.Qinv;
     fit2$time.opt <- inputs$time.opt
-    fit2$inits <- inits
+    fit2$inits <- yinits
     ## gradient timings to check for added overhead
     if(require(microbenchmark)){
       bench <- microbenchmark(obj2$gr(inits),

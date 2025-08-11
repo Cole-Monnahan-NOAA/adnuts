@@ -267,7 +267,7 @@ plot_marginals <- function(fit, pars=NULL, mfrow=NULL,
       tmp <- par("usr"); xy <- c(.85,.88)
       text.x <- tmp[1]+xy[1]*diff(tmp[1:2])
       text.y <- tmp[3]+xy[2]*diff(tmp[3:4])
-      label <- paste0('ESS=', mon[ii,'n_eff'], "\nRhat=", round(mon[ii,'Rhat'],3))
+      label <- paste0('ESS=', round(mon[ii,'n_eff'],2), "\nRhat=", round(mon[ii,'Rhat'],3))
       text(x=text.x, y=text.y, labels=label, cex=.8)
     }
     mtext(paste("",par), line=-1.6, adj=0, cex=.9)
