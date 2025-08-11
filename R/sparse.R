@@ -401,13 +401,11 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
           tdense <- summary(bench)$median[1]
           tsparse <- summary(bench)$median[2]
           if(tdense < tsparse){
-            message("dense metric selected b/c faster than sparse
-                    and high correlation (",
+            message("dense metric selected b/c faster than sparse and high correlation (",
                     round(max(abs(cors)),4), ")")
             return(rdense)
           } else {
-            message("sparse metric selected b/c faster than sparse
-                    and high correlation (",
+            message("sparse metric selected b/c faster than sparse and high correlation (",
                     round(max(abs(cors)),4), ")")
             return(rsparse)
           }

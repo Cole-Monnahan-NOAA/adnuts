@@ -8,13 +8,16 @@ pairs(fit)
 pairs(fit, order='slow')
 pairs(fit, order='mismatch')
 pairs(fit, order='fast')
+pairs(fit, order='cor')
+
+
 print(fit)
 
 # quick plots to explore output
 plot_sampler_params(fit)
 plot_uncertainties(fit)
 plot_marginals(fit, pars=1:9)
-pairs_admb(fit, pars=1:5, order='slow')
+plot_Q(fit)
 # launch_shiny(fit)
 
 ## It also works for RTMB. Example from the repo, simplified down
