@@ -1,21 +1,12 @@
 Package: adnuts
-Title: No-U-Turn MCMC Sampling for 'ADMB' Models
+Title: Sparse No-U-Turn MCMC Sampling for 'Template Model Builder'
 Version: 1.1.2.9000
-Authors@R: person("Cole", "Monnahan", email = "monnahc@uw.edu", role = c("aut", "cre"),
+Authors@R: person("Cole", "Monnahan", email = "cole.monnahan@noaa.gov", role = c("aut", "cre"),
  comment = c(ORCID = "0000-0003-0871-6700"))
-Description: Bayesian inference using the no-U-turn (NUTS) algorithm by 
- Hoffman and Gelman (2014) <https://www.jmlr.org/papers/v15/hoffman14a.html>. 
- Designed for 'AD Model Builder' ('ADMB') models,
- or when R functions for log-density and log-density gradient
- are available, such as 'Template Model Builder'
- models and other special cases. Functionality is similar to 'Stan', 
- and the 'rstan' and 'shinystan' packages are used for diagnostics and 
- inference.
+Description: Bayesian inference powered by the sparse no-U-turn (SNUTS) algorithm by 
+ Monnahan et al. (in prep). SNUTS is implemented for 'Template Model Builder' ('TMB') models via the 'StanEstimators' interface, which improves sampling efficiency by decorrelating the posterior via a sparse metric prior to sampling. 'AD Model Builder' ('ADMB') models are also supported and have functionality is similar to 'Stan'. The 'rstan' and 'shinystan' packages are used for diagnostics and inference.
 Depends:
-    R (>= 3.6.0),
-    snowfall (>= 1.84.6.1),
-    Matrix,
-    StanEstimators
+    R (>= 3.6.0)
 URL: https://github.com/Cole-Monnahan-NOAA/adnuts
 BugReports: https://github.com/Cole-Monnahan-NOAA/adnuts/issues
 License: GPL-3 | file LICENSE
@@ -29,10 +20,18 @@ Suggests:
     stats,
     knitr,
     TMB,
+    RTMB,
     rmarkdown,
     withr,
+    snowfall,
     testthat (>= 2.1.0)
 Remotes:
-    andrjohns/StanEstimators@main
-Imports: ellipse, rstan, R2admb, ggplot2, rlang
+    git::https://github.com/andrjohns/StanEstimators
+Imports: ellipse,
+    rstan,
+    R2admb, 
+    ggplot2, 
+    rlang, 
+    StanEstimators,
+    Matrix
 VignetteBuilder: knitr
