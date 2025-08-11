@@ -142,7 +142,8 @@ sample_snuts <-
            print=TRUE, rotation_only=FALSE,
            iter=2000, warmup=floor(iter/2),
            ...){
-
+    if (!requireNamespace("StanEstimators", quietly = TRUE))
+      stop("StanEstimators package must be installed manually to use this function. \nSee https://github.com/andrjohns/StanEstimators")
     if(!is.list(obj)) stop("obj appears not to be a valid TMB object")
     if(is.null(obj$env$DLL)) stop("obj appears not to be a valid TMB object")
     if(!missing(iter)){
@@ -231,7 +232,7 @@ sample_snuts <-
     if(is.null(num_warmup)) num_warmup <- num_samples
     message("Starting MCMC sampling...")
     if(cores>1) message("Preparing parallel workspace...")
-    fit <- stan_sample(fn=fsparse, par_inits=inits,
+    fit <- StanEstimators::stan_sample(fn=fsparse, par_inits=inits,
                        grad_fun=gsparse, num_samples=num_samples,
                        num_warmup=num_warmup, thin=thin,
                        globals = globals2, packages=packages,

@@ -332,7 +332,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
     perm <- chd@perm + 1L
     iperm <- Matrix::invPerm(perm)
     # Drop all numerical zeros and convert to triangular storage
-    L <- tril(drop0(L)) ## class(L) == "dtCMatrix"
+    L <- Matrix::tril(Matrix::drop0(L)) ## class(L) == "dtCMatrix"
     Lt <- Matrix::t(L) ## class(Lt) == "dtCMatrix"
     x.cur <- as.vector(Matrix::t(L) %*% y.cur[perm])
     fn2 <- function(y)  fn(Matrix::solve(Lt, y)[iperm])
