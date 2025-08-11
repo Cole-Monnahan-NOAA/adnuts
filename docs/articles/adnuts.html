@@ -4,427 +4,172 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>No-U-turn sampling for ADMB models • adnuts</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
-<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="No-U-turn sampling for ADMB models">
-<meta property="og:description" content="adnuts">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>No-U-turn sampling for TMB and ADMB models • adnuts</title>
+<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="No-U-turn sampling for TMB and ADMB models">
 </head>
-<body data-spy="scroll" data-target="#toc">
-    <div class="container template-article">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">adnuts</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.2.9000</span>
-      </span>
-    </div>
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
+    <a class="navbar-brand me-2" href="../index.html">adnuts</a>
+
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.2.9000</small>
+
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="active nav-item"><a class="nav-link" href="../articles/adnuts.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/NUTS-for-ADMB-models.html">NUTS for ADMB models</a></li>
+    <li><a class="dropdown-item" href="../articles/SNUTS-for-TMB-models.html">Sparse NUTS for TMB models</a></li>
+  </ul>
 </li>
-<li>
-  <a href="../articles/adnuts.html">Get started</a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
-<li>
-  <a href="../news/index.html">Changelog</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/">
-    <span class="fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/Cole-Monnahan-NOAA/adnuts/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
-<!--/.nav-collapse -->
+
+
   </div>
-<!--/.container -->
-</div>
-<!--/.navbar -->
+</nav><div class="container template-article">
 
-      
 
-      </header><script src="adnuts_files/header-attrs-2.7/header-attrs.js"></script><div class="row">
-  <div class="col-md-9 contents">
-    <div class="page-header toc-ignore">
-      <h1 data-toc-skip>No-U-turn sampling for ADMB models</h1>
-                        <h4 class="author">Cole C. Monnahan</h4>
+
+
+<div class="row">
+  <main id="main" class="col-md-9"><div class="page-header">
+
+      <h1>No-U-turn sampling for TMB and ADMB models</h1>
+                        <h4 data-toc-skip class="author">Cole C.
+Monnahan</h4>
             
-            <h4 class="date">2021-06-14</h4>
+            <h4 data-toc-skip class="date">2025-08-11</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/vignettes/adnuts.Rmd"><code>vignettes/adnuts.Rmd</code></a></small>
-      <div class="hidden name"><code>adnuts.Rmd</code></div>
-
+      <small class="dont-index">Source: <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/blob/HEAD/vignettes/adnuts.Rmd" class="external-link"><code>vignettes/adnuts.Rmd</code></a></small>
+      <div class="d-none name"><code>adnuts.Rmd</code></div>
     </div>
 
     
     
-<div id="summary" class="section level2">
-<h2 class="hasAnchor">
-<a href="#summary" class="anchor"></a>Summary</h2>
-<p><code>adnuts</code> (pronounced A-D NUTS like A-D MB) main purpose is to provide a wrapper for performing Bayesian analyses using the no-U-turn (NUTS) algorithm <span class="citation">(Hoffman and Gelman 2014)</span> for ADMB models <span class="citation">(Fournier et al. 2012)</span>. The ADMB model itself contains the algorithm code, but this package provides the user a convenient environment to run and diagnose Markov chains, and make inference. In addition, NUTS capabilities are provided for any posterior whose log-density and log-density gradient can be written as R functions. This includes TMB models <span class="citation">(Kristensen et al. 2016)</span> but also other special cases, although TMB users should prefer the package <code>tmbstan</code>. This package aims to give ADMB models similar functionality to the software Stan and <code>rstan</code> <span class="citation">(Carpenter et al. 2017; Stan Development Team 2017)</span>.</p>
-<p>Key features of the packages:</p>
-<ul>
-<li>Run no-U-turn sampler (NUTS) or random walk Metropolis (RWM) MCMC chains from within R using the <code>sample_nuts</code> and ‘sample_rwm’ functions.</li>
-<li>Parallel execution with automatic merging of chains and linking to other R packages provides a smooth, efficient workflow for ADMB users.</li>
-<li>Adaptation of the NUTS stepsize is automatically done during the warmup phase.</li>
-<li>The mass matrix options are: diagonal or dense adaptation during warmup, the estimated covariance (from admodel.cov file), or an arbitrary dense matrix can be passed from R.</li>
-<li>Easy diagnostic checking using functionality provided by packages <code>rstan</code> and <code>shinystan</code>.</li>
-<li>A ‘duration’ argument to stop the chains running after a specified period of time (e.g., 2 hours), returning whatever samples were generated in that period.</li>
-<li>When running multiple chains, whether in parallel or serial, samples are merged and written to the ‘.psv’ file. Thus, executing the model in the ‘-mceval’ phase uses all chains, including with an ‘mceval’ argument dictating whether to run in this phase when the sampling is finished.</li>
-<li>A modified pairs plot designed to help facilitate comparison between MLE estimates and covariances, and the posterior samples.</li>
-</ul>
-<p>Typically, for well-designed models, NUTS works efficiently with default settings and no user intervention. However, in some cases you may need to modify the settings. See below for a brief description of NUTS and how you can modify its behavior and when needed. Guidance and performance specifically designed for fisheries stock assessment is given in <span class="citation">(C. C. Monnahan et al. 2019)</span>.</p>
+<div class="section level2">
+<h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+</h2>
+<p><code>adnuts</code>’ (pronounced A-D NUTS like A-D MB) main purpose
+is to provide a wrapper for performing Bayesian analyses using the
+no-U-turn (NUTS) algorithm <span class="citation">(Hoffman and Gelman
+2014)</span> for TMB <span class="citation">(Kristensen et al.
+2016)</span> and ADMB <span class="citation">(Fournier et al.
+2012)</span> models.</p>
+<p>For TMB models the NUTS algorithm is in the Stan software <span class="citation">(Carpenter et al. 2017)</span> and linked through the
+<a href="https://github.com/andrjohns/StanEstimators" class="external-link">StanEstimators</a>
+R package. <code>adnuts</code> implements the sparse NUTS (SNUTS)
+algorithm of <span class="citation">(Monnahan et al. in prep)</span> by
+decorrelating and descaling the posterior distribution prior to passing
+to Stan. For models with high correlations and sparse precision
+matrices, SNUTS can substantially improve sampling efficiency. For
+models without strong global correlations, the related package
+<code>tmbstan</code> is likely to be faster due to lower overhead and
+may be a better option. Eventually, Stan may include SNUTS functionality
+and in that case <code>tmbstan</code> may be a better long term option.
+For TMB users now, SNUTS via <code>adnuts</code> is likely to be the
+best overall package for Bayesian inference. Importantly, it works for
+TMB and RTMB models, and can be run on TMB models from existing
+packages.</p>
+<p>ADMB models contain the algorithm code internally, but this package
+provides the user a convenient environment to run and diagnose Markov
+chains, and make inference. Development for ADMB models is frozen but
+should maintain backwards compatibility in the near future. This package
+aims to give ADMB models similar functionality to the software Stan and
+<code>rstan</code> in particular <span class="citation">(Carpenter et
+al. 2017; Stan Development Team 2017)</span>.</p>
 </div>
-<div id="sampling-for-admb-models" class="section level2">
-<h2 class="hasAnchor">
-<a href="#sampling-for-admb-models" class="anchor"></a>Sampling for ADMB models</h2>
-<div id="setting-up-the-model" class="section level3">
-<h3 class="hasAnchor">
-<a href="#setting-up-the-model" class="anchor"></a>Setting up the model</h3>
-<p>In general very little is needed to prepare an ADMB model for use with <code>adnuts</code>. As with any model, the user must build the template file to return a negative log likelihood value for given data and parameters. The user is responsible for ensuring a valid and reasonable model is specified. Typical model building practices such as building complexity slowly and validating with simulated data are strongly encouraged. Users must manually specify priors, otherwise there are implicit improper uniform distributions for unbounded parameters, and proper uniform distributions for bounded parameters (see below for more details).</p>
-<p>The ADMB model is an executable file that contains the code necessary for NUTS and RWM. When run, it typically has various input files and generates many output files. As such, <strong>I strongly recommend putting the model into a subdirectory below the directory containing the R script</strong> (passed as the <code>path</code> argument). <strong>This is required for parallel execution</strong> but is recommended in general.</p>
-</div>
-<div id="sampling-with-sample_nuts-and-sample_rwm" class="section level3">
-<h3 class="hasAnchor">
-<a href="#sampling-with-sample_nuts-and-sample_rwm" class="anchor"></a>Sampling with sample_nuts and sample_rwm</h3>
-<p>Sampling for ADMB models is accomplished with the R functions <code>sample_nuts</code> and <code>sample_rwm</code> which replace the deprecated function <code>sample_admb</code>. These functions are designed to be similar to Stan’s <code>stan</code> function in naming conventions and behavior. Some differences are necessary, such as passing a model name and path. The two MCMC algorithms, NUTS and RWM, are built into the ADMB source code so this is just a wrapper function. Also note that this function does not do optimization nor Variational Inference.</p>
-<p>The default behavior for NUTS is to run 3 chains with 2000 iterations, with a warmup (i.e., burn-in) phase during the first 1000. There is no external thinning (in a sense it is done automatically within the algorithm), and thus the <code>-mcsave</code> option does not work with NUTS by design. These defaults work well in the case where diagonal mass matrix adaptation is done (e.g., hierarchical models). This adaptation often requires a long warmup period. For models starting with a good mass matrix (e.g., from the MLE covariance or previous run), a much shorter warmup period can be used. For instance <code>warmup=200</code> and <code>iter=800</code> with multiple chains may work sufficiently well during model development. Users of the RWM algorithm will accustomed to running millions of iterations with a high thinning rate. <strong>Do not do that!</strong>. The key thing to understand is that NUTS runs as long as it needs to get nearly independent samples. Consult the Stan documentation for advice on a workflow for NUTS models (e.g., <a href="https://mc-stan.org/users/documentation/case-studies/rstan_workflow.html">this guide</a>)</p>
-<p>For poorly-constructed or over-parameterized models, the NUTS algorithm will be potentially catastrophically slow. This is likely common in many existing fisheries stock assessment models. In these cases it can be very informative to run the RWM algorithm with <code>sample_rwm</code> because it often provides fast feedback from which the user can determine the cause of poor mixing (see <span class="citation">(C. C. Monnahan et al. 2019)</span>). Consult the ADMB documentation for more information on a workflow with these samplers. <code>adnuts</code> provides no new options for RWM compared to the command line from previous ADMB versions (besides a better console output), but the option for parallel execution and integration with MCMC diagnostic tools provided by adnuts should be sufficiently appealing to users. Once a model is more appropriately parameterized, NUTS should be used. Further work on optimal parameterizations for fisheries model is needed. This vignette only covers the functionality of the package.</p>
-<p>One important overlap with Stan is with the <code>control</code> argument, which allows the user to control the NUTS algorithm:</p>
-<ul>
-<li><p>Metric or mass matrix (adapted diagonal or dense matrix) [<code>metric</code>]</p></li>
-<li><p>Maximum treedepth for trajectories [<code>max_treedepth</code>’]</p></li>
-<li><p>Target acceptance rate [<code>adapt_delta</code>]</p></li>
-<li><p>Step size, which if NULL (recommended) is adapted [<code>stepsize</code>]</p></li>
-<li><p>Mass matrix adaptation tuning parameters (not recommended to change) [<code>adapt_init_buffer</code>, <code>adapt_term_buffer</code>, <code>adapt_window</code>]</p></li>
-</ul>
-<p>This function returns a list (of class <code>adfit</code>) whose elements mimic some of that returned by <code>stan</code> to be useful for plugging into some <code>rstan</code> tools (see below).</p>
-</div>
-<div id="mceval-phase-and-posterior-outputs" class="section level3">
-<h3 class="hasAnchor">
-<a href="#mceval-phase-and-posterior-outputs" class="anchor"></a>mceval phase and posterior outputs</h3>
-<p>No special output files are required to run the model with <code>adnuts</code>. In addition, the user can still use the <code>mceval_phase</code> flag to run specific code on saved samples. ADMB saves posterior draws to a .psv file. When executing the model with <code>-mceval</code> it will loop through those samples and execute the procedure section with flag <code>mceval_phase()</code> evaluating to 1. This behavior is unchanged with <code>adnuts</code>, but is complicated when running multiple chains because there will be multiple .psv files. Thus, <code>sample_nuts</code> combines chains in R and writes a single .psv file containing samples from all chains (after warmup and thinned samples are discarded). This also works in parallel (see below). Consequently, the user only has to set <code>mceval=TRUE</code>, or run <code>-mceval</code> from the command line after <code>adnuts</code> finishes sampling, in order to generate the desired output files.</p>
-<p>Previously, ADMB required an estimated covariance function to use the random walk Metropolis (RWM) algorithm. Thus, for models without a valid mode or a Hessian that could not be inverted could not use MCMC methods. With <code>adnuts</code> neither an MLE nor covariance estimate is needed because NUTS adapts these tuning parameters automatically (see below). However, if a mode exists I recommend estimating the model normally before running MCMC.</p>
-<p><code>sample_nuts</code> or <code>sample_rwm</code> are strongly recommended for running the MCMC. However, it is a convenience function that runs the chains from the command line. The list returned contains an element <code>cmd</code> which shows the user the exact command used to call the ADMB model from the command line. The command line can also be useful for quick tests.</p>
-</div>
-<div id="bounds-priors" class="section level3">
-<h3 class="hasAnchor">
-<a href="#bounds-priors" class="anchor"></a>Bounds &amp; Priors</h3>
-<p>Parameter priors must be specified manually in the ADMB template file. For instance, a standard normal prior on parameter <code>B</code> would be subtracted from the objective as <code>f+=dnorm(B,0.0,1.0)</code>. Note that contributed statistical functions in ADMB, such as <code>dnorm</code>, return the negative log density and thus must be added to the objective function.</p>
-<p>Parameter transformations are limited to box constraints within the ADMB template (e.g., <code>init_bounded_number</code>). When used, this puts an implicit uniform prior on the parameter over the bounds. Implicit improper uniform priors occur when an unbounded parameter has no explicit prior. The analysis can proceed if the data contain information to update the prior, but if not the chains will wander between negative and positive infinity and fail diagnostic checks.</p>
-<p>Variance parameters are common and require bounds of (0, Inf). To implement such a bound in ADMB, specify the model parameter as the log of the standard deviation, and then in the template exponentiate it and use throughout. Because of this parameter transformation, the Jacobian adjustment is needed. This can be accomplished by subtracting the parameter in log space from the negative log-likelihood. For instance, use parameter <code>log_sd</code> in the template, then let <code>sigma=exp(log_sd)</code>, and update the objective function with the Jacobian: <code>f-=log_sd;</code>. The recommended half-normal prior for standard deviations can then be added as, e.g., <code>f+=dnorm(sigma,0,2)</code>. This also holds for any positively constrained parameters of which there are many in ecology and fisheries: somatic growth rates, maximum length, unfished recruits, etc.</p>
-</div>
-<div id="initializing-chains" class="section level3">
-<h3 class="hasAnchor">
-<a href="#initializing-chains" class="anchor"></a>Initializing chains</h3>
-<p>It is generally recommended to initialize multiple chains from “dispersed” values relative to the typical set of the posterior. The sampling functions can accept a list of lists (one for each chain), or function which returns a list of parameters (e.g., <code>init &lt;- function() list(a=rnorm(1), eta=rnorm(10))</code>. If no initial values are specified <code>init=NULL</code> then ADMB will attempt to read in the optimized values stored in the admodel.hes file. Typically these are the MLE (really MPD) values. Starting all chains from the model is discouraged because it makes diagnostic tools like Rhat (see below) inefficient. From <a href="https://discourse.mc-stan.org/t/overdispersed-initial-values-general-questions/3966">this discussion</a> “…Rhat is ratio of overestimate and underestimate of variance, but that overestimate is overestimate only if the starting points are diffuse.” Consequently I <strong>strongly encourage creating a function to generate reasonable random initial values</strong>.</p>
-<p>If your model has inactive parameters (those with negative phases) they are completely ignored in the MCMC analysis (sampling, inputs, outputs, etc.), so the initial values are only for active parameters. This means you cannot read in the .par file and use it for initial values if there are inactive parameters.</p>
-</div>
-<div id="parallel-sampling" class="section level3">
-<h3 class="hasAnchor">
-<a href="#parallel-sampling" class="anchor"></a>Parallel sampling</h3>
-<p>Parallel sampling is done by default as of version 1.1.0. It is done by parallelizing multiple chains, not calculations within a chain. The <code>snowfall</code> package is used. <code>n.cores</code> chains will be run by making temporary copies of the directory <code>path</code> (which contain the model executable, data inputs, and any other required files). Then a separate R session does the sampling and when done the results are merged together and the temporary folders deleted. If errors occur, these temporary folders may need to be deleted manually. The default behavior is to set <code>n.cores</code> to be one fewer than available to the system, but the user can override this and by setting <code>n.cores=1</code> the chains will be run in serial which can be useful for debugging purposes.</p>
-</div>
-</div>
-<div id="diagnostics-and-plotting-results" class="section level2">
-<h2 class="hasAnchor">
-<a href="#diagnostics-and-plotting-results" class="anchor"></a>Diagnostics and plotting results</h2>
-<div id="diagnosing-mcmc-chains" class="section level3">
-<h3 class="hasAnchor">
-<a href="#diagnosing-mcmc-chains" class="anchor"></a>Diagnosing MCMC chains</h3>
-<p>MCMC diagnostics refers to checking for signs of non-convergence of the Markov chains before using them for inference, and is a key step in Bayesian inference. There is a large literature related to this which I refer unfamiliar readers to the Stan manual <a href="https://mc-stan.org/docs/2_23/reference-manual/convergence.html">chapter on convergence</a>. Note that the user is entirely responsible for this component of the analysis, <code>adnuts</code> only provides tools to help with it.</p>
-<p>The <code>rstan</code> package provides an improved function for calculating effective sample size and <span class="math inline">\(\hat{R}\)</span> statistics vis the function <code><a href="https://mc-stan.org/rstan/reference/monitor.html">rstan::monitor</a></code>. This function is automatically run for completed runs and stored in the output. For very large models (either many parameters or many iterations) this operation can be slow and thus a user may disable it with the argument <code>skip_monitor</code>, however this situation should be rare as these quantities should always be checked.</p>
-<p>I use a hierarchical mark-recapture model of swallows to demonstrate functionality, taken from the examples in <span class="citation">(C. C. Monnahan, Thorson, and Branch 2017)</span> read in as a RDS file from a previous run.</p>
-<pre><code>## Loading required package: snowfall</code></pre>
-<pre><code>## Loading required package: snow</code></pre>
-<p>The diagnostic information can be directly accessed via the fitted object <code>fit</code>. :</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="st">'fit.RDS'</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></code></pre></div>
-<pre><code>## Model 'swallows' has 177 pars, and was fit using NUTS with 500 iter and 2 chains
-## Average run time per chain was 2.57 minutes 
-## Minimum ESS=71 (14.2%), and maximum Rhat=1.063
-## !! Warning: Signs of non-convergence found. Do not use for inference !!
-## There were 0 divergences after warmup</code></pre>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">monitor</span><span class="op">$</span><span class="va">n_eff</span><span class="op">)</span></code></pre></div>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    71.0   417.2   548.5   541.4   695.0  1238.0</code></pre>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">monitor</span><span class="op">$</span><span class="va">Rhat</span><span class="op">)</span></code></pre></div>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.9965  1.0001  1.0029  1.0045  1.0063  1.0626</code></pre>
-<p>The Rhat values are sufficiently close to 1 but the minimum effective sample size is 71 which is too few for inference so longer chains should be run. Both the model parameters and the NUTS sampler parameters can be extracted as a data frame.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">post</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_samples.html">extract_samples</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">post</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></code></pre></div>
-<pre><code>## 'data.frame':    500 obs. of  5 variables:
-##  $ sigmayearphi: num  0.646 0.454 0.392 0.771 0.917 ...
-##  $ sigmaphi    : num  -0.688 -0.996 -0.398 -1.275 -0.94 ...
-##  $ sigmap      : num  -0.1945 -0.3027 0.0436 -0.1589 -0.3653 ...
-##  $ a[1]        : num  1.398 1.543 1.567 0.561 1.302 ...
-##  $ a[2]        : num  1.369 1.551 1.248 0.955 0.395 ...</code></pre>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_sampler_params.html">extract_sampler_params</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">sp</span><span class="op">)</span></code></pre></div>
-<pre><code>## 'data.frame':    500 obs. of  8 variables:
-##  $ chain        : num  1 1 1 1 1 1 1 1 1 1 ...
-##  $ iteration    : num  251 252 253 254 255 256 257 258 259 260 ...
-##  $ accept_stat__: num  0.0658 0.9882 0.827 0.8954 0.9686 ...
-##  $ stepsize__   : num  0.0802 0.0802 0.0802 0.0802 0.0802 ...
-##  $ treedepth__  : num  5 6 6 6 6 6 6 6 6 6 ...
-##  $ n_leapfrog__ : num  31 63 63 63 63 63 63 63 63 63 ...
-##  $ divergent__  : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ energy__     : num  -1863 -1848 -1856 -1861 -1875 ...</code></pre>
-<p>These functions have options whether to include the warmup and log-posterior (lp) column, but also whether to return the unbounded parameters. The latter can be useful for debugging issues with parameters with high density near the bounds or poor mixing issues when using RWM chains.</p>
-<p>The object returned by <code>sample_nuts</code> and <code>sample_rwm' can also be plugged directly into the ShinyStan interactive tool environment by calling the wrapper function</code>launch_shinyadmb(fit)<code>after loading the</code>shinystan<code>library. See ShinyStan documentation for more information on this. It is designed to provide NUTS specific diagnostics, but also serves as a more general tool for MCMC diagnostics and thus is beneficial for RWM chains as well. If desired, the output samples can be converted into</code>mcmc` objects for use with the CODA R package. For instance, CODA traceplots can be accessed like this:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">post</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_samples.html">extract_samples</a></span><span class="op">(</span><span class="va">fit</span>, as.list<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
-<span class="va">postlist</span> <span class="op">&lt;-</span> <span class="fu">coda</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/coda/man/mcmc.list.html">mcmc.list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">post</span>, <span class="fu">coda</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/coda/man/mcmc.html">mcmc</a></span><span class="op">)</span><span class="op">)</span>
-<span class="fu">coda</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/coda/man/traceplot.html">traceplot</a></span><span class="op">(</span><span class="va">postlist</span><span class="op">)</span></code></pre></div>
-<p>Or into <code>bayesplot</code> with a little massaging. Future versions of adnuts may link these more directly. But for now it can be done manually such as with the energy diagnostic:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/bayesplot/">bayesplot</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyr.tidyverse.org">tidyr</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
-<span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-colors.html">color_scheme_set</a></span><span class="op">(</span><span class="st">"red"</span><span class="op">)</span>
-<span class="va">np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_sampler_params.html">extract_sampler_params</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">pivot_longer</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">chain</span>, <span class="va">iteration</span><span class="op">)</span>, names_to<span class="op">=</span><span class="st">'Parameter'</span>, values_to<span class="op">=</span><span class="st">'Value'</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span>Iteration<span class="op">=</span><span class="va">iteration</span>, <span class="va">Parameter</span>, <span class="va">Value</span>, Chain<span class="op">=</span><span class="va">chain</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>Parameter<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="va">Parameter</span><span class="op">)</span>,
-         Iteration<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span><span class="op">(</span><span class="va">Iteration</span><span class="op">)</span>,
-         Chain<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span><span class="op">(</span><span class="va">Chain</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html">as.data.frame</a></span><span class="op">(</span><span class="op">)</span>
-<span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-nuts.html">mcmc_nuts_energy</a></span><span class="op">(</span><span class="va">np</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"NUTS Energy Diagnostic"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-</div>
-</div>
-<div id="plotting-output" class="section level2">
-<h2 class="hasAnchor">
-<a href="#plotting-output" class="anchor"></a>Plotting output</h2>
-<p>A convenience function <code>plot_marginals</code> is provided to quickly plot marginal posterior distributions with options to overlay the asymptotic estimates.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plot_marginals.html">plot_marginals</a></span><span class="op">(</span><span class="va">fit</span>, pars<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span></code></pre></div>
-<p><img src="adnuts_files/figure-html/fig1-1.png" width="576"></p>
-<p>Many ADMB models have well defined modes and estimated covariance matrices used to quantify uncertainty. The <code>pairs_admb</code> function can be used to plot pairwise posterior draws vs the MLE estimate and confidence ellipses. Major discrepancies between the two are cause for concern. As such, this can be a good diagnostic tool for both frequentist and Bayesian inference. In particular, it often is informative to plot the slowest mixing parameters or key ones by name as follows.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/pairs_admb.html">pairs_admb</a></span><span class="op">(</span><span class="va">fit</span>, pars<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, order<span class="op">=</span><span class="st">'slow'</span><span class="op">)</span></code></pre></div>
-<p><img src="adnuts_files/figure-html/fig2-1.png" width="576"></p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/pairs_admb.html">pairs_admb</a></span><span class="op">(</span><span class="va">fit</span>, pars<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'sigmaphi'</span>, <span class="st">'sigmap'</span>, <span class="st">'sigmayearphi'</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="adnuts_files/figure-html/fig2-2.png" width="576"></p>
-<p>The last plot shows the three hypervariances of this hierarchical model. The diagonal shows traces of two chains (colors), where alternative options for argument <code>diag</code> are ‘trace’ (default), ‘hist’ for histogram, and ‘acf’ for the autocorrelation function. The remaining plots show pairwise posterior samples (black points) for the remaining parameters. Divergences are shown as green points if they exist (none do here). A red point shows the posterior mode and an ellipse shows the 95% bivariate confidence region, taken from the inverse Hessian calculated by ADMB. Since the log-posterior (lp__) is not a parameter there is no ellipse. Note that the posterior samples and asymptotic approximations for the two fixed effects <code>a</code> match closely, whereas for the <code>sigmaphi</code> hypervariance parameter there is a notable mismatch. This mismatch is not surprising as estimates from optimizing hierarchical models are not reliable. Since adaptive NUTS was used for sampling, the information contained in red was not used and is only shown for illustration. The option <code>metric='mle'</code> would use the inverse Hessian as a tuning parameter (see section on metric below). More options for plotting fits like these are available in the help file <code><a href="../reference/pairs_admb.html">?pairs_admb</a></code>.</p>
-</div>
-<div id="mass-matrix-adaptation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#mass-matrix-adaptation" class="anchor"></a>Mass matrix adaptation</h2>
-<p>I assume the reader is familiar with the basics of the mass matrix and its effect on sampling with NUTS (if not, see section below). Note that the mass matrix represents the geometry of the posterior in untransformed (unbounded) space, not the parameter space defined by the user. This space is typically hidden from the user but nonetheless is important to recognize when thinking about the mass matrix.</p>
-<p>ADMB has the capability to do both diagonal and dense (full matrix, as of version 12.2) estimation during warmup (adaptation). The initial matrix can likewise easily be initialized in two ways. First is a unit diagonal, and second is the “MLE” option, which more accurately is the covariance matrix calculated from inverting the Hessian at the maximum posterior density (the mode – informally referred to as the MLE often). I refer to this as <span class="math inline">\(\Sigma\)</span>. As such there are 6 options for the mass matrix, summarized in the subsequent table. Note that options 3 and 6 were not available before <code>adnuts</code> version 1.1.0 and are only available for ADMB &gt;= 12.2. Also not the differences in default behavior when running from <code>sample_nuts</code> vs. the command line.</p>
-<p>Note that dense estimation should be considered an experimental feature. This option is in Stan but is rarely used. Stan users almost always use option 2 below (the default in <code>adnuts</code>). As more models are fit this advice will evolve. For now this is my best guess:</p>
-<table class="table">
-<colgroup>
-<col width="18%">
-<col width="20%">
-<col width="17%">
-<col width="24%">
-<col width="18%">
-</colgroup>
-<thead><tr class="header">
-<th>Initial<br>matrix</th>
-<th>Adaptation</th>
-<th>adnuts</th>
-<th>Command<br>line</th>
-<th>Recommended usage</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Unit</td>
-<td>None</td>
-<td><code>adapt_mass=FALSE</code></td>
-<td><code>-mcdiag</code></td>
-<td>Rarely if ever used</td>
-</tr>
-<tr class="even">
-<td>Unit</td>
-<td>Diagonal</td>
-<td>(default)</td>
-<td>
-<code>-mcdiag</code><br><code>-adapt_mass</code>
-</td>
-<td>Use with minimal correlations, <span class="math inline">\(\Sigma\)</span> is unavailable, or <span class="math inline">\(d\)</span>&gt;1000. Often the best choice for hierarchical models</td>
-</tr>
-<tr class="odd">
-<td>Unit</td>
-<td>Dense</td>
-<td><code>adapt_mass_dense=TRUE</code></td>
-<td>
-<code>-mcdiag</code><br><code>-adapt_mass_dense</code>
-</td>
-<td>Use when strong correlations but <span class="math inline">\(\Sigma\)</span> is unavailable and <span class="math inline">\(d\)</span>&lt;500</td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(\Sigma\)</span></td>
-<td>None</td>
-<td>
-<code>metric='mle'| (default) | When $\Sigma$ is good and $d$&lt;1000 |  | $\Sigma$  | Diagonal |</code>metric=‘mle’<code>&lt;br</code>adapt_mass=TRUE<code><a href="https://rdrr.io/r/base/Logic.html">|</a></code>-mcdiag<code>&lt;br&gt;</code>-adapt_mass<code>| When $\Sigma$ is OK and $d$&gt;500.  | $\Sigma$  | Dense |</code>metric=‘mle’<code>&lt;br&gt;</code>adapt_mass_dense=TRUE<code><a href="https://rdrr.io/r/base/Logic.html">|</a></code>-adapt_mass_dense`</td>
-<td>When <span class="math inline">\(\Sigma\)</span> is OK but <span class="math inline">\(d\)</span>&lt;500</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p><span class="math inline">\(d\)</span> refers to the dimensionality (# of parameters) and this guidance is a very rough guess. The reason dimensionality matters is that there is a numerical cost to using a dense matrix over a diagonal one, and one that scales poorly with dimensionality. However, the more computationally expensive the model is (the prediction and log density calculations) the smaller relative cost of the dense calculations. Thus there is an interplay between the mass matrix form, dimensionality, model computational cost, and MCMC sampling efficiency.</p>
-<p>In addition to these options, an arbitrary matrix <code>M</code> can be passed via <code>metric=M</code>. This works by using R to overwrite the admodel.cov file so that when ADMB runs it reads it in thinking it was the estimated matrix. The file admodel_original.cov is copied in case the user wants to revert it. Probably the only realistic usage of this feature is when you have already run a pilot chain and want to rerun it for longer, and wish to use the samples to generate an estimated mass matrix. In this case use <code>M=fit$covar.est</code> which is the estimate in unbounded space (see below). Note that if <code>M=diag(d)</code> it is equivalent to the first three rows and if <code>M</code>=<span class="math inline">\(\Sigma\)</span> it is equivalent to the last three rows.</p>
-<p>The following figure shows the step size of a single chain during warmup for these six options for a simple linear model, and demonstrates the general differences among them.</p>
-<div class="figure">
-<img src="metric_adaptation.png" style="width:90.0%" alt=""><p class="caption">Effects of mass matrix adaptation on step size adaptation</p>
-</div>
-<p>The three which start with a unit diagonal matrix are apparent by their small initial step sizes, while the three which start with dense are larger. There is a clear shift in the stepsize at iteration 125 which is when the first mass matrix update happens (and with improved knowledge of the geometry the optimal step size changes). A second update happens later but is not apparent, indicating the first was sufficient. All fits with a dense matrix end with the same approximate step size, which is larger than any without it. Option 3 starts off diagonal but after updating to a dense matrix performs equivalently. For the diagonal options, option 1 does not update, while option two starts at unit diagonal and aftering updating the diagonal performs equally well as option 5 which starts well.</p>
-<p>This is the behavior on a trivial model, but it is often hard to estimate a good dense mass matrix, especially in the first few phases of warmup with very few samples. In such cases the Cholesky decomposition of the estimated matrix may fail. Instead of crashing the run I coded ADMB to instead do a diagonal estimate in this case, and try a dense update at the next phase, repeating until warmup is over. Warnings are printed to the console when this happens.</p>
-<p>Which option to use in which situation is still an open question. Certainly for hierarchical models where <span class="math inline">\(\Sigma\)</span> is not helpful or doesn’t exist, option 2 is likely the best. For fisheries stock assessment models which already rely on <span class="math inline">\(\Sigma\)</span> options 4-6 are worth exploring.</p>
-</div>
-<div id="sampling-for-tmb-models" class="section level2">
-<h2 class="hasAnchor">
-<a href="#sampling-for-tmb-models" class="anchor"></a>Sampling for TMB models</h2>
-<p>Previous versions of <code>adnuts</code> included explicit demonstrations of use for TMB models. Now, however, the package <code>tmbstan</code> (<span class="citation">(C. C. Monnahan and Kristensen 2018)</span>) has replaced this functionality and users should exclusively use that package except for very rare cases. Consequently I deleted the TMB section from this vignette, but older versions on CRAN may be helpful for those looking for guidance.</p>
-</div>
-<div id="the-no-u-turn-sampler-implementation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#the-no-u-turn-sampler-implementation" class="anchor"></a>The no-U-turn sampler implementation</h2>
-<div id="brief-review-of-hamiltonian-monte-carlo" class="section level3">
-<h3 class="hasAnchor">
-<a href="#brief-review-of-hamiltonian-monte-carlo" class="anchor"></a>Brief review of Hamiltonian Monte Carlo</h3>
-<p>Hamiltonian Monte Carlo is a powerful family of MCMC algorithms that use gradients to propose efficient transitions. We review the basics here but refer to interested readers to <span class="citation">(Neal 2011; Michael Betancourt 2017; C. C. Monnahan, Thorson, and Branch 2017)</span>. Instead of randomly generating a proposed point, to be rejected/accepted, HMC generates <em>trajectories</em> from which a point is chosen to be rejected/accepted. These trajectories use gradient information and an analogy of a ball rolling on a surface is often used. These trajectories are efficient when they can transition to nearly anywhere on the posterior (stark contrast with random walk algorithms). However, to do this they need to be well-tuned. Generally there are three aspects of the algorithms that need to be tuned.</p>
-<ol style="list-style-type: decimal">
-<li>The step size. How big of steps between points on a single trajectory. Bigger steps means fewer calculations (and thus faster), but has a negative cost of rejecting more points.</li>
-<li>The trajectory length. How long should a trajectory should be depends on many factors, and is not constant over the posterior. If it is too short, HMC resembles inefficient random walk behavior. If it is too long, computations are wasted.</li>
-<li>The “mass matrix” used. This matrix tells the algorithm about the global shape of the posterior so that it can generate better trajectories. When large discrepancies between marginal variances exist, the trajectories will be less efficient (e.g., one parameter has a marginal variance of 1, and another a marginal variance of 1000).</li>
-</ol>
-<p>The no-U-turn sampler is a powerful sampler because it automated the tuning of the first two of these aspects <span class="citation">(Hoffman and Gelman 2014)</span>. During warmup it tunes the step size to a target acceptance rate (default of 0.8) which has been shown to be optimal <span class="citation">(MJ Betancourt, Byrne, and Girolami 2014)</span>. Most importantly, though, is that it uses a recursive tree building algorithm to continue doubling the trajectory until a “U-turn” occurs, meaning going any further would be wasteful computationally. Thus, trajectory lengths are automatically optimal.</p>
-<p>The original algorithm was implemented into the Bayesian statistical software Stan <span class="citation">(Carpenter et al. 2017; Stan Development Team 2017)</span>. In addition to the automation of NUTS, Stan provides a scheme for adapting the step size during the warmup phase. Estimated diagonal mass matrices correct for global differences in scale, but not correlations. A dense matrix can also be adapted, and corrects for global correlations, but comes at a higher computation cost. Typically a diagonal matrix is best and thus is default in both Stan and <code>adnuts</code>.</p>
-<p>These three extensions lead to efficient HMC sampling with little to no user intervention for a wide class of statistical models, including hierarchical ones <span class="citation">(C. C. Monnahan, Thorson, and Branch 2017)</span>. Since publication, further developments have been made in HMC theoretical and practical research. For instance, Stan now includes an update called “exhaustive” HMC <span class="citation">(Michael Betancourt 2016)</span> that more efficiently samples from the points in a trajectory.</p>
-</div>
-<div id="algorithm-implementation-details" class="section level3">
-<h3 class="hasAnchor">
-<a href="#algorithm-implementation-details" class="anchor"></a>Algorithm implementation details</h3>
-<p>For both ADMB and TMB models, <code>adnuts</code> uses the original algorithm presented in <span class="citation">(Hoffman and Gelman 2014)</span>. However it also uses a similar mass matrix adaptation scheme as used in Stan.</p>
-<p>The algorithm is initiated with a unit diagonal mass matrix. During the first 50 iterations only the step size is adapted. After the next 75 iterations an estimated variance for each parameter (in untransformed space) is calculated and used as the new mass matrix. The next update occurs after twice the iterations as the previous update. This process repeats until the last 25 samples of the warmup phase. During this phase the mass matrix is held constant and only the step size adapt. See the Stan manual <span class="citation">(Stan Development Team 2017)</span> for more details. The step size is adapted during all warmup iterations. No information is returned about mass matrix adaptation currently.</p>
-<p>Once the warmup phase is over, no adaptation is done. Because of the adaptation the warmup samples are not valid samples from the posterior and <em>must</em> be discarded and not used for inference.</p>
-</div>
-<div id="user-intervention" class="section level3">
-<h3 class="hasAnchor">
-<a href="#user-intervention" class="anchor"></a>User intervention</h3>
-<p>In some cases you will need to adjust the behavior of the NUTS algorithm to improve sampling. Here I review the three options for intervention (step size, trajectory lengths, mass matrix) that a user can take, and when and why they might need to.</p>
-<p>A maximum tree depth argument is used to prevent excessively long trajectories (which can occur with poorly specified models). This is set to 12 (i.e., a length of <span class="math inline">\(2^12=4096\)</span> steps) by default, which typically is long enough that a U-turn would occur. However, in some cases a model may need to make longer trajectories to maintain efficient sampling. In this case you will get warnings about exceeding maximum tree depth. Rerun the model with <code>control=list(max_treedepth=14)</code> or higher, as needed.</p>
-<p>Recall that a single NUTS trajectory consists of a set of posterior samples, resulting from a numerical approximation to a path along the posterior. The step size controls how close the approximation is along the true path. When the step size is too large and encounters extreme curvature in the posterior a divergence will occur. Divergences should not be ignored because they could lead to bias in inference. Instead, you force the model to take smaller step sizes by increasing the target acceptance rate. Thus, when you get warnings about divergences, rerun the model with <code>control=list(adapt_delta=.9)</code> or higher, as necessary. If the divergences do not go away, investigate the cause and try to eliminate the extreme curvature from the model, for example with a reparameterization <span class="citation">(Stan Development Team 2017; C. C. Monnahan, Thorson, and Branch 2017)</span>.</p>
-<p>If there are extreme global correlations in your model, NUTS will be inefficient when using a diagonal mass matrix (the default). In this case, you can pass a dense matrix, estimated externally or from previous runs (previous fits contain an element <code>covar.est</code> which can be passed to the next call). Do this with <code>control=list(metric=M)</code> where M is a matrix in untransformed space that approximates the posterior. For ADMB models, you can try using the MLE covariance by setting <code>control=list(metric="mle"). Note that, for technical reasons, you need to reoptimize the model with the command line argument</code>-hbf`. (ADMB uses different transformation functions for HMC so the covariance would be mismatched otherwise). Note that when using a dense mass matrix there is additional computational overhead, particularly in higher dimensions. That is, a dense matrix leads to shorter trajectories, but they take longer to calculate. Whether a dense metric is worth the increase in sampling efficiency will depend on the model.</p>
-<p>The following figure demonstrates the effect of the mass matrix on a 2d normal model with box constraints. The columns denote the different model “spaces” and the rows different mass matrices. Random, arbitrary NUTS trajectories are show in red over the top of posterior draws (points). The right column is the model space, the middle the untransformed, and the far left the untransformed after being rotated by the mass matrix. Note the differences in scales in the axes among plots. The key here is the rightmost column. The top panel is with no mass matrix (i.e., unit diagonal), and the trajectories ungulate back and forth as they move across the posterior. Thus to go from one end to the other is not very straight. When a diagonal matrix is used, the trajectories become noticeably straighter. Finally, with the dense matrix the trajectories are even better. This is the effect of the mass matrix: trajectories can move between regions in the posterior more easily.</p>
-<div class="figure">
-<img src="tree_trajectories.png" alt=""><p class="caption">Effects of mass matrix on trajectories</p>
-</div>
-</div>
-</div>
-<div id="algorithm-validity" class="section level2">
-<h2 class="hasAnchor">
-<a href="#algorithm-validity" class="anchor"></a>Algorithm validity</h2>
-<p>Software bugs in the MCMC algorithms can manifest as biased sampling from the target distribution. This is a serious issue and one that can be hard to detect. One way to check this is to run the algorithms on known distributions and check estimated properties against the analytical. I checked this with normal, t with df=4 and df=10, gamma, inverse gamma, truncated normal, and multivariate normal. I ran long chains (1 million samples) with thinning rate of 10 for NUTS, and compared this to an equivalent set of points from RWM and IID samples from Monte Carlo samples (e.g., <code>rnorm</code>). Long chains and thining ensured no residual autocorrelation. I repeated this for 20 chains for the RWM, NUTS with MLE metric, adaptive NUTS, and Monte Carlo (mc). Results are plotted as relative error of different probabilities (via <code>pnorm</code> etc.).</p>
-<div class="figure">
-<img src="validity_tests.png" style="width:100.0%" alt=""><p class="caption">Validity of ADMB MCMC algorithms</p>
-</div>
-<p>All cases are mean 0, and MC is indistinguishable from MCMC. This provides strong evidence that the algorithms are coded correctly. This <strong>does not</strong> mean that finite samples from target distributions are unbiased.</p>
-</div>
-<div id="references" class="section level2 unnumbered">
-<h2 class="hasAnchor">
-<a href="#references" class="anchor"></a>References</h2>
-<div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-betancourt2016" class="csl-entry">
-Betancourt, Michael. 2016. <span>“Identifying the Optimal Integration Time in Hamiltonian Monte Carlo.”</span> <em>arXiv Preprint arXiv:1601.00225</em>.
-</div>
-<div id="ref-betancourt2017intro" class="csl-entry">
-———. 2017. <span>“A Conceptual Introduction to Hamiltonian Monte Carlo.”</span> <em>arXiv Preprint arXiv:1701.02434</em>.
-</div>
-<div id="ref-betancourt2014" class="csl-entry">
-Betancourt, MJ, Simon Byrne, and Mark Girolami. 2014. <span>“Optimizing the Integrator Step Size for Hamiltonian Monte Carlo.”</span> <em>arXiv Preprint arXiv:1411.6669</em>.
-</div>
+<div class="section level2">
+<h2 id="history">History<a class="anchor" aria-label="anchor" href="#history"></a>
+</h2>
+<p>The package has undergone several shifts in focus. Initially, it was
+developed to provide a NUTS implementation for models where the
+log-density and log-density gradient could be written as R functions
+(e.g., TMB). However, the <code>tmbstan</code> package was developed and
+became the preferred option for TMB users, so the focus switched to ADMB
+models and TMB functionality was de-emphasized. Now, with the
+development of SNUTS, the primary focus of <code>adnuts</code> is for
+TMB sampling via the SNUTS approach.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-carpenter2017" class="csl-entry">
-Carpenter, B., A. Gelman, M. D. Hoffman, D. Lee, B. Goodrich, M. Betancourt, A. Riddell, J. Q. Guo, P. Li, and A. Riddell. 2017. <span>“Stan: A Probabilistic Programming Language.”</span> <em>Journal of Statistical Software</em> 76 (1): 1–29.
+Carpenter, B., A. Gelman, M. D. Hoffman, D. Lee, B. Goodrich, M.
+Betancourt, A. Riddell, J. Q. Guo, P. Li, and A. Riddell. 2017.
+<span>“Stan: A Probabilistic Programming Language.”</span> <em>Journal
+of Statistical Software</em> 76 (1): 1–29.
 </div>
 <div id="ref-fournier2012" class="csl-entry">
-Fournier, D. A., H. J. Skaug, J. Ancheta, J. Ianelli, A. Magnusson, M. N. Maunder, A. Nielsen, and J. Sibert. 2012. <span>“AD Model Builder: Using Automatic Differentiation for Statistical Inference of Highly Parameterized Complex Nonlinear Models.”</span> <em>Optimization Methods &amp; Software</em> 27 (2): 233–49.
+Fournier, D. A., H. J. Skaug, J. Ancheta, J. Ianelli, A. Magnusson, M.
+N. Maunder, A. Nielsen, and J. Sibert. 2012. <span>“AD Model Builder:
+Using Automatic Differentiation for Statistical Inference of Highly
+Parameterized Complex Nonlinear Models.”</span> <em>Optimization Methods
+&amp; Software</em> 27 (2): 233–49.
 </div>
 <div id="ref-hoffman2014" class="csl-entry">
-Hoffman, M. D., and A. Gelman. 2014. <span>“The No-u-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo.”</span> <em>Journal of Machine Learning Research</em> 15 (1): 1593–623.
+Hoffman, M. D., and A. Gelman. 2014. <span>“The No-u-Turn Sampler:
+Adaptively Setting Path Lengths in Hamiltonian Monte Carlo.”</span>
+<em>Journal of Machine Learning Research</em> 15 (1): 1593–623.
 </div>
 <div id="ref-kristensen2016" class="csl-entry">
-Kristensen, Kasper, Anders Nielsen, Casper W. Berg, Hans Skaug, and Bradley M. Bell. 2016. <span>“TMB: Automatic Differentiation and Laplace Approximation.”</span> <em>Journal of Statistical Software</em> 70 (5): 21.
+Kristensen, Kasper, Anders Nielsen, Casper W. Berg, Hans Skaug, and
+Bradley M. Bell. 2016. <span>“TMB: Automatic Differentiation and Laplace
+Approximation.”</span> <em>Journal of Statistical Software</em> 70 (5):
+21.
 </div>
-<div id="ref-monnahan2019" class="csl-entry">
-Monnahan, C. C., T. A. Branch, J. T. Thorson, Stewart I. J., and C. S. Szuwalksi. 2019. <span>“Overcoming Long Bayesian Run Times in Integrated Fisheries Stock Assessments.”</span> <em>ICES Journal of Marine Science (in Press)</em>. <a href="https://doi.org/10.1093/icesjms/fsz059">https://doi.org/10.1093/icesjms/fsz059</a>.
-</div>
-<div id="ref-monnahan2017" class="csl-entry">
-Monnahan, C. C., J. T. Thorson, and T. A. Branch. 2017. <span>“Faster Estimation of Bayesian Models in Ecology Using Hamiltonian Monte Carlo.”</span> <em>Methods in Ecology and Evolution</em> 8 (3): 339–48.
-</div>
-<div id="ref-monnahan2018" class="csl-entry">
-Monnahan, C. C, and Kasper Kristensen. 2018. <span>“No-u-Turn Sampling for Fast Bayesian Inference in ADMB and TMB: Introducing the Adnuts and Tmbstan r Packages.”</span> <em>PloS One</em> 13 (5).
-</div>
-<div id="ref-neal2011" class="csl-entry">
-Neal, Radford M. 2011. <span>“MCMC Using Hamiltonian Dynamics.”</span> <em>Handbook of Markov Chain Monte Carlo</em> 2.
+<div id="ref-monnahan2025" class="csl-entry">
+Monnahan, C. C., Thorson J. T., K. Kristensen, and B. Carpenter. in
+prep. <span>“Leveraging Sparsity to Improve No-u-Turn Sampling
+Efficiency for Hierarchical Bayesian Models.”</span> <em>arXiv
+Preprint</em>, in prep.
 </div>
 <div id="ref-stan2017" class="csl-entry">
-Stan Development Team. 2017. <span>“Stan Modeling Language Users Guide and Reference Manual, Version 2.17.0.”</span>
+Stan Development Team. 2017. <span>“Stan Modeling Language Users Guide
+and Reference Manual, Version 2.17.0.”</span>
 </div>
 </div>
 </div>
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
-
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
 
-      <footer><div class="copyright">
+    <footer><div class="pkgdown-footer-left">
   <p>Developed by Cole Monnahan.</p>
 </div>
 
-<div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+<div class="pkgdown-footer-right">
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
 
-  
+
+
 
 
   </body>

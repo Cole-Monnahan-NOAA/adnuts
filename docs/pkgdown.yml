@@ -1,7 +1,8 @@
-pandoc: 2.11.2
-pkgdown: 1.6.1
+pandoc: '3.4'
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   adnuts: adnuts.html
-last_built: 2021-06-14T18:37Z
-
+  NUTS-for-ADMB-models: NUTS-for-ADMB-models.html
+  SNUTS-for-TMB-models: SNUTS-for-TMB-models.html
+last_built: 2025-08-11T21:41Z

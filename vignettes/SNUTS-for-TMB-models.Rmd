@@ -373,7 +373,7 @@ obj2 <- MakeADFun(func=obj$env$data, parameters=obj$env$parList(),
 # TMB does negative log densities so convert to form used by Stan
 fn <- function(x) -obj2$fn(x)
 grad_fun <- function(x) -obj2$gr(x)
-pf <- stan_pathfinder(fn=fn, grad_fun=grad_fun, refresh=100,
+pf <- StanEstimators::stan_pathfinder(fn=fn, grad_fun=grad_fun, refresh=100,
                       par_inits = obj$env$last.par.best)
 
 ````
