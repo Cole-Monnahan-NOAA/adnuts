@@ -2,7 +2,15 @@
 adnuts 1.1.2.9000 (development)
 ------------------------------------------------------------------------
 
+* Add sparse NUTS option for TMB & RTMB models, and shift focus of package back to TMB. Main function `sample_snuts` with defaults to automatically detect the metric and set the warmup samples to use.
 
+* Update `pairs_admb` function to be S3 method `pairs` and add 'mismatch' and 'cor' options for the order, and argument `add.inits` to plot initial values.
+
+* Add `plot_Q` function.
+
+* Cleaned up console output
+
+* Minor bug fixes and improvements
 
 ------------------------------------------------------------------------
 adnuts 1.1.2 (2021-03-02)

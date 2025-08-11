@@ -2,7 +2,7 @@
 
 main: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg?branch=main)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check) dev: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg?branch=dev)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check) [![codecov](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts/branch/dev/graph/badge.svg)](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts) [![](https://www.r-pkg.org/badges/version/adnuts)](https://www.r-pkg.org/pkg/adnuts) [![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/adnuts)](https://www.r-pkg.org/pkg/adnuts)
 
-The aim of 'adnuts' (pronounced A-D nuts) is to provide advanced MCMC sampling for 'TMB' and 'ADMB' models. For TMB models it uses the sparse NUTS (SNUTS; Monnahan et al. (in prep)) algorithm to decorrelate the posterior using the joint precision matrix. The R package 'tmbstan' (available on CRAN) provides an alternative for TMB which more closely links to Stan. Until the development of SNUTS adnuts was primarily used for ADMB models. For the foreseeable future SNUTS via 'adnuts' is likely to be the best general option for TMB users.
+The aim of 'adnuts' (pronounced A-D nuts) is to provide advanced MCMC sampling for 'TMB' and 'ADMB' models. For TMB models it uses the sparse NUTS (SNUTS; [@monnahan2025]) algorithm to decorrelate the posterior using the joint precision matrix. The R package 'tmbstan' (available on CRAN) provides an alternative for TMB which more closely links to Stan. Until the development of SNUTS, 'adnuts' was primarily used for ADMB models. For the foreseeable future SNUTS via 'adnuts' is likely to be the best general option for TMB users.
 
 For ADMB it mimics 'Stan' in functionality and feel, specifically providing no-U-turn (NUTS) sampling with adaptive mass matrix and parallel execution. Development of ADMB features is winding down, but functionality expected to be maintained in the coming years.
 
@@ -21,7 +21,7 @@ To use SNUTS with TMB the development version must be installed, as well as the 
 install.packages('StanEstimators', repos = c('<https://andrjohns.r-universe.dev>', '<https://cloud.r-project.org>'))
 ```
 
-The development version of 'adnuts' **is required for SNUTS functionality**. `devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='dev')`
+The development version of 'adnuts' **is required for SNUTS functionality** and will be submitted to CRAN upon acceptance of the SNUTS paper. `devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='dev')`
 
 A very basic example can be run as:
 
@@ -31,7 +31,7 @@ TMB::runExample('simple')
 mcmc <- sample_snuts(obj)
 ```
 
-A brief [demonstration file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/dev/inst/demo_SNUTS.R) is the best place to help get you started, and there is also a user guide: `vignette('adnuts')` for more detailed information.
+A brief [demonstration file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/dev/inst/demo_SNUTS.R) is the best place to help get you started, and there is also a user guide: see `vignette('adnuts')` for more detailed information.
 
 ## ADMB Installation and Usage
 
