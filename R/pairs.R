@@ -3,6 +3,7 @@
 #' objects. Use S3 class method 'pairs' instead, and see
 #' \code{?pairs.adfit} for help.
 #' @param ... Passed on
+#' @export
 pairs_admb <- function(...){
   .Deprecated('pairs', package='adnuts')
   pairs.adfit(...)
@@ -20,11 +21,13 @@ pairs_admb <- function(...){
 #'   'orig' (default) to use the order declared in the model, or
 #'   'slow' and 'fast' which are based on the effective sample
 #'   sizes ordered by slowest or fastest mixing
-#'   respectively. Finally 'mismatch' is for parameters with
+#'   respectively. 'mismatch' sorts by parameters with
 #'   large discrepancies between the MLE and posterior marginal
 #'   variances, defined as the absolute relative difference of
-#'   the MLE from the posterior i.e., abs((mle-post)/post). See
-#'   example for usage.
+#'   the MLE from the posterior i.e., abs((mle-post)/post).
+#'   Finally, 'cor' orders by the largest maximum absolute
+#'   pairwise posterior correlation (including lp__).
+#'   See example for usage.
 #' @param inc_warmup Whether to include the warmup samples or not
 #'   (default).
 #' @param diag What type of plot to include on the diagonal,
@@ -44,6 +47,7 @@ pairs_admb <- function(...){
 #'   to use in plotting.
 #' @param add.mle Boolean whether to add 95\% confidence ellipses
 #' @param add.monitor Boolean whether to print effective sample
+#' @param add.inits Boolean whether to add the initial values to the plot
 #' @param unbounded Whether to use the bounded or unbounded
 #'   version of the parameters.  size (ESS) and Rhat values on
 #'   the diagonal.
@@ -73,12 +77,13 @@ pairs_admb <- function(...){
 #' pairs(fit, pars=1:2, order='mismatch')
 #'
 pairs.adfit <- function(fit, pars=NULL,
-                       order=c('orig', 'slow', 'fast', 'mismatch'),
+                       order=c('orig', 'slow', 'fast', 'mismatch', 'cor'),
                        inc_warmup=FALSE,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        label.cex=.8, limits=NULL,
-                       add.mle=TRUE, add.monitor=TRUE, unbounded=FALSE,
+                       add.mle=TRUE, add.monitor=TRUE, add.inits=FALSE,
+                       unbounded=FALSE,
                        ...){
   if(unbounded | !add.mle){
     mle <- NULL
@@ -109,33 +114,44 @@ pairs.adfit <- function(fit, pars=NULL,
   par.names <- names(posterior)
   ess <- fit$monitor$n_eff
   Rhat <- fit$monitor$Rhat
+  if(add.inits & is.null(fit$inits)){
+    warning("add.inits not possible when fit$inits slot is empty -- ignoring")
+    add.inits <- FALSE
+  }
   if(!is.null(pars) & length(pars)<=1)
     stop("pars argument <=1, only makes sense for >=2")
   if(is.null(ess))
     warning("No monitor information found in fitted object so ESS and Rhat not available. See details of help.")
+
+  # reorder the parameter name vector
+  if(is.character(pars[1]) & order!='orig'){
+    warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
+    order <- 'orig'
+  }
   if(order=='orig'){
     ## do nothing
+    ind <- seq_along(par.names)
   } else if(order %in% c('slow', 'fast')){
     if(is.null(ess))
       stop("No effective sample sizes found so cannot order by slow/fast.")
-    if(is.character(pars[1])){
-      warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
-    } else {
-      ## Get slowest or fastest parameter names
+    ## Get slowest or fastest parameter names
       ind <- order(ess, decreasing=(order=='fast'))
-      par.names <- par.names[ind]
-    }
   } else if(order=='mismatch'){
-    if(is.character(pars[1])){
-      warning("Ignoring 'order' argument because parameter names supplied in 'pars'")
-    } else {
-      if(is.null(fit$mle$se)) stop("SEs unavailable so mismatch option fails")
+      if(is.null(fit$mle$se))
+        stop("SEs unavailable so mismatch option fails")
       tmp <- plot_uncertainties(fit, log=FALSE, plot=FALSE)
       x <- abs((tmp$sd.mle-tmp$sd.post)/tmp$sd.post)
       ind <- order(x, decreasing=TRUE)
-      par.names <- par.names[ind]
-    }
+  } else if(order=='cor'){
+      post.cor <- cor(posterior)
+      diag(post.cor) <- 0 # zero out so can take max along rows
+      max.cors <- sapply(1:ncol(post.cor),
+                         function(i) post.cor[i,which.max(abs(post.cor[i,]))])
+      ind <- order(abs(max.cors), decreasing=TRUE)
   }
+  # everything below here matches by par name so this is the only
+  # reordering needed
+  par.names <- par.names[ind]
 
   ## if(!(NCOL(posterior) %in% c(mle$nopar, mle$nopar+1)))
   ##   stop("Number of parameters in posterior and mle not the same")
@@ -150,7 +166,7 @@ pairs.adfit <- function(fit, pars=NULL,
     ## can be sorted from above
     pars <- par.names[pars]
   }
-  ## Now pars is character and possibly sorted by fast/slow
+  ## Now pars is character and possibly reordered
   pars.bad <- match(x=pars, table=names(posterior))
   if(any(is.na(pars.bad))){
     warning("Some par names did not match -- dropped")
@@ -252,11 +268,13 @@ pairs.adfit <- function(fit, pars=NULL,
           ## Add bivariate 95% normal levels from MLE
           points(x=mle$est[jj], y=mle$est[ii],
                  pch=16, cex=.5, col='red')
+          if(add.inits)
+            points(fit$inits[jj], fit$inits[ii], col='blue', cex=.5, pch=16)
           ## Get points of a bivariate normal 95% confidence contour
           if(!requireNamespace("ellipse", quietly=TRUE)){
             warning("ellipse package needs to be installed to show ellipses")
           } else {
-            ellipse.temp <- ellipse(x=mle$cor[jj, ii],
+            ellipse.temp <- ellipse::ellipse(x=mle$cor[jj, ii],
                                     scale=mle$se[c(jj, ii)],
                                     centre= mle$est[c(jj, ii)], npoints=1000,
                                     level=.95)

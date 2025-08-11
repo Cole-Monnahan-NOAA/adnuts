@@ -8,7 +8,7 @@ confidence ellipses.}
 \method{pairs}{adfit}(
   fit,
   pars = NULL,
-  order = c("orig", "slow", "fast", "mismatch"),
+  order = c("orig", "slow", "fast", "mismatch", "cor"),
   inc_warmup = FALSE,
   diag = c("trace", "acf", "hist"),
   acf.ylim = c(-1, 1),
@@ -18,6 +18,7 @@ confidence ellipses.}
   limits = NULL,
   add.mle = TRUE,
   add.monitor = TRUE,
+  add.inits = FALSE,
   unbounded = FALSE,
   ...
 )
@@ -34,11 +35,13 @@ a few key ones.}
 'orig' (default) to use the order declared in the model, or
 'slow' and 'fast' which are based on the effective sample
 sizes ordered by slowest or fastest mixing
-respectively. Finally 'mismatch' is for parameters with
+respectively. 'mismatch' sorts by parameters with
 large discrepancies between the MLE and posterior marginal
 variances, defined as the absolute relative difference of
-the MLE from the posterior i.e., abs((mle-post)/post). See
-example for usage.}
+the MLE from the posterior i.e., abs((mle-post)/post).
+Finally, 'cor' orders by the largest maximum absolute
+pairwise posterior correlation (including lp__).
+See example for usage.}
 
 \item{inc_warmup}{Whether to include the warmup samples or not
 (default).}
@@ -67,6 +70,8 @@ to use in plotting.}
 \item{add.mle}{Boolean whether to add 95\% confidence ellipses}
 
 \item{add.monitor}{Boolean whether to print effective sample}
+
+\item{add.inits}{Boolean whether to add the initial values to the plot}
 
 \item{unbounded}{Whether to use the bounded or unbounded
 version of the parameters.  size (ESS) and Rhat values on
