@@ -14,6 +14,15 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 ByteCompile: true
+Remotes:
+    andrjohns/StanEstimators
+Imports: ellipse,
+    rstan,
+    R2admb, 
+    ggplot2, 
+    rlang, 
+    StanEstimators,
+    Matrix
 Suggests:
     shinystan (>= 2.5.0),
     matrixcalc (>= 1.0.3),
@@ -25,13 +34,4 @@ Suggests:
     withr,
     snowfall,
     testthat (>= 2.1.0)
-Remotes:
-    git::https://github.com/andrjohns/StanEstimators
-Imports: ellipse,
-    rstan,
-    R2admb, 
-    ggplot2, 
-    rlang, 
-    StanEstimators,
-    Matrix
 VignetteBuilder: knitr

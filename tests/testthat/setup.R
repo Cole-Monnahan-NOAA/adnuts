@@ -1,7 +1,7 @@
 ## Skip consistency and reproducibility tests? Only need to run
 ## these locally when ADMB changes. Last checked 2025-08-11 with
 ## ADMB version 13.2.
-skip_consistency <- skip_reproducibility <- skip_ADMB <- TRUE
+skip_consistency <- skip_reproducibility <- skip_ADMB <- FALSE
 
 # Only TMB is tested as of July 2025
 skip_TMB <- FALSE
