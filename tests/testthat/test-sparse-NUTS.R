@@ -279,6 +279,7 @@ test_that("small models work", {
 
 
 test_that("num_samples and num_warmup work", {
+  skip_if(skip_RTMB)
   if('TMB' %in% .packages()) detach(package:TMB, unload=TRUE)
   suppressWarnings(library(RTMB))
   f <- function(params){
