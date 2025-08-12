@@ -532,7 +532,7 @@ check_identifiable <- function(model, path=getwd()){
     }
   } else if(is(M,"Matrix")){
     ##  warning( "Use of Q is highly experimental still" )
-    stopifnot(require(Matrix))
+   # stopifnot(require(Matrix))
     # M is actually Q, i.e., the inverse-mass
     # Antidiagonal matrix JJ = I
     J = Matrix::sparseMatrix( i=1:nrow(M), j=nrow(M):1 )

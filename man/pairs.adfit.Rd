@@ -7,6 +7,7 @@ confidence ellipses.}
 \usage{
 \method{pairs}{adfit}(
   fit,
+  ...,
   pars = NULL,
   order = c("orig", "slow", "fast", "mismatch", "cor"),
   inc_warmup = FALSE,
@@ -19,12 +20,14 @@ confidence ellipses.}
   add.mle = TRUE,
   add.monitor = TRUE,
   add.inits = FALSE,
-  unbounded = FALSE,
-  ...
+  unbounded = FALSE
 )
 }
 \arguments{
 \item{fit}{A list as returned by \code{sample_nuts}.}
+
+\item{...}{Arguments to be passed to plot call in lower
+triangular panels (scatterplots).}
 
 \item{pars}{A character vector of parameters or integers
 representing which parameters to subset. Useful if the model
@@ -76,9 +79,6 @@ to use in plotting.}
 \item{unbounded}{Whether to use the bounded or unbounded
 version of the parameters.  size (ESS) and Rhat values on
 the diagonal.}
-
-\item{...}{Arguments to be passed to plot call in lower
-triangular panels (scatterplots).}
 }
 \value{
 Produces a plot, and returns nothing.

@@ -4,7 +4,7 @@
 \alias{.get_inits}
 \title{Get a single initial value vector in untransformed model space}
 \usage{
-.get_inits(init, metric, obj2, seed, inputs)
+.get_inits(init, obj2, seed, inputs)
 }
 \arguments{
 \item{init}{The initial value strategy}

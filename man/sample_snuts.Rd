@@ -78,7 +78,7 @@ for all parameters, similar ot Stan's default behavior. If
 the joint NLL is undefined at the initial values then the
 model will exit and return the initial vector for further
 investigation by the user, if desired. Note that
-\code{\link{StanEstimators::stan_sample}} only allows for
+\code{\link[StanEstimators]{stan_sample}} only allows for
 the same init vector for all chains currently. If a seed is
 specified it will be set and thus the inits used will be
 reproducible. The inits are also returned in the 'inits'

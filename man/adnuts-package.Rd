@@ -85,7 +85,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Cole Monnahan \email{monnahc@uw.edu} (\href{https://orcid.org/0000-0003-0871-6700}{ORCID})
+\strong{Maintainer}: Cole Monnahan \email{cole.monnahan@noaa.gov} (\href{https://orcid.org/0000-0003-0871-6700}{ORCID})
 
 }
 \keyword{internal}

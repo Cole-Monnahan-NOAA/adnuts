@@ -24,7 +24,7 @@
 #'   the joint NLL is undefined at the initial values then the
 #'   model will exit and return the initial vector for further
 #'   investigation by the user, if desired. Note that
-#'   \code{\link{StanEstimators::stan_sample}} only allows for
+#'   \code{\link[StanEstimators]{stan_sample}} only allows for
 #'   the same init vector for all chains currently. If a seed is
 #'   specified it will be set and thus the inits used will be
 #'   reproducible. The inits are also returned in the 'inits'
@@ -142,6 +142,7 @@ sample_snuts <-
            print=TRUE, rotation_only=FALSE,
            iter=2000, warmup=floor(iter/2),
            ...){
+
     if (!requireNamespace("StanEstimators", quietly = TRUE))
       stop("StanEstimators package must be installed manually to use this function. \nSee https://github.com/andrjohns/StanEstimators")
     if(!is.list(obj)) stop("obj appears not to be a valid TMB object")
@@ -253,8 +254,8 @@ sample_snuts <-
     fit2$time.opt <- inputs$time.opt
     fit2$inits <- yinits
     ## gradient timings to check for added overhead
-    if(require(microbenchmark)){
-      bench <- microbenchmark(obj2$gr(inits),
+    if(requireNamespace("microbenchmark", quietly=TRUE)){
+      bench <- microbenchmark::microbenchmark(obj2$gr(inits),
                               gsparse(inits),
                               times=500, unit='s')
       fit2$time.gr <- summary(bench)$median[1]

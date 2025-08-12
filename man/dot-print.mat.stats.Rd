@@ -8,8 +8,6 @@
 }
 \arguments{
 \item{x}{matrix object}
-
-\item{name}{}
 }
 \description{
 Print matrix stats

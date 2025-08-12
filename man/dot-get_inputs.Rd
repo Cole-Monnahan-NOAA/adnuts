@@ -2,20 +2,12 @@
 % Please edit documentation in R/sparse.R
 \name{.get_inputs}
 \alias{.get_inputs}
-\title{Prepare inputs for sparse sampling
- @param obj Object
- @param skip_optimization Whether to skip or not
- @param laplace Whether to due the LA or not
- @param metric Which metric
- @param Q Sparse precision
- @param Qinv Inverse of Q
- @return A list containing Q, Qinv, the mle list, and timings}
+\title{Prepare inputs for sparse sampling}
 \usage{
 .get_inputs(obj, skip_optimization, laplace, metric, Q, Qinv)
 }
 \description{
-Prepare inputs for sparse sampling
- @param obj Object
+@param obj Object
  @param skip_optimization Whether to skip or not
  @param laplace Whether to due the LA or not
  @param metric Which metric

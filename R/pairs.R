@@ -76,15 +76,16 @@ pairs_admb <- function(...){
 #' pairs(fit, pars=1:2, order='fast')
 #' pairs(fit, pars=1:2, order='mismatch')
 #'
-pairs.adfit <- function(fit, pars=NULL,
+pairs.adfit <- function(fit, ...,
+                        pars=NULL,
                        order=c('orig', 'slow', 'fast', 'mismatch', 'cor'),
                        inc_warmup=FALSE,
                        diag=c("trace","acf","hist"),
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        label.cex=.8, limits=NULL,
                        add.mle=TRUE, add.monitor=TRUE, add.inits=FALSE,
-                       unbounded=FALSE,
-                       ...){
+                       unbounded=FALSE
+                       ){
   if(unbounded | !add.mle){
     mle <- NULL
   } else {

@@ -16,7 +16,8 @@ sample_sparse_tmb <- function(...){
 #' @export
 get_post <- function(x, invf, parnames, array=FALSE) {
   p <- x@draws |> as.data.frame()
-  q <- subset(p, select=-c(lp__, .iteration, .draw, .chain))
+  #q <- subset(p, select=-c(lp__, .iteration, .draw, .chain))
+  q <- p[, which(!names(p) %in% c('lp__', '.iteration', '.draw', '.chain')), drop=FALSE]
   names(q) <- parnames
   if(ncol(q)==1){
     q <- as.data.frame(apply(q, 1, invf)) |> cbind(p$lp__)
@@ -83,7 +84,6 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
 #' Print matrix stats
 #'
 #' @param x matrix object
-#' @param name
 #'
 .print.mat.stats <- function(x){
   if(is.null(x)) return(NULL)
@@ -98,6 +98,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
 }
 
 #' Prepare inputs for sparse sampling
+#'
 #'  @param obj Object
 #'  @param skip_optimization Whether to skip or not
 #'  @param laplace Whether to due the LA or not
@@ -105,8 +106,10 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
 #'  @param Q Sparse precision
 #'  @param Qinv Inverse of Q
 #'  @return A list containing Q, Qinv, the mle list, and timings
+#'
 .get_inputs <- function(obj, skip_optimization, laplace, metric, Q, Qinv) {
 
+  isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
   time.opt <- time.Q <- time.Qinv <- 0
   if(metric=='stan'){
     parnames <- .make_unique_names(names(obj$env$last.par.best))
@@ -135,8 +138,13 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
     parnames <- .make_unique_names(names(mle))
     if(is.null(Q) & hasRE){
       message("Getting Q...")
-      time.Q <- as.numeric(system.time(
-        sdr <- sdreport(obj, getJointPrecision=TRUE))[3])
+      if(isRTMB){
+        time.Q <- as.numeric(system.time(
+          sdr <- RTMB::sdreport(obj, getJointPrecision=TRUE))[3])
+      } else {
+        time.Q <- as.numeric(system.time(
+          sdr <- TMB::sdreport(obj, getJointPrecision=TRUE))[3])
+      }
       Q <- sdr$jointPrecision
     }
     if(!is.null(Q))  dimnames(Q) <- list(parnames, parnames)
@@ -171,7 +179,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
     stopifnot(all.equal(length(mle), nrow(Qinv)))
   }
   ses <- suppressWarnings(sqrt(diag(Qinv)))
-  mycor <- suppressWarnings(cov2cor(Qinv))
+  mycor <- suppressWarnings(stats::cov2cor(Qinv))
 
     if(!all(is.finite(ses))){
     if(metric %in% c('unit', 'auto')){
@@ -198,7 +206,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
 #' @param obj2 The joint TMB model
 #' @param seed RNG seed
 #' @param inputs A list as returned by \code{.get_inputs}.
-.get_inits <- function(init, metric, obj2, seed, inputs) {
+.get_inits <- function(init, obj2, seed, inputs) {
   # only certain combinations of metrics and inputs can work
   metric <- inputs$metric
   if(metric=='stan' & init %in% c('random', 'random-t'))
@@ -293,7 +301,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
     # This metric is carefully constructured to match the dense
     # metric up to numerical precision. But as it is slower it is
     # not typically used.
-    stopifnot(require(Matrix))
+   # stopifnot(require(Matrix))
     if(!is(Q,"Matrix")) stop("Q is not a Matrix object, something went wrong")
     # M is actually Q, i.e., the inverse-mass
     # Antidiagonal matrix JJ = I
@@ -370,7 +378,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
       } else {
         # no Q but does have Qinv, e.g., a model w/o RE or using the LA
         ## check for high correlations
-        cors <- cov2cor(Qinv)[lower.tri(Qinv, diag=FALSE)]
+        cors <- stats::cov2cor(Qinv)[lower.tri(Qinv, diag=FALSE)]
         if(NROW(cors)==1) {
           message("diag metric selected b/c only a single parameter")
           return(rdiag)
@@ -385,12 +393,12 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
       }
     } else {
       # has a Q
-      cors <- cov2cor(Qinv)[lower.tri(Qinv, diag=FALSE)]
+      cors <- stats::cov2cor(Qinv)[lower.tri(Qinv, diag=FALSE)]
       if(max(abs(cors))<.8){
         message("diag metric selected b/c of low correlations")
         return(rdiag)
       } else {
-        if(!require(microbenchmark)){
+        if(!requireNamespace("microbenchmark", quietly=TRUE)){
           message("sparse metric selected b/c no timing available -- please install microbenchmark")
           ## check for speed differences
           return(rsparse)
@@ -446,13 +454,13 @@ plot_Q <- function(fit, Q=NULL){
     if(is.null(fit$mle$Q)) return(NULL)
     nn <- length(fit$par_names)
     if(is.null(fit$mle$Qinv)){
-      corr <- cov2cor(as.matrix(Matrix::solve(fit$mle$Q)))
+      corr <- stats::cov2cor(as.matrix(Matrix::solve(fit$mle$Q)))
     } else {
-      corr <- cov2cor(fit$mle$Qinv)
+      corr <- stats::cov2cor(fit$mle$Qinv)
     }
     Q <- fit$mle$Q
   } else {
-    corr <- cov2cor(solve(Q))
+    corr <- stats::cov2cor(solve(Q))
   }
   Q[Q!=0] <- 1e-10
   Q[lower.tri(Q,TRUE)] <- corr[lower.tri(Q,TRUE)]

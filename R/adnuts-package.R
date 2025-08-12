@@ -80,7 +80,9 @@
 #' @importFrom ellipse ellipse
 #' @importFrom rstan monitor
 #' @importFrom ggplot2 ggplot aes geom_point theme_bw facet_wrap
-## #' @importFrom withr defer
+#' @importFrom methods as is
+#' @importFrom stats cov2cor
+#' @importFrom utils str
 ## usethis namespace: start
 ## usethis namespace: end
 NULL

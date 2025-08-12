@@ -6,12 +6,13 @@ Authors@R: person("Cole", "Monnahan", email = "cole.monnahan@noaa.gov", role = c
 Description: Bayesian inference powered by the sparse no-U-turn (SNUTS) algorithm by 
  Monnahan et al. (in prep). SNUTS is implemented for 'Template Model Builder' ('TMB') models via the 'StanEstimators' interface, which improves sampling efficiency by decorrelating the posterior via a sparse metric prior to sampling. 'AD Model Builder' ('ADMB') models are also supported and have functionality is similar to 'Stan'. The 'rstan' and 'shinystan' packages are used for diagnostics and inference.
 Depends:
-    R (>= 3.6.0)
+    R (>= 4.1.0),
+    StanEstimators
 URL: https://github.com/Cole-Monnahan-NOAA/adnuts
 BugReports: https://github.com/Cole-Monnahan-NOAA/adnuts/issues
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 RoxygenNote: 7.3.2
 ByteCompile: true
 Remotes:
@@ -21,8 +22,12 @@ Imports: ellipse,
     R2admb, 
     ggplot2, 
     rlang, 
-    StanEstimators,
-    Matrix
+    microbenchmark,
+    snowfall,
+    mvtnorm,
+    Matrix,
+    future,
+    callr
 Suggests:
     shinystan (>= 2.5.0),
     matrixcalc (>= 1.0.3),
@@ -32,6 +37,5 @@ Suggests:
     RTMB,
     rmarkdown,
     withr,
-    snowfall,
     testthat (>= 2.1.0)
 VignetteBuilder: knitr
