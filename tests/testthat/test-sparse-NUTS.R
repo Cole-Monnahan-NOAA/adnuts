@@ -186,6 +186,12 @@ test_that("random inits work", {
   #   geom_line()
 })
 
+test_that("benchmark works", {
+  skip_if(skip_TMB)
+  obj <- get_simple_obj()
+  bench <- benchmark_metrics(obj)
+  expect_true(is.data.frame(bench))
+})
 
 test_that("RTMB works", {
   skip_if(skip_RTMB) # not sure why this fails when testing but not locally?
@@ -309,3 +315,5 @@ test_that("num_samples and num_warmup work", {
   expect_true(fit1$warmup==1000)
   expect_true(fit1$iter==1000)
 })
+
+

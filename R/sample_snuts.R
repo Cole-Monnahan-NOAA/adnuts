@@ -49,10 +49,11 @@
 #'   and only use NUTS to sample the fixed effects, or turn it
 #'   off and sample from the joint parameter space (default).
 #' @param skip_optimization Whether to skip optimization or not
-#'   (default).
+#'   (default). If the model is already optimized and Q available
+#'   these redundant steps can be skipped.
 #' @param Q The sparse precision matrix. It is calculated
 #'   internally if not specified (default).
-#' @param Qinv The dense matrix (M). It is calculated internally
+#' @param Qinv The dense matrix \eqn{Q^{-1}}. It is calculated internally
 #'   if not specified (default).
 #' @param globals A named list of objects to pass to new R
 #'   sessions when running in parallel and using RTMB. Typically
@@ -120,8 +121,8 @@
 #' specific to \strong{TMB} and is distinct from the Stan metric,
 #' which is controlled via the \code{control} list argument in
 #' the sampling function. Stan by default adapts a diagonal mass
-#' matrix (metric_e) using a series of expanding windows. If Q is
-#' a good estimate of the global covariance then this is not
+#' matrix (metric_e) using a series of expanding windows. If \eqn{Q} is
+#' a good estimate of the global precision then this is not
 #' needed and disabling Stan's metric adaptation is recommended.
 #' This can be done by setting `adapt_stan_metric=FALSE`. If left
 #' at NULL Stan's adaptation will only be done for metrics 'stan'
@@ -253,21 +254,7 @@ sample_snuts <-
     fit2$time.Q <- inputs$time.Q; fit2$time.Qinv <- inputs$time.Qinv;
     fit2$time.opt <- inputs$time.opt
     fit2$inits <- yinits
-    ## gradient timings to check for added overhead
-    if(requireNamespace("microbenchmark", quietly=TRUE)){
-      bench <- microbenchmark::microbenchmark(obj2$gr(inits),
-                              gsparse(inits),
-                              times=500, unit='s')
-      fit2$time.gr <- summary(bench)$median[1]
-      fit2$time.gr2 <- summary(bench)$median[2]
-    } else {
-      warning("Package microbenchmark required to do accurate gradient timings, using system.time() instead")
-      fit2$time.gr <-
-        as.numeric(system.time(trash <- replicate(1000, obj2$gr(inits)))[3])
-      fit2$time.gr2 <-
-        as.numeric(system.time(trash <- replicate(1000, gsparse(inits)))[3])
-    }
-    cat('\n\n')
+     cat('\n\n')
     if(print) print(fit2)
     return(invisible(fit2))
   }

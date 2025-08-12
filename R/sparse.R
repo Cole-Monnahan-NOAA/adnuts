@@ -467,3 +467,58 @@ plot_Q <- function(fit, Q=NULL){
   Matrix::image(Q, useRaster=TRUE, at=seq(-1,1, len=50))
 }
 
+
+#' Calculate gradient timings on a model for different metrics
+#'
+#' @param obj A TMB object
+#' @param metrics A character vector of different metrics to benchmark
+#' @param times How many evaluations to do
+#' @param model_name An optional character name for the model, if
+#'   NULL will pull from the DLL name
+#' @export
+#' @return A data.frame containing the median gradient timing
+#'   (time), the percent sparsity of \eqn{Q} and the dimension of
+#'   the model (npar).
+#'
+benchmark_metrics <- function(obj, times=1000, metrics=NULL,
+                              model_name=NULL){
+  hasRE <- length(obj$env$random)>0
+  if(is.null(metrics)){
+    metrics <- c('unit', 'diag', 'dense', 'sparse')
+    # if no RE, sparse won't work
+    if(!hasRE)  metrics <- c('unit', 'diag', 'dense')
+  }
+  if(!hasRE & any(c('sparse', 'sparse-naive') %in% metrics))
+    stop('sparse metric not allowed for models without random effects')
+  if(is.null(model_name)) model_name <- obj$env$DLL
+  message("optimizing model ", model_name, "...")
+  obj$env$beSilent()
+  opt <- with(obj, nlminb(par, fn, gr))
+  sdrep <- sdreport(obj, getJointPrecision=TRUE)
+  Q <- sdrep$jointPrecision
+  if(!is.null(Q)){
+    M <- solve(as.matrix(Q))
+  }  else {
+    M <- sdrep$cov.fixed
+    Q <- Matrix(solve(M), sparse = TRUE)
+  }
+  n <- length(obj$env$last.par.best)
+  if(!requireNamespace(package='microbenchmark', quietly=TRUE))
+    stop("The microbenchmark package is required for this function")
+  res <- lapply(metrics, function(metric) {
+    out <- adnuts::sample_snuts(obj, rotation_only = TRUE,
+                                     metric=metric, Q=Q, Qinv=M,
+                                     skip_optimization = TRUE)
+    metric <- out$metric # in case auto
+    x0 <- out$x.cur
+    # make sure to add tiny random component during benchmarking to
+    # avoid TMB tricks of skipping calcs
+    time <- summary(microbenchmark::microbenchmark(out$gr2(x0+rnorm(n, sd=.0000001)),
+                                   unit='ms', times=times))$median
+    return(data.frame(model=model_name, metric=metric, time=time))
+  })
+  res <- do.call(rbind, res) |>
+    cbind(pct.sparsity=round(100*mean(Q[lower.tri(Q)] == 0),2)) |>
+    cbind(npar=length(obj$env$last.par.best))
+  res
+}
