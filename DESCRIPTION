@@ -27,6 +27,7 @@ Imports: ellipse,
     mvtnorm,
     Matrix,
     future,
+    methods,
     callr
 Suggests:
     shinystan (>= 2.5.0),

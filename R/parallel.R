@@ -45,7 +45,8 @@ sample_admb_parallel <- function(parallel_number, path, algorithm, ...){
 ## A wrapper for running TMB models in parallel
 sample_tmb_parallel <-  function(parallel_number, obj, init, path,
                                  algorithm, lower, upper, seed, laplace, ...){
-library(Matrix)
+# library(Matrix)
+
   source("c:/Users/cole.monnahan/adnuts/R/utils.R")
   source("c:/Users/cole.monnahan/adnuts/R/sample_tmb_deprecated.R")
   ## Each node starts in a random work directory. Rebuild TMB model obj so

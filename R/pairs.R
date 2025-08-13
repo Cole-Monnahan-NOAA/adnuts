@@ -53,6 +53,7 @@ pairs_admb <- function(...){
 #'   the diagonal.
 #' @param ... Arguments to be passed to plot call in lower
 #'   triangular panels (scatterplots).
+#' @method pairs adfit
 #' @return Produces a plot, and returns nothing.
 #' @details This function is modified from the base \code{pairs}
 #'   code to work specifically with fits from the 'adnuts'
@@ -76,7 +77,7 @@ pairs_admb <- function(...){
 #' pairs(fit, pars=1:2, order='fast')
 #' pairs(fit, pars=1:2, order='mismatch')
 #'
-pairs.adfit <- function(fit, ...,
+pairs.adfit <- function(x,
                         pars=NULL,
                        order=c('orig', 'slow', 'fast', 'mismatch', 'cor'),
                        inc_warmup=FALSE,
@@ -84,8 +85,9 @@ pairs.adfit <- function(fit, ...,
                        acf.ylim=c(-1,1), ymult=NULL, axis.col=gray(.5),
                        label.cex=.8, limits=NULL,
                        add.mle=TRUE, add.monitor=TRUE, add.inits=FALSE,
-                       unbounded=FALSE
+                       unbounded=FALSE, ...
                        ){
+  fit <- x
   if(unbounded | !add.mle){
     mle <- NULL
   } else {

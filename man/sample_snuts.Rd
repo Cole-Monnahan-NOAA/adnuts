@@ -91,12 +91,13 @@ best metric (see details), otherwise one of "sparse",
 specified.}
 
 \item{skip_optimization}{Whether to skip optimization or not
-(default).}
+(default). If the model is already optimized and Q available
+these redundant steps can be skipped.}
 
 \item{Q}{The sparse precision matrix. It is calculated
 internally if not specified (default).}
 
-\item{Qinv}{The dense matrix (M). It is calculated internally
+\item{Qinv}{The dense matrix \eqn{Q^{-1}}. It is calculated internally
 if not specified (default).}
 
 \item{globals}{A named list of objects to pass to new R
@@ -177,8 +178,8 @@ Note that the \code{metric} parameter described here is
 specific to \strong{TMB} and is distinct from the Stan metric,
 which is controlled via the \code{control} list argument in
 the sampling function. Stan by default adapts a diagonal mass
-matrix (metric_e) using a series of expanding windows. If Q is
-a good estimate of the global covariance then this is not
+matrix (metric_e) using a series of expanding windows. If \eqn{Q} is
+a good estimate of the global precision then this is not
 needed and disabling Stan's metric adaptation is recommended.
 This can be done by setting `adapt_stan_metric=FALSE`. If left
 at NULL Stan's adaptation will only be done for metrics 'stan'
