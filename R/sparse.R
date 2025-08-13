@@ -125,6 +125,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
 #'
 .get_Qinv <- function(obj){
   isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
+  # breaks w/ Laplace turned on so need to catch it before use
   # if(length(obj$env$random)>0){
   #   warning("Qinv does not make sense for models with random effects")
   #   return(NULL)
@@ -436,9 +437,15 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
           ## check for speed differences
           return(rsparse)
         } else {
-          bench <- microbenchmark::microbenchmark(rdense$gr2(rdense$x.cur),
-                                                  rsparse$gr2(rsparse$x.cur),
-                                                  times = 500)
+          # when doing timing need to add random components to
+          # input, otherwise TMB may skip calculations and throw
+          # off benchmarking
+          npars <- length(rdense$x.cur)
+          bench <- microbenchmark::microbenchmark(
+            rdense$gr2(rdense$x.cur+rnorm(npars, sd=1e-10)),
+            rsparse$gr2(rsparse$x.cur+rnorm(npars, sd=1e-10)),
+            times = 500
+            )
           tdense <- summary(bench)$median[1]
           tsparse <- summary(bench)$median[2]
           if(tdense < tsparse){
@@ -515,6 +522,8 @@ plot_Q <- function(fit, Q=NULL){
 #'
 benchmark_metrics <- function(obj, times=1000, metrics=NULL,
                               model_name=NULL){
+  if(!requireNamespace(package='microbenchmark', quietly=TRUE))
+    stop("The microbenchmark package is required for this function")
   hasRE <- length(obj$env$random)>0
   if(is.null(metrics)){
     metrics <- c('unit', 'diag', 'dense', 'sparse')
@@ -535,8 +544,6 @@ benchmark_metrics <- function(obj, times=1000, metrics=NULL,
     Q <- NULL
   }
   n <- length(obj$env$last.par.best)
-  if(!requireNamespace(package='microbenchmark', quietly=TRUE))
-    stop("The microbenchmark package is required for this function")
   res <- lapply(metrics, function(metric) {
     out <- adnuts::sample_snuts(obj, rotation_only = TRUE,
                                      metric=metric, Q=Q, Qinv=M,
@@ -545,7 +552,7 @@ benchmark_metrics <- function(obj, times=1000, metrics=NULL,
     x0 <- out$x.cur
     # make sure to add tiny random component during benchmarking to
     # avoid TMB tricks of skipping calcs
-    time <- summary(microbenchmark::microbenchmark(out$gr2(x0+rnorm(n, sd=.0000001)),
+    time <- summary(microbenchmark::microbenchmark(out$gr2(x0+rnorm(n, sd=1e-10)),
                                    unit='ms', times=times))$median
     return(data.frame(model=model_name, metric=metric, time=time))
   })
