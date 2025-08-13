@@ -97,6 +97,47 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
           ' (min=',round(mine,3), ', max=', round(maxe,1),")")
 }
 
+#' Get the joint precision matrix Q from an optimized TMB or RTMB obj.
+#'
+#' @param obj An optimized TMB or RTMB object
+#' @return A sparse matrix Q
+#'
+.get_Q <- function(obj){
+  isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
+  if(length(obj$env$random)==0){
+    warning("Q not available for models without random effects")
+    return(NULL)
+  }
+  if(isRTMB){
+    Q <- RTMB::sdreport(obj, getJointPrecision=TRUE,                                              skip.delta.method=TRUE)$jointPrecision
+  } else {
+    Q <- TMB::sdreport(obj, getJointPrecision=TRUE,
+                       skip.delta.method=TRUE)$jointPrecision
+  }
+  return(Q)
+}
+
+#' Get the joint covariance Sigma from an optimized TMB or RTMB
+#' obj without random effects.
+#'
+#' @param obj An optimized TMB or RTMB object
+#' @return A dense matrix Sigma
+#'
+.get_Qinv <- function(obj){
+  isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
+  # if(length(obj$env$random)>0){
+  #   warning("Qinv does not make sense for models with random effects")
+  #   return(NULL)
+  # }
+  if(isRTMB){
+    Qinv <- RTMB::sdreport(obj, skip.delta.method=TRUE)$cov.fixed
+  } else {
+    Qinv <- TMB::sdreport(obj, skip.delta.method=TRUE)$cov.fixed
+  }
+  return(Qinv)
+}
+
+
 #' Prepare inputs for sparse sampling
 #'
 #'  @param obj Object
@@ -109,7 +150,6 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
 #'
 .get_inputs <- function(obj, skip_optimization, laplace, metric, Q, Qinv) {
 
-  isRTMB <- ifelse(obj$env$DLL=='RTMB', TRUE, FALSE)
   time.opt <- time.Q <- time.Qinv <- 0
   if(metric=='stan'){
     parnames <- .make_unique_names(names(obj$env$last.par.best))
@@ -138,14 +178,8 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
     parnames <- .make_unique_names(names(mle))
     if(is.null(Q) & hasRE){
       message("Getting Q...")
-      if(isRTMB){
-        time.Q <- as.numeric(system.time(
-          sdr <- RTMB::sdreport(obj, getJointPrecision=TRUE))[3])
-      } else {
-        time.Q <- as.numeric(system.time(
-          sdr <- TMB::sdreport(obj, getJointPrecision=TRUE))[3])
-      }
-      Q <- sdr$jointPrecision
+      time.Q <- as.numeric(system.time(
+        Q <- .get_Q(obj))[3])
     }
     if(!is.null(Q))  dimnames(Q) <- list(parnames, parnames)
     if(is.null(Qinv)){
@@ -155,7 +189,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
         time.Qinv <- as.numeric(system.time(Qinv <- solve(Q))[3])
       } else if(!hasRE){
         ## fixed effect only model
-        time.Qinv <- as.numeric(system.time(Qinv <- sdreport(obj)$cov.fixed)[3])
+        time.Qinv <- as.numeric(system.time(Qinv <- .get_Qinv(obj))[3])
       } else {
         stop("something wrong here")
       }
@@ -166,8 +200,7 @@ as.tmbfit <- function(x, parnames, mle, invf, metric, model='anonymous'){
     stopifnot(all.equal(length(mle), nrow(Qinv)))
   } else { #laplace is turned on
     message("Getting M for fixed effects...")
-    time.Qinv <- as.numeric(system.time(sdr <- sdreport(obj))[3])
-    Qinv <- sdr$cov.fixed
+    time.Qinv <- as.numeric(system.time(Qinv <- .get_Qinv(obj))[3])
     .print.mat.stats(Qinv)
     if(is.null(opt)){
       mle <- opt$par
@@ -494,13 +527,12 @@ benchmark_metrics <- function(obj, times=1000, metrics=NULL,
   message("optimizing model ", model_name, "...")
   obj$env$beSilent()
   opt <- with(obj, nlminb(par, fn, gr))
-  sdrep <- sdreport(obj, getJointPrecision=TRUE)
-  Q <- sdrep$jointPrecision
-  if(!is.null(Q)){
+  if(hasRE){
+    Q <- .get_Q(obj)
     M <- solve(as.matrix(Q))
-  }  else {
-    M <- sdrep$cov.fixed
-    Q <- Matrix(solve(M), sparse = TRUE)
+  } else {
+    M <- .get_Qinv(obj)
+    Q <- NULL
   }
   n <- length(obj$env$last.par.best)
   if(!requireNamespace(package='microbenchmark', quietly=TRUE))
