@@ -17,10 +17,10 @@ editor_options:
 
 ## Summary
 
-`adnuts`' (pronounced A-D NUTS like A-D MB) main purpose is to
-provide a wrapper for performing Bayesian analyses using the
-no-U-turn (NUTS) algorithm [@hoffman2014] for TMB
-[@kristensen2016] and ADMB [@fournier2012] models. 
+`adnuts` (pronounced A-D NUTS like A-D MB) provides a wrapper for
+performing Bayesian analyses using the no-U-turn (NUTS) algorithm
+[@hoffman2014] for TMB [@kristensen2016] and ADMB [@fournier2012]
+models.
 
 For TMB models the NUTS algorithm is in the Stan software
 [@carpenter2017] and linked through the
@@ -29,14 +29,20 @@ package. `adnuts` implements the sparse NUTS (SNUTS) algorithm of
 [@monnahan2025] by decorrelating and descaling the posterior
 distribution prior to passing to Stan. For models with high
 correlations and sparse precision matrices, SNUTS can
-substantially improve sampling efficiency. For models without
-strong global correlations, the related package `tmbstan` is
-likely to be faster due to lower overhead and may be a better
-option. Eventually, Stan may include SNUTS functionality and in
-that case `tmbstan` may be a better long term option. For TMB
-users now, SNUTS via `adnuts` is likely to be the best overall
-package for Bayesian inference. Importantly, it works for TMB and
-RTMB models, and can be run on TMB models from existing packages.
+substantially improve sampling efficiency.  Importantly, it works
+for TMB and RTMB models, and can be run on models from
+existing packages.
+
+Basic usage for a TMB or RTMB object `obj` is shown as
+follows, with a more in depth article on the website.
+````{r, eval=FALSE}
+fit <- sample_snuts(obj)
+print(fit)
+plot(fit)
+pairs(fit, order='slow')
+post <- as.data.frame(fit)
+launch_shinytmb(fit)
+````
 
 ADMB models contain the algorithm code internally, but this
 package provides the user a convenient environment to run and
@@ -46,13 +52,25 @@ the near future. This package aims to give ADMB models similar
 functionality to the software Stan and `rstan` in particular
 [@carpenter2017; @stan2017].
 
+Assuming a valid ADMB model located in directory `path` has been
+built and optimized successfully, then
+````{r, eval=FALSE}
+fit <- sample_nuts(model='simple', path=path)
+print(fit)
+plot(fit)
+pairs(fit, order='slow')
+post <- as.data.frame(fit)
+launch_shinyadmb(fit)
+````
+
 ## History
 The package has undergone several shifts in focus. Initially, it
-was developed to provide a NUTS implementation for models where
+was developed to provide a NUTS implementation in R for models where
 the log-density and log-density gradient could be written as R
 functions (e.g., TMB). However, the `tmbstan` package was
 developed and became the preferred option for TMB users, so the
 focus switched to ADMB models and TMB functionality was
-de-emphasized. Now, with the development of SNUTS, the primary
-focus of `adnuts` is for TMB sampling via the SNUTS approach.
+de-emphasized. In 2025, with the development of SNUTS, the primary
+focus of `adnuts` was shifted back to TMB models via the SNUTS approach.
 
+## References

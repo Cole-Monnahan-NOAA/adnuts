@@ -68,6 +68,12 @@
         <dd>Construtor for tmbfit objects</dd>
       </dl><dl><dt>
 
+          <code><a href="benchmark_metrics.html">benchmark_metrics()</a></code>
+
+        </dt>
+        <dd>Calculate gradient timings on a model for different metrics</dd>
+      </dl><dl><dt>
+
           <code><a href="check_identifiable.html">check_identifiable()</a></code>
 
         </dt>
@@ -107,7 +113,19 @@
           <code><a href="dot-get_inputs.html">.get_inputs()</a></code>
 
         </dt>
-        <dd>Prepare inputs for sparse sampling @param obj Object @param skip_optimization Whether to skip or not @param laplace Whether to due the LA or not @param metric Which metric @param Q Sparse precision @param Qinv Inverse of Q @return A list containing Q, Qinv, the mle list, and timings</dd>
+        <dd>Prepare inputs for sparse sampling</dd>
+      </dl><dl><dt>
+
+          <code><a href="dot-get_Q.html">.get_Q()</a></code>
+
+        </dt>
+        <dd>Get the joint precision matrix Q from an optimized TMB or RTMB obj.</dd>
+      </dl><dl><dt>
+
+          <code><a href="dot-get_Qinv.html">.get_Qinv()</a></code>
+
+        </dt>
+        <dd>Get the joint covariance Sigma from an optimized TMB or RTMB obj without random effects.</dd>
       </dl><dl><dt>
 
           <code><a href="dot-make_unique_names.html">.make_unique_names()</a></code>

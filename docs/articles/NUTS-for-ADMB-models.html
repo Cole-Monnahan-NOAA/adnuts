@@ -60,24 +60,30 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>NUTS for ADMB models</h1>
+                        <h4 data-toc-skip class="author">Cole C.
+Monnahan</h4>
             
+            <h4 data-toc-skip class="date">2025-08-13</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/blob/HEAD/vignettes/NUTS-for-ADMB-models.Rmd" class="external-link"><code>vignettes/NUTS-for-ADMB-models.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/blob/HEAD/vignettes/articles/NUTS-for-ADMB-models.Rmd" class="external-link"><code>vignettes/articles/NUTS-for-ADMB-models.Rmd</code></a></small>
       <div class="d-none name"><code>NUTS-for-ADMB-models.Rmd</code></div>
     </div>
 
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Cole-Monnahan-NOAA/adnuts" class="external-link">adnuts</a></span><span class="op">)</span></span></code></pre></div>
-<p>Key features of the packages:</p>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://Cole-Monnahan-NOAA.github.io/adnuts">adnuts</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Loading required package: StanEstimators</span></span></code></pre></div>
+<p>As of 2025 the ADMB functionality is no longer under development.
+However, ADMB users can still use ‘adnuts’ and it provides the best
+software framework for doing Bayesian inference in these models. Key
+features of the packages for ADMB users:</p>
 <ul>
 <li>Run no-U-turn sampler (NUTS) or random walk Metropolis (RWM) MCMC
-chains from within R using the <code>sample_nuts</code> and ‘sample_rwm’
-functions.</li>
+chains from within R using the <code>sample_nuts</code> and
+<code>sample_rwm</code> functions.</li>
 <li>Parallel execution with automatic merging of chains and linking to
-other R packages provides a smooth, efficient workflow for ADMB
-users.</li>
+other R packages provides a smooth, efficient workflow.</li>
 <li>Adaptation of the NUTS stepsize is automatically done during the
 warmup phase.</li>
 <li>The mass matrix options are: diagonal or dense adaptation during
@@ -101,7 +107,61 @@ default settings and no user intervention. However, in some cases you
 may need to modify the settings. See below for a brief description of
 NUTS and how you can modify its behavior and when needed. Guidance and
 performance specifically designed for fisheries stock assessment is
-given in <span class="citation">[@monnahan2019]</span>.</p>
+given in <span class="citation">(Monnahan et al. 2019)</span>.</p>
+<div class="section level2">
+<h2 id="admb-installation-and-usage">ADMB Installation and Usage<a class="anchor" aria-label="anchor" href="#admb-installation-and-usage"></a>
+</h2>
+<p>The adnuts R package version 1.1.2 can be installed from CRAN:
+<code>install.packages('adnuts')</code>. Future minor releases <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/releases" class="external-link">listed
+here</a> may not be released on CRAN so the latest stable version can be
+installed as:</p>
+<p><code>devtools::install_github('Cole-Monnahan-NOAA/adnuts')</code></p>
+<p>The <code>sample_rwm</code> and <code>sample_nuts</code> functions
+draw posterior samples from an ADMB model using an MCMC algorithm
+(random walk Metropolis or no-U-turn sampler). The returned fitted
+object contains samples and other information. The function
+‘extract_samples’ can be used to get posterior samples (post warmup and
+thinning) into a data frame for inference, while ‘launch_shinyadmb’ can
+be used for interactive diagnostics based on ‘ShinyStan’.</p>
+<p>A brief <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo_ADMB.R" class="external-link">demonstration
+file</a> is the best place to help get you started, and there is also a
+user guide: <code><a href="../articles/adnuts.html">vignette('adnuts')</a></code> for more detailed
+information.</p>
+<p>‘adnuts’ was designed specifically for use in ADMB fisheries ’stock
+assessments, and interested authors are referred to:</p>
+<p>Monnahan, C.C., T.A. Branch, J.T. Thorson, I.J. Stewart, C.S.
+Szuwalksi (2020) Overcoming long Bayesian run times in integrated
+fisheries stock assessments. ICES Journal of Marine Science. <a href="https://dx.doi.org/10.1093/icesjms/fsz059" class="external-link uri">https://dx.doi.org/10.1093/icesjms/fsz059</a></p>
+</div>
+<div class="section level2">
+<h2 id="admb-installation">ADMB Installation<a class="anchor" aria-label="anchor" href="#admb-installation"></a>
+</h2>
+<p>To use the ADMB functionality you need to build your model with
+version 12.0 (released December 2017) or later, otherwise this
+functionality is not available. See <a href="https://www.admb-project.org/docs/install/" class="external-link">the ADMB installation
+instructions</a> for more information. ADMB 12.2 or newer is highly
+recommended because it provides better console output, fixes bugs, and
+adds improved adaptation capabilities as compared to 12.0. You can check
+the ADMB version of a compiled model from the command line with a
+command <code>model.exe -version</code> which prints the version among
+other things.</p>
+</div>
+<div class="section level2">
+<h2 id="known-issues">Known issues<a class="anchor" aria-label="anchor" href="#known-issues"></a>
+</h2>
+<p>Windows users may experience issues if their model name is too long.
+In some cases the OS will rename the output files using a “short”
+version. You’ll see files like “MODEL~1.par”. The package tries to
+handle this but it is <strong>highly recommended</strong> to simply
+shorten your filename. So instead of ‘model_filename_2021.tpl’ use
+e.g. ‘model_21’.</p>
+<p>Analyses are reproducible by setting the same initial values and a
+seed in <code>sample_rwm</code> or <code>sample_nuts</code> (passed to
+ADMB as ‘-mcseed’). However, they may not be entirely consistent across
+OS platforms. The chains will start the same but may eventually diverge.
+This is likely due to minuscule differences in the gradient and
+log-posterior calculations between systems and compilers.</p>
+</div>
 <div class="section level2">
 <h2 id="sampling-for-admb-models">Sampling for ADMB models<a class="anchor" aria-label="anchor" href="#sampling-for-admb-models"></a>
 </h2>
@@ -160,8 +220,8 @@ algorithm will be potentially catastrophically slow. This is likely
 common in many existing fisheries stock assessment models. In these
 cases it can be very informative to run the RWM algorithm with
 <code>sample_rwm</code> because it often provides fast feedback from
-which the user can determine the cause of poor mixing (see <span class="citation">[@monnahan2019]</span>). Consult the ADMB documentation
-for more information on a workflow with these samplers.
+which the user can determine the cause of poor mixing (see <span class="citation">(Monnahan et al. 2019)</span>). Consult the ADMB
+documentation for more information on a workflow with these samplers.
 <code>adnuts</code> provides no new options for RWM compared to the
 command line from previous ADMB versions (besides a better console
 output), but the option for parallel execution and integration with MCMC
@@ -311,8 +371,8 @@ operation can be slow and thus a user may disable it with the argument
 <code>skip_monitor</code>, however this situation should be rare as
 these quantities should always be checked.</p>
 <p>I use a hierarchical mark-recapture model of swallows to demonstrate
-functionality, taken from the examples in <span class="citation">[@monnahan2017]</span> read in as a RDS file from a
-previous run.</p>
+functionality, taken from the examples in <span class="citation">(Monnahan, Thorson, and Branch 2017)</span> read in as
+a RDS file from a previous run.</p>
 <p>The diagnostic information can be directly accessed via the fitted
 object <code>fit</code>. :</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -586,15 +646,16 @@ options 4-6 are worth exploring.</p>
 </h3>
 <p>Hamiltonian Monte Carlo is a powerful family of MCMC algorithms that
 use gradients to propose efficient transitions. We review the basics
-here but refer to interested readers to <span class="citation">[@neal2011; @betancourt2017intro;
-@monnahan2017]</span>. Instead of randomly generating a proposed point,
-to be rejected/accepted, HMC generates <em>trajectories</em> from which
-a point is chosen to be rejected/accepted. These trajectories use
-gradient information and an analogy of a ball rolling on a surface is
-often used. These trajectories are efficient when they can transition to
-nearly anywhere on the posterior (stark contrast with random walk
-algorithms). However, to do this they need to be well-tuned. Generally
-there are three aspects of the algorithms that need to be tuned.</p>
+here but refer to interested readers to <span class="citation">(Neal
+2011; Michael Betancourt 2017; Monnahan, Thorson, and Branch
+2017)</span>. Instead of randomly generating a proposed point, to be
+rejected/accepted, HMC generates <em>trajectories</em> from which a
+point is chosen to be rejected/accepted. These trajectories use gradient
+information and an analogy of a ball rolling on a surface is often used.
+These trajectories are efficient when they can transition to nearly
+anywhere on the posterior (stark contrast with random walk algorithms).
+However, to do this they need to be well-tuned. Generally there are
+three aspects of the algorithms that need to be tuned.</p>
 <ol style="list-style-type: decimal">
 <li>The step size. How big of steps between points on a single
 trajectory. Bigger steps means fewer calculations (and thus faster), but
@@ -610,36 +671,38 @@ the trajectories will be less efficient (e.g., one parameter has a
 marginal variance of 1, and another a marginal variance of 1000).</li>
 </ol>
 <p>The no-U-turn sampler is a powerful sampler because it automated the
-tuning of the first two of these aspects <span class="citation">[@hoffman2014]</span>. During warmup it tunes the step
-size to a target acceptance rate (default of 0.8) which has been shown
-to be optimal <span class="citation">[@betancourt2014]</span>. Most
-importantly, though, is that it uses a recursive tree building algorithm
-to continue doubling the trajectory until a “U-turn” occurs, meaning
-going any further would be wasteful computationally. Thus, trajectory
-lengths are automatically optimal.</p>
+tuning of the first two of these aspects <span class="citation">(Hoffman
+and Gelman 2014)</span>. During warmup it tunes the step size to a
+target acceptance rate (default of 0.8) which has been shown to be
+optimal <span class="citation">(MJ Betancourt, Byrne, and Girolami
+2014)</span>. Most importantly, though, is that it uses a recursive tree
+building algorithm to continue doubling the trajectory until a “U-turn”
+occurs, meaning going any further would be wasteful computationally.
+Thus, trajectory lengths are automatically optimal.</p>
 <p>The original algorithm was implemented into the Bayesian statistical
-software Stan <span class="citation">[@carpenter2017; @stan2017]</span>.
-In addition to the automation of NUTS, Stan provides a scheme for
-adapting the step size during the warmup phase. Estimated diagonal mass
-matrices correct for global differences in scale, but not correlations.
-A dense matrix can also be adapted, and corrects for global
-correlations, but comes at a higher computation cost. Typically a
-diagonal matrix is best and thus is default in both Stan and
-<code>adnuts</code>.</p>
+software Stan <span class="citation">(Carpenter et al. 2017; Stan
+Development Team 2017)</span>. In addition to the automation of NUTS,
+Stan provides a scheme for adapting the step size during the warmup
+phase. Estimated diagonal mass matrices correct for global differences
+in scale, but not correlations. A dense matrix can also be adapted, and
+corrects for global correlations, but comes at a higher computation
+cost. Typically a diagonal matrix is best and thus is default in both
+Stan and <code>adnuts</code>.</p>
 <p>These three extensions lead to efficient HMC sampling with little to
 no user intervention for a wide class of statistical models, including
-hierarchical ones <span class="citation">[@monnahan2017]</span>. Since
-publication, further developments have been made in HMC theoretical and
-practical research. For instance, Stan now includes an update called
-“exhaustive” HMC <span class="citation">[@betancourt2016]</span> that
-more efficiently samples from the points in a trajectory.</p>
+hierarchical ones <span class="citation">(Monnahan, Thorson, and Branch
+2017)</span>. Since publication, further developments have been made in
+HMC theoretical and practical research. For instance, Stan now includes
+an update called “exhaustive” HMC <span class="citation">(Michael
+Betancourt 2016)</span> that more efficiently samples from the points in
+a trajectory.</p>
 </div>
 <div class="section level3">
 <h3 id="algorithm-implementation-details">Algorithm implementation details<a class="anchor" aria-label="anchor" href="#algorithm-implementation-details"></a>
 </h3>
 <p>For ADMB <code>adnuts</code> uses the original algorithm presented in
-<span class="citation">[@hoffman2014]</span>. However it also uses a
-similar mass matrix adaptation scheme as used in Stan.</p>
+<span class="citation">(Hoffman and Gelman 2014)</span>. However it also
+uses a similar mass matrix adaptation scheme as used in Stan.</p>
 <p>The algorithm is initiated with a unit diagonal mass matrix. During
 the first 50 iterations only the step size is adapted. After the next 75
 iterations an estimated variance for each parameter (in untransformed
@@ -647,9 +710,9 @@ space) is calculated and used as the new mass matrix. The next update
 occurs after twice the iterations as the previous update. This process
 repeats until the last 25 samples of the warmup phase. During this phase
 the mass matrix is held constant and only the step size adapt. See the
-Stan manual <span class="citation">[@stan2017]</span> for more details.
-The step size is adapted during all warmup iterations. No information is
-returned about mass matrix adaptation currently.</p>
+Stan manual <span class="citation">(Stan Development Team 2017)</span>
+for more details. The step size is adapted during all warmup iterations.
+No information is returned about mass matrix adaptation currently.</p>
 <p>Once the warmup phase is over, no adaptation is done. Because of the
 adaptation the warmup samples are not valid samples from the posterior
 and <em>must</em> be discarded and not used for inference.</p>
@@ -681,8 +744,8 @@ acceptance rate. Thus, when you get warnings about divergences, rerun
 the model with <code>control=list(adapt_delta=.9)</code> or higher, as
 necessary. If the divergences do not go away, investigate the cause and
 try to eliminate the extreme curvature from the model, for example with
-a reparameterization <span class="citation">[@stan2017;
-@monnahan2017]</span>.</p>
+a reparameterization <span class="citation">(Stan Development Team 2017;
+Monnahan, Thorson, and Branch 2017)</span>.</p>
 <p>If there are extreme global correlations in your model, NUTS will be
 inefficient when using a diagonal mass matrix (the default). In this
 case, you can pass a dense matrix, estimated externally or from previous
@@ -742,9 +805,55 @@ provides strong evidence that the algorithms are coded correctly. This
 <strong>does not</strong> mean that finite samples from target
 distributions are unbiased.</p>
 </div>
-<div class="section level2">
-<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+<div class="section level2 unnumbered">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-betancourt2016" class="csl-entry">
+Betancourt, Michael. 2016. <span>“Identifying the Optimal Integration
+Time in Hamiltonian Monte Carlo.”</span> <em>arXiv Preprint
+arXiv:1601.00225</em>.
+</div>
+<div id="ref-betancourt2017intro" class="csl-entry">
+———. 2017. <span>“A Conceptual Introduction to Hamiltonian Monte
+Carlo.”</span> <em>arXiv Preprint arXiv:1701.02434</em>.
+</div>
+<div id="ref-betancourt2014" class="csl-entry">
+Betancourt, MJ, Simon Byrne, and Mark Girolami. 2014. <span>“Optimizing
+the Integrator Step Size for Hamiltonian Monte Carlo.”</span> <em>arXiv
+Preprint arXiv:1411.6669</em>.
+</div>
+<div id="ref-carpenter2017" class="csl-entry">
+Carpenter, B., A. Gelman, M. D. Hoffman, D. Lee, B. Goodrich, M.
+Betancourt, A. Riddell, J. Q. Guo, P. Li, and A. Riddell. 2017.
+<span>“Stan: A Probabilistic Programming Language.”</span> <em>Journal
+of Statistical Software</em> 76 (1): 1–29.
+</div>
+<div id="ref-hoffman2014" class="csl-entry">
+Hoffman, M. D., and A. Gelman. 2014. <span>“The No-u-Turn Sampler:
+Adaptively Setting Path Lengths in Hamiltonian Monte Carlo.”</span>
+<em>Journal of Machine Learning Research</em> 15 (1): 1593–623.
+</div>
+<div id="ref-monnahan2019" class="csl-entry">
+Monnahan, C. C., T. A. Branch, J. T. Thorson, Stewart I. J., and C. S.
+Szuwalksi. 2019. <span>“Overcoming Long Bayesian Run Times in Integrated
+Fisheries Stock Assessments.”</span> <em>ICES Journal of Marine Science
+(in Press)</em>. <a href="https://doi.org/10.1093/icesjms/fsz059" class="external-link">https://doi.org/10.1093/icesjms/fsz059</a>.
+</div>
+<div id="ref-monnahan2017" class="csl-entry">
+Monnahan, C. C., J. T. Thorson, and T. A. Branch. 2017. <span>“Faster
+Estimation of Bayesian Models in Ecology Using Hamiltonian Monte
+Carlo.”</span> <em>Methods in Ecology and Evolution</em> 8 (3): 339–48.
+</div>
+<div id="ref-neal2011" class="csl-entry">
+Neal, Radford M. 2011. <span>“MCMC Using Hamiltonian Dynamics.”</span>
+<em>Handbook of Markov Chain Monte Carlo</em> 2.
+</div>
+<div id="ref-stan2017" class="csl-entry">
+Stan Development Team. 2017. <span>“Stan Modeling Language Users Guide
+and Reference Manual, Version 2.17.0.”</span>
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

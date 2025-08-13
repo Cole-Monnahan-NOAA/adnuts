@@ -60,33 +60,55 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Sparse NUTS for TMB models</h1>
+                        <h4 data-toc-skip class="author">Cole C.
+Monnahan</h4>
             
+            <h4 data-toc-skip class="date">2025-08-13</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/blob/HEAD/vignettes/SNUTS-for-TMB-models.Rmd" class="external-link"><code>vignettes/SNUTS-for-TMB-models.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/blob/HEAD/vignettes/articles/SNUTS-for-TMB-models.Rmd" class="external-link"><code>vignettes/articles/SNUTS-for-TMB-models.Rmd</code></a></small>
       <div class="d-none name"><code>SNUTS-for-TMB-models.Rmd</code></div>
     </div>
 
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Cole-Monnahan-NOAA/adnuts" class="external-link">adnuts</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://Cole-Monnahan-NOAA.github.io/adnuts">adnuts</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="differences-between-tmb-and-rtmb">Differences between TMB and RTMB<a class="anchor" aria-label="anchor" href="#differences-between-tmb-and-rtmb"></a>
 </h2>
 <p><code>adnuts</code> implements the sparse no-u-turn sampler (SNUTS)
-as introduced and detailed in <span class="citation">[@monnahan2025]</span>. This only works for TMB models
-because Stan currently has no way to pass and use a sparse metric. Both
-TMB and RTMB can be used in parallel. The <code>sample_snuts</code>
-function will detect which is used internally and adjust accordingly. If
-the RTMB model uses external functions or data sets then they must be
-passed through via a list in the <code>globals</code> argument so they
-are available to rebuild the ‘obj’ in the parallel R sessions.
+as introduced and detailed in <span class="citation">(C. C. Monnahan et
+al. in prep)</span>. This only works for TMB models because Stan
+currently has no way to pass and use a sparse metric. Both TMB and RTMB
+models can be used without user specification, including parallel
+chains. The <code>sample_snuts</code> function will detect which is used
+internally and adjust accordingly. If the user wants to use models from
+both packages in the same session then one needs to be unloaded, e.g.,
+<code>if('TMB' %in% .packages()) detach(package:TMB)</code>, before the
+other package is loaded.</p>
+<p>If the RTMB model uses external functions or data sets then they must
+be passed through via a list in the <code>globals</code> argument so
+they are available to rebuild the ‘obj’ in the parallel R sessions.
 Optionally, the <code>model_name</code> can be specified in the call,
 otherwise your model will be labeled “RTMB” in the output. TMB models do
 not require a globals input and the model name is pulled from the DLL
 name, but can be overridden if desired.</p>
+</div>
+<div class="section level2">
+<h2 id="comparison-to-tmbstan">Comparison to tmbstan<a class="anchor" aria-label="anchor" href="#comparison-to-tmbstan"></a>
+</h2>
+<p>The related package ‘tmbstan’ <span class="citation">(C. C. Monnahan
+and Kristensen 2018)</span> also allows users to link TMB models to the
+Stan algorithms. ‘tmbstan’ links through the package ‘rstan’, while
+‘adnuts’ modifies the objective and gradient functions and then passes
+those to ‘cmdstan’ through the ‘StanEstimators’ R package interface. For
+models without large correlations or scale differences,
+<code>tmbstan</code> is likely to be faster than ‘adnuts’ due to lower
+overhead and may be a better option. Eventually, Stan may add SNUTS
+functionality and an interface to ‘tmbstan’ developed, and in that case
+<code>tmbstan</code> may be a better long term option. For TMB users
+now, SNUTS via <code>adnuts</code> is likely to be the best overall
+package for Bayesian inference.</p>
 </div>
 <div class="section level2">
 <h2 id="snuts-for-tmb-models-from-existing-packages-sdmtmb-glmmtmb-etc-">SNUTS for TMB models from existing packages (sdmTMB, glmmTMB,
@@ -101,15 +123,16 @@ this:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/glmmTMB/glmmTMB" class="external-link">glmmTMB</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">Salamanders</span><span class="op">)</span></span>
-<span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span><span class="va">count</span><span class="op">~</span><span class="va">spp</span> <span class="op">*</span> <span class="va">mined</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">site</span><span class="op">)</span>, <span class="va">Salamanders</span>, family<span class="op">=</span><span class="st">"nbinom2"</span><span class="op">)</span><span class="op">$</span><span class="va">obj</span></span></code></pre></div>
+<span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span><span class="va">count</span><span class="op">~</span><span class="va">spp</span> <span class="op">*</span> <span class="va">mined</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">site</span><span class="op">)</span>, <span class="va">Salamanders</span>, family<span class="op">=</span><span class="st">"nbinom2"</span><span class="op">)</span><span class="op">$</span><span class="va">obj</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_snuts.html">sample_snuts</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
 <p>The recommended usage for TMB users is to let the
 <code>sample_snuts</code> function automatically detect the metric to
-use and the length of warmup, especially for pilot runs during model
-development.</p>
+use and the length of warmup period, especially for pilot runs during
+model development.</p>
 <p>I demonstrate basic usage using a very simple RTMB version of the
 eight schools model that has been examined extensively in the Bayesian
 literature. The first step is to build the TMB object ‘obj’ that
@@ -153,30 +176,33 @@ function as follows:</p>
 <span><span class="co">#&gt; Starting MCMC sampling...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Gradient evaluation took 0.000113 seconds</span></span>
-<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 1.13 seconds.</span></span>
+<span><span class="co">#&gt; Gradient evaluation took 8.1e-05 seconds</span></span>
+<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.81 seconds.</span></span>
 <span><span class="co">#&gt; Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 0.062 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt;                0.377 seconds (Sampling)</span></span>
-<span><span class="co">#&gt;                0.439 seconds (Total)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 0.066 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt;                0.366 seconds (Sampling)</span></span>
+<span><span class="co">#&gt;                0.432 seconds (Total)</span></span>
 <span><span class="co">#&gt; 5 of 1150 (0.43%) iterations ended with a divergence.</span></span>
 <span><span class="co">#&gt; These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.</span></span>
 <span><span class="co">#&gt; Try increasing adapt_delta closer to 1.</span></span>
 <span><span class="co">#&gt; If this doesn't remove all divergences, try to reparameterize the model.</span></span>
-<span><span class="co">#&gt; Loading required package: microbenchmark</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model 'schools' has 10 pars, and was fit using NUTS with a 'diag' metric</span></span>
 <span><span class="co">#&gt; 1 chain(s) of 1150 total iterations (150 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 0.44 seconds </span></span>
+<span><span class="co">#&gt; Average run time per chain was 0.43 seconds </span></span>
 <span><span class="co">#&gt; Minimum ESS=296.92 (29.69%), and maximum Rhat=1.002</span></span>
 <span><span class="co">#&gt; There were 0 divergences after warmup</span></span></code></pre></div>
 <p>The returned object <code>fit</code> (an object of ‘adfit’ S3 class)
 contains the posterior samples and other relevant information for a
 Bayesian analysis.</p>
+<p>Here a ‘diag’ (diagonal) metric is selected and a very short warmup
+period of 150 iterations is used, with mass matrix adaptation in Stan
+disabled. See below for more details on mass matrix adaptation within
+Stan.</p>
 <p>Notice that no optimization was done before calling
 <code>sample_snuts</code>. When the model has already been optimized,
 you can skip that by setting <code>skip_optimization=TRUE</code>, and
@@ -185,10 +211,14 @@ even pass in
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Σ</mi><mo>=</mo><msup><mi>Q</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\Sigma=Q^{-1}</annotation></semantics></math>
 via arguments <code>Q</code> and <code>Qinv</code> to bypass this step
-and save some run time. The returned fitted object contains a slot
-called <code>mle</code> which has the conditional mode (‘est’), the
-marginal standard errors ‘se’, and a joint correlation matrix
-(‘cor’).</p>
+and save some run time. This may also be required if the model
+optimization routine internal to <code>sample_snuts</code> is
+insufficient. In that case, the user should optimize prior to SNUTS
+sampling. The returned fitted object contains a slot called
+<code>mle</code> (for maximum likelihood estimates) which has the
+conditional mode (‘est’), the marginal standard errors ‘se’, a joint
+correlation matrix (‘cor’), and the sparse precision matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">mle</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 5</span></span>
@@ -236,7 +266,7 @@ can be accessed in more depth via the <code>monitor</code> slot:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Model 'schools' has 10 pars, and was fit using NUTS with a 'diag' metric</span></span>
 <span><span class="co">#&gt; 1 chain(s) of 1150 total iterations (150 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 0.44 seconds </span></span>
+<span><span class="co">#&gt; Average run time per chain was 0.43 seconds </span></span>
 <span><span class="co">#&gt; Minimum ESS=296.92 (29.69%), and maximum Rhat=1.002</span></span>
 <span><span class="co">#&gt; There were 0 divergences after warmup</span></span>
 <span></span>
@@ -293,8 +323,8 @@ NUTS trajectories.</p>
 <p><img src="SNUTS-for-TMB-models_files/figure-html/sp-schools-1.png" width="700"></p>
 <p>The ShinyStan tool is also available and provides a convenient,
 interactive way to check diagnostics via the function
-<code>launch_shinytmb(obj)</code>, but also explore estimates and other
-important quantities. This is a key tool for a workflow with
+<code><a href="../reference/launch_shinytmb.html">launch_shinytmb()</a></code>, but also explore estimates and other
+important quantities. This is a valuable tool for a workflow with
 ‘adnuts’.</p>
 </div>
 <div class="section level3">
@@ -304,8 +334,9 @@ important quantities. This is a key tool for a workflow with
 for inference. Posterior samples for parameters can be extracted and
 examined in R by casting the fitted object to an R data.frame. These
 posterior samples can then be put back into the TMB object
-<code>report()</code> function to extract any desired “generated
-quantity” in Stan terminology.</p>
+<code>obj$report()</code> function to extract any desired “generated
+quantity” in Stan terminology. Below is a demonstration of how to do
+this for the quantity theta (a vector of length 8).</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">post</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="va">post</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -437,15 +468,15 @@ joint precision matrix
 <span><span class="co">#&gt; Starting MCMC sampling...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Gradient evaluation took 0.000121 seconds</span></span>
-<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 1.21 seconds.</span></span>
+<span><span class="co">#&gt; Gradient evaluation took 0.00013 seconds</span></span>
+<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 1.3 seconds.</span></span>
 <span><span class="co">#&gt; Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 0.225 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt;                1.122 seconds (Sampling)</span></span>
-<span><span class="co">#&gt;                1.347 seconds (Total)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 0.232 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt;                1.193 seconds (Sampling)</span></span>
+<span><span class="co">#&gt;                1.425 seconds (Total)</span></span>
 <span><span class="co">#&gt; 1 of 1150 (0.09%) iterations ended with a divergence.</span></span>
 <span><span class="co">#&gt; These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.</span></span>
 <span><span class="co">#&gt; Try increasing adapt_delta closer to 1.</span></span>
@@ -454,7 +485,7 @@ joint precision matrix
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model 'RTMB' has 105 pars, and was fit using NUTS with a 'dense' metric</span></span>
 <span><span class="co">#&gt; 1 chain(s) of 1150 total iterations (150 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 1.35 seconds </span></span>
+<span><span class="co">#&gt; Average run time per chain was 1.43 seconds </span></span>
 <span><span class="co">#&gt; Minimum ESS=324.07 (32.41%), and maximum Rhat=1.023</span></span>
 <span><span class="co">#&gt; There were 0 divergences after warmup</span></span>
 <span><span class="va">post</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">)</span></span>
@@ -584,15 +615,15 @@ values to be available for each posterior draw. I facilitate this via a
 <span><span class="co">#&gt; Starting MCMC sampling...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Gradient evaluation took 7.9e-05 seconds</span></span>
-<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.79 seconds.</span></span>
+<span><span class="co">#&gt; Gradient evaluation took 8.7e-05 seconds</span></span>
+<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.87 seconds.</span></span>
 <span><span class="co">#&gt; Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 0.118 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt;                0.694 seconds (Sampling)</span></span>
-<span><span class="co">#&gt;                0.812 seconds (Total)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 0.126 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt;                0.733 seconds (Sampling)</span></span>
+<span><span class="co">#&gt;                0.859 seconds (Total)</span></span>
 <span><span class="co">#&gt; 1 of 1150 (0.09%) iterations ended with a divergence.</span></span>
 <span><span class="co">#&gt; These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.</span></span>
 <span><span class="co">#&gt; Try increasing adapt_delta closer to 1.</span></span>
@@ -601,7 +632,7 @@ values to be available for each posterior draw. I facilitate this via a
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model 'RTMB' has 53 pars, and was fit using NUTS with a 'diag' metric</span></span>
 <span><span class="co">#&gt; 1 chain(s) of 1150 total iterations (150 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 0.81 seconds </span></span>
+<span><span class="co">#&gt; Average run time per chain was 0.86 seconds </span></span>
 <span><span class="co">#&gt; Minimum ESS=402.16 (40.22%), and maximum Rhat=1.007</span></span>
 <span><span class="co">#&gt; There were 0 divergences after warmup</span></span>
 <span><span class="va">post2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mcmc2</span><span class="op">)</span></span>
@@ -650,7 +681,9 @@ equal to TRUE</p>
 <p>Here I run three versions of the model and compare the NUTS stepsize.
 The model version without adaptation uses a shorter warmup period</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">adapted1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_snuts.html">sample_snuts</a></span><span class="op">(</span><span class="va">obj</span>, chains<span class="op">=</span><span class="fl">1</span>, seed<span class="op">=</span><span class="fl">1234</span>, refresh<span class="op">=</span><span class="fl">0</span>,</span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">adapted1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_snuts.html">sample_snuts</a></span><span class="op">(</span><span class="va">obj</span>, chains<span class="op">=</span><span class="fl">1</span>, seed<span class="op">=</span><span class="fl">1234</span>, refresh<span class="op">=</span><span class="fl">0</span>,</span>
 <span>                        skip_optimization<span class="op">=</span><span class="cn">TRUE</span>, Q<span class="op">=</span><span class="va">Q</span>, Qinv<span class="op">=</span><span class="va">Sigma</span>,</span>
 <span>                        metric<span class="op">=</span><span class="st">'auto'</span>, adapt_stan_metric <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Q is 91.85% zeroes, with condition factor=74028 (min=0.014, max=1018.9)</span></span>
@@ -660,15 +693,15 @@ The model version without adaptation uses a shorter warmup period</p>
 <span><span class="co">#&gt; Starting MCMC sampling...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Gradient evaluation took 0.000117 seconds</span></span>
-<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 1.17 seconds.</span></span>
+<span><span class="co">#&gt; Gradient evaluation took 0.000152 seconds</span></span>
+<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 1.52 seconds.</span></span>
 <span><span class="co">#&gt; Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 1.631 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt;                1.967 seconds (Sampling)</span></span>
-<span><span class="co">#&gt;                3.598 seconds (Total)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 1.747 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt;                2.118 seconds (Sampling)</span></span>
+<span><span class="co">#&gt;                3.865 seconds (Total)</span></span>
 <span><span class="co">#&gt; 5 of 2000 (0.25%) iterations ended with a divergence.</span></span>
 <span><span class="co">#&gt; These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.</span></span>
 <span><span class="co">#&gt; Try increasing adapt_delta closer to 1.</span></span>
@@ -677,7 +710,7 @@ The model version without adaptation uses a shorter warmup period</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model 'RTMB' has 105 pars, and was fit using NUTS with a 'dense' metric</span></span>
 <span><span class="co">#&gt; 1 chain(s) of 2000 total iterations (1000 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 3.6 seconds </span></span>
+<span><span class="co">#&gt; Average run time per chain was 3.87 seconds </span></span>
 <span><span class="co">#&gt; Minimum ESS=661.27 (66.13%), and maximum Rhat=1.008</span></span>
 <span><span class="co">#&gt; There were 0 divergences after warmup</span></span>
 <span><span class="va">adapted2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_snuts.html">sample_snuts</a></span><span class="op">(</span><span class="va">obj</span>, chains<span class="op">=</span><span class="fl">1</span>, seed<span class="op">=</span><span class="fl">1234</span>, refresh<span class="op">=</span><span class="fl">0</span>,</span>
@@ -688,15 +721,15 @@ The model version without adaptation uses a shorter warmup period</p>
 <span><span class="co">#&gt; Starting MCMC sampling...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Gradient evaluation took 6.8e-05 seconds</span></span>
-<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.68 seconds.</span></span>
+<span><span class="co">#&gt; Gradient evaluation took 9.3e-05 seconds</span></span>
+<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.93 seconds.</span></span>
 <span><span class="co">#&gt; Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 7.68 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt;                2.872 seconds (Sampling)</span></span>
-<span><span class="co">#&gt;                10.552 seconds (Total)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 8.602 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt;                3.038 seconds (Sampling)</span></span>
+<span><span class="co">#&gt;                11.64 seconds (Total)</span></span>
 <span><span class="co">#&gt; 23 of 2000 (1.15%) iterations ended with a divergence.</span></span>
 <span><span class="co">#&gt; These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.</span></span>
 <span><span class="co">#&gt; Try increasing adapt_delta closer to 1.</span></span>
@@ -705,7 +738,7 @@ The model version without adaptation uses a shorter warmup period</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model 'RTMB' has 105 pars, and was fit using NUTS with a 'stan' metric</span></span>
 <span><span class="co">#&gt; 1 chain(s) of 2000 total iterations (1000 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 10.55 seconds </span></span>
+<span><span class="co">#&gt; Average run time per chain was 11.64 seconds </span></span>
 <span><span class="co">#&gt; Minimum ESS=580.82 (58.08%), and maximum Rhat=1.007</span></span>
 <span><span class="co">#&gt; There were 0 divergences after warmup</span></span>
 <span><span class="va">sp1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_sampler_params.html">extract_sampler_params</a></span><span class="op">(</span><span class="va">mcmc</span>, inc_warmup <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -732,16 +765,18 @@ short warmup period can be used with SNUTS (‘descaled + not adapted’) in
 this case, and often which is why the default warmup is short and
 adaptation disabled for SNUTS.</p>
 <p>In other cases a longer warmup and mass matrix adaptation will make a
-difference, see for example the ‘wildf’ model in <span class="citation">@monnahan2025</span>.</p>
+difference, see for example the ‘wildf’ model in <span class="citation">C. C. Monnahan et al. (in prep)</span>.</p>
 </div>
 <div class="section level3">
 <h3 id="embedded-laplace-approximation-snuts">Embedded Laplace approximation SNUTS<a class="anchor" aria-label="anchor" href="#embedded-laplace-approximation-snuts"></a>
 </h3>
 <p>This approach uses NUTS (or SNUTS) to sample from the marginal
 posterior using the Laplace approximation to integrate the random
-effects. This was first explored in <span class="citation">@monnahan2018</span> and later in more detail in <span class="citation">@margossian2020</span> who called it the ‘embedded
-Laplace approximation’. <span class="citation">@monnahan2025</span>
-applied this to a much larger set of models and found mixed results.</p>
+effects. This was first explored in <span class="citation">(C. C.
+Monnahan and Kristensen 2018)</span> and later in more detail in <span class="citation">(Margossian et al. 2020)</span> who called it the
+‘embedded Laplace approximation’. <span class="citation">(C. C. Monnahan
+et al. in prep)</span> applied this to a much larger set of models and
+found mixed results.</p>
 <p>It is trivial to try in SNUTS by simply declaring
 <code>laplace=TRUE</code>.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
@@ -754,15 +789,15 @@ applied this to a much larger set of models and found mixed results.</p>
 <span><span class="co">#&gt; Starting MCMC sampling...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Gradient evaluation took 0.000769 seconds</span></span>
-<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 7.69 seconds.</span></span>
+<span><span class="co">#&gt; Gradient evaluation took 0.000993 seconds</span></span>
+<span><span class="co">#&gt; 1000 transitions using 10 leapfrog steps per transition would take 9.93 seconds.</span></span>
 <span><span class="co">#&gt; Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 0.847 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt;                4.64 seconds (Sampling)</span></span>
-<span><span class="co">#&gt;                5.487 seconds (Total)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 1.166 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt;                5.193 seconds (Sampling)</span></span>
+<span><span class="co">#&gt;                6.359 seconds (Total)</span></span>
 <span><span class="co">#&gt; 1 of 1150 (0.09%) iterations ended with a divergence.</span></span>
 <span><span class="co">#&gt; These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.</span></span>
 <span><span class="co">#&gt; Try increasing adapt_delta closer to 1.</span></span>
@@ -771,8 +806,8 @@ applied this to a much larger set of models and found mixed results.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model 'RTMB' has 5 pars, and was fit using NUTS with a 'diag' metric</span></span>
 <span><span class="co">#&gt; 1 chain(s) of 1150 total iterations (150 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 5.49 seconds </span></span>
-<span><span class="co">#&gt; Minimum ESS=636.49 (63.65%), and maximum Rhat=1.001</span></span>
+<span><span class="co">#&gt; Average run time per chain was 6.36 seconds </span></span>
+<span><span class="co">#&gt; Minimum ESS=574.05 (57.4%), and maximum Rhat=1.006</span></span>
 <span><span class="co">#&gt; There were 0 divergences after warmup</span></span></code></pre></div>
 <p>Here I can see there are only 5 model parameters (the fixed effects),
 and that a diagonal metric was chosen due to minimal correlations among
@@ -799,7 +834,6 @@ recovers the</p>
 <span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">RTMB</span><span class="fu">::</span><span class="fu">MakeADFun</span><span class="op">(</span><span class="va">f</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>y<span class="op">=</span><span class="op">-</span><span class="fl">1.12</span>, x<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">9</span><span class="op">)</span><span class="op">)</span>, random<span class="op">=</span><span class="st">'x'</span>, silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">### Now SNUTS</span></span>
-<span><span class="co"># devtools::install_github('Cole-Monnahan-NOAA/adnuts', ref='sparse_M')</span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_snuts.html">sample_snuts</a></span><span class="op">(</span><span class="va">obj</span>, seed<span class="op">=</span><span class="fl">1213</span>, refresh<span class="op">=</span><span class="fl">0</span>, init<span class="op">=</span><span class="st">'random'</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimizing...</span></span>
 <span><span class="co">#&gt; Getting Q...</span></span>
@@ -810,30 +844,30 @@ recovers the</p>
 <span><span class="co">#&gt; log-posterior at inits=-237.116; at conditional mode=-10.288</span></span>
 <span><span class="co">#&gt; Starting MCMC sampling...</span></span>
 <span><span class="co">#&gt; Preparing parallel workspace...</span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.00012 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.2 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000122 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.22 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
-<span><span class="co">#&gt; Chain 2: Gradient evaluation took 0.000127 seconds</span></span>
-<span><span class="co">#&gt; Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.27 seconds.</span></span>
+<span><span class="co">#&gt; Chain 2: Gradient evaluation took 0.000116 seconds</span></span>
+<span><span class="co">#&gt; Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.16 seconds.</span></span>
 <span><span class="co">#&gt; Chain 2: Adjust your expectations accordingly!</span></span>
-<span><span class="co">#&gt; Chain 3: Gradient evaluation took 0.000103 seconds</span></span>
-<span><span class="co">#&gt; Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.03 seconds.</span></span>
+<span><span class="co">#&gt; Chain 3: Gradient evaluation took 0.000107 seconds</span></span>
+<span><span class="co">#&gt; Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.07 seconds.</span></span>
 <span><span class="co">#&gt; Chain 3: Adjust your expectations accordingly!</span></span>
-<span><span class="co">#&gt; Chain 4: Gradient evaluation took 0.000102 seconds</span></span>
-<span><span class="co">#&gt; Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 1.02 seconds.</span></span>
+<span><span class="co">#&gt; Chain 4: Gradient evaluation took 0.00011 seconds</span></span>
+<span><span class="co">#&gt; Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 1.1 seconds.</span></span>
 <span><span class="co">#&gt; Chain 4: Adjust your expectations accordingly!</span></span>
-<span><span class="co">#&gt; Chain 4:  Elapsed Time: 0.415 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 4:                2.627 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 4:                3.042 seconds (Total)</span></span>
-<span><span class="co">#&gt; Chain 3:  Elapsed Time: 0.897 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 3:                2.43 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 3:                3.327 seconds (Total)</span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 0.294 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                3.827 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                4.121 seconds (Total)</span></span>
-<span><span class="co">#&gt; Chain 2:  Elapsed Time: 0.642 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 2:                6.623 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 2:                7.265 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 3:  Elapsed Time: 0.957 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 3:                2.436 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 3:                3.393 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 4:  Elapsed Time: 0.473 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 4:                2.74 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 4:                3.213 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 0.329 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                3.914 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                4.243 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 2:  Elapsed Time: 0.71 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 2:                6.747 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 2:                7.457 seconds (Total)</span></span>
 <span><span class="co">#&gt; 39 of 4600 (0.85%) iterations ended with a divergence.</span></span>
 <span><span class="co">#&gt; These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.</span></span>
 <span><span class="co">#&gt; Try increasing adapt_delta closer to 1.</span></span>
@@ -844,7 +878,7 @@ recovers the</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model 'RTMB' has 10 pars, and was fit using NUTS with a 'diag' metric</span></span>
 <span><span class="co">#&gt; 4 chain(s) of 1150 total iterations (150 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 4.44 seconds </span></span>
+<span><span class="co">#&gt; Average run time per chain was 4.58 seconds </span></span>
 <span><span class="co">#&gt; Minimum ESS=92.75 (2.32%), and maximum Rhat=1.044</span></span>
 <span><span class="co">#&gt; !! Warning: Signs of non-convergence found. Do not use for inference !!</span></span>
 <span><span class="co">#&gt; There were 4 divergences after warmup</span></span>
@@ -859,8 +893,7 @@ recovers the</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span>v<span class="op">=</span><span class="va">fit</span><span class="op">$</span><span class="va">mle</span><span class="op">$</span><span class="va">est</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, col<span class="op">=</span><span class="fl">2</span>, lwd<span class="op">=</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p><img src="SNUTS-for-TMB-models_files/figure-html/funnel-2.png" width="700"></p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Now turn on ELA and it easily recovers the prior on y</span></span>
+<code class="sourceCode R"><span><span class="co"># Now turn on ELA and it easily recovers the prior on y</span></span>
 <span><span class="va">fit.ela</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_snuts.html">sample_snuts</a></span><span class="op">(</span><span class="va">obj</span>, laplace<span class="op">=</span><span class="cn">TRUE</span>, refresh<span class="op">=</span><span class="fl">0</span>, init<span class="op">=</span><span class="st">'random'</span>, seed<span class="op">=</span><span class="fl">12312</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimizing...</span></span>
 <span><span class="co">#&gt; Getting M for fixed effects...</span></span>
@@ -868,30 +901,30 @@ recovers the</p>
 <span><span class="co">#&gt; log-posterior at inits=-3.181; at conditional mode=-2.087</span></span>
 <span><span class="co">#&gt; Starting MCMC sampling...</span></span>
 <span><span class="co">#&gt; Preparing parallel workspace...</span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.023581 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 235.81 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.018099 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 180.99 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
-<span><span class="co">#&gt; Chain 2: Gradient evaluation took 0.019007 seconds</span></span>
-<span><span class="co">#&gt; Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 190.07 seconds.</span></span>
+<span><span class="co">#&gt; Chain 2: Gradient evaluation took 0.021238 seconds</span></span>
+<span><span class="co">#&gt; Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 212.38 seconds.</span></span>
 <span><span class="co">#&gt; Chain 2: Adjust your expectations accordingly!</span></span>
-<span><span class="co">#&gt; Chain 3: Gradient evaluation took 0.017706 seconds</span></span>
-<span><span class="co">#&gt; Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 177.06 seconds.</span></span>
+<span><span class="co">#&gt; Chain 3: Gradient evaluation took 0.024513 seconds</span></span>
+<span><span class="co">#&gt; Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 245.13 seconds.</span></span>
 <span><span class="co">#&gt; Chain 3: Adjust your expectations accordingly!</span></span>
-<span><span class="co">#&gt; Chain 4: Gradient evaluation took 0.022063 seconds</span></span>
-<span><span class="co">#&gt; Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 220.63 seconds.</span></span>
+<span><span class="co">#&gt; Chain 4: Gradient evaluation took 0.020786 seconds</span></span>
+<span><span class="co">#&gt; Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 207.86 seconds.</span></span>
 <span><span class="co">#&gt; Chain 4: Adjust your expectations accordingly!</span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 0.217 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                1.149 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                1.366 seconds (Total)</span></span>
-<span><span class="co">#&gt; Chain 2:  Elapsed Time: 0.196 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 2:                1.136 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 2:                1.332 seconds (Total)</span></span>
-<span><span class="co">#&gt; Chain 3:  Elapsed Time: 0.225 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 3:                1.1 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 3:                1.325 seconds (Total)</span></span>
-<span><span class="co">#&gt; Chain 4:  Elapsed Time: 0.214 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 4:                1.103 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 4:                1.317 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 0.271 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                1.241 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                1.512 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 2:  Elapsed Time: 0.219 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 2:                1.18 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 2:                1.399 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 3:  Elapsed Time: 0.287 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 3:                1.115 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 3:                1.402 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 4:  Elapsed Time: 0.249 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 4:                1.16 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 4:                1.409 seconds (Total)</span></span>
 <span><span class="co">#&gt; 6 of 4600 (0.13%) iterations ended with a divergence.</span></span>
 <span><span class="co">#&gt; These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.</span></span>
 <span><span class="co">#&gt; Try increasing adapt_delta closer to 1.</span></span>
@@ -900,23 +933,22 @@ recovers the</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model 'RTMB' has 1 pars, and was fit using NUTS with a 'diag' metric</span></span>
 <span><span class="co">#&gt; 4 chain(s) of 1150 total iterations (150 warmup) were used</span></span>
-<span><span class="co">#&gt; Average run time per chain was 1.33 seconds </span></span>
+<span><span class="co">#&gt; Average run time per chain was 1.43 seconds </span></span>
 <span><span class="co">#&gt; Minimum ESS=1834.24 (45.86%), and maximum Rhat=1.002</span></span>
 <span><span class="co">#&gt; There were 0 divergences after warmup</span></span>
 <span><span class="co"># you just get the prior back b/c the Laplace approximation is</span></span>
 <span><span class="co"># accurate</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/pairs.html" class="external-link">pairs</a></span><span class="op">(</span><span class="va">fit.ela</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SNUTS-for-TMB-models_files/figure-html/funnel-3.png" width="700"></p>
+<p><img src="SNUTS-for-TMB-models_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">post.ela</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit.ela</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">post.ela</span><span class="op">$</span><span class="va">y</span>, freq<span class="op">=</span><span class="cn">FALSE</span>, breaks<span class="op">=</span><span class="fl">30</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="va">x</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>,<span class="fl">10</span>, len<span class="op">=</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="va">x</span>,<span class="fl">0</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SNUTS-for-TMB-models_files/figure-html/funnel-4.png" width="700"></p>
+<p><img src="SNUTS-for-TMB-models_files/figure-html/unnamed-chunk-10-2.png" width="700"></p>
 </div>
-</div>
-<div class="section level2">
-<h2 id="linking-to-other-stan-algorithms-via-stanestimators">Linking to other Stan algorithms via StanEstimators<a class="anchor" aria-label="anchor" href="#linking-to-other-stan-algorithms-via-stanestimators"></a>
-</h2>
+<div class="section level3">
+<h3 id="linking-to-other-stan-algorithms-via-stanestimators">Linking to other Stan algorithms via StanEstimators<a class="anchor" aria-label="anchor" href="#linking-to-other-stan-algorithms-via-stanestimators"></a>
+</h3>
 <p><code>sample_snuts</code> links to the
 <code><a href="https://rdrr.io/pkg/StanEstimators/man/stan_sample.html" class="external-link">StanEstimators::stan_sample</a></code> function for NUTS sampling.
 However, this package provides other algorithms given a model and these
@@ -934,26 +966,26 @@ and an RTMB model.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Path [1] :Initial log joint density = -10.287998</span></span>
 <span><span class="co">#&gt; Path [1] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes </span></span>
-<span><span class="co">#&gt;               2       8.084e+01      3.600e+01   4.441e-15    1.000e+00  1.000e+00        51 -1.583e+21 -1.583e+21                  </span></span>
-<span><span class="co">#&gt; Path [1] :Best Iter: [1] ELBO (-30.672905) evaluations: (51)</span></span>
+<span><span class="co">#&gt;               2       8.084e+01      3.600e+01   4.441e-15    1.000e+00  1.000e+00        51 -1.711e+19 -1.711e+19                  </span></span>
+<span><span class="co">#&gt; Path [1] :Best Iter: [1] ELBO (-35.650319) evaluations: (51)</span></span>
 <span><span class="co">#&gt; Path [2] :Initial log joint density = -10.287998</span></span>
 <span><span class="co">#&gt; Path [2] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes </span></span>
-<span><span class="co">#&gt;               2       8.084e+01      3.600e+01   4.441e-15    1.000e+00  1.000e+00        51 -1.901e+20 -1.901e+20                  </span></span>
-<span><span class="co">#&gt; Path [2] :Best Iter: [1] ELBO (-52.886267) evaluations: (51)</span></span>
+<span><span class="co">#&gt;               2       8.084e+01      3.600e+01   4.441e-15    1.000e+00  1.000e+00        51 -3.999e+20 -3.999e+20                  </span></span>
+<span><span class="co">#&gt; Path [2] :Best Iter: [1] ELBO (-34.141497) evaluations: (51)</span></span>
 <span><span class="co">#&gt; Path [3] :Initial log joint density = -10.287998</span></span>
 <span><span class="co">#&gt; Path [3] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes </span></span>
-<span><span class="co">#&gt;               2       8.084e+01      3.600e+01   4.441e-15    1.000e+00  1.000e+00        51 -8.823e+20 -8.823e+20                  </span></span>
-<span><span class="co">#&gt; Path [3] :Best Iter: [1] ELBO (-44.689254) evaluations: (51)</span></span>
+<span><span class="co">#&gt;               2       8.084e+01      3.600e+01   4.441e-15    1.000e+00  1.000e+00        51 -3.115e+20 -3.115e+20                  </span></span>
+<span><span class="co">#&gt; Path [3] :Best Iter: [1] ELBO (-50.148681) evaluations: (51)</span></span>
 <span><span class="co">#&gt; Path [4] :Initial log joint density = -10.287998</span></span>
 <span><span class="co">#&gt; Path [4] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes </span></span>
-<span><span class="co">#&gt;               2       8.084e+01      3.600e+01   4.441e-15    1.000e+00  1.000e+00        51 -2.386e+20 -2.386e+20                  </span></span>
-<span><span class="co">#&gt; Path [4] :Best Iter: [1] ELBO (-41.926718) evaluations: (51)</span></span>
+<span><span class="co">#&gt;               2       8.084e+01      3.600e+01   4.441e-15    1.000e+00  1.000e+00        51 -1.012e+22 -1.012e+22                  </span></span>
+<span><span class="co">#&gt; Path [4] :Best Iter: [1] ELBO (-60.410036) evaluations: (51)</span></span>
 <span><span class="co">#&gt; Total log probability function evaluations:4104</span></span>
-<span><span class="co">#&gt; Pareto k value (1.8) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor.</span></span></code></pre></div>
+<span><span class="co">#&gt; Pareto k value (1.6) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor.</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="linking-to-other-bayesian-tools">Linking to other Bayesian tools<a class="anchor" aria-label="anchor" href="#linking-to-other-bayesian-tools"></a>
-</h2>
+<div class="section level3">
+<h3 id="linking-to-other-bayesian-tools">Linking to other Bayesian tools<a class="anchor" aria-label="anchor" href="#linking-to-other-bayesian-tools"></a>
+</h3>
 <p>It is straightforward to pass <code>adnuts</code> output into other
 Bayesian R packages. I demonstrate this with <code>bayesplot</code>.</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
@@ -964,6 +996,15 @@ Bayesian R packages. I demonstrate this with <code>bayesplot</code>.</p>
 <span><span class="co">#&gt;    * Does _not_ affect other ggplot2 plots</span></span>
 <span><span class="co">#&gt;    * See ?bayesplot_theme_set for details on theme setting</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyr.tidyverse.org" class="external-link">tidyr</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     filter, lag</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
 <span><span class="va">post</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">)</span></span>
 <span><span class="va">pars</span> <span class="op">&lt;-</span> <span class="va">mcmc</span><span class="op">$</span><span class="va">par_names</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-intervals.html" class="external-link">mcmc_areas</a></span><span class="op">(</span><span class="va">post</span>, pars<span class="op">=</span><span class="va">pars</span><span class="op">)</span></span></code></pre></div>
@@ -988,6 +1029,35 @@ Bayesian R packages. I demonstrate this with <code>bayesplot</code>.</p>
 <span><span class="co"># finally, posterior predictive for first 24 observations</span></span>
 <span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/PPC-intervals.html" class="external-link">ppc_intervals</a></span><span class="op">(</span>y<span class="op">=</span><span class="va">ChickWeight</span><span class="op">$</span><span class="va">weight</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">24</span><span class="op">]</span>, yrep<span class="op">=</span><span class="va">simdat</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">24</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p><img src="SNUTS-for-TMB-models_files/figure-html/bayesplot-4.png" width="700"></p>
+</div>
+</div>
+<div class="section level2 unnumbered">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-margossian2020" class="csl-entry">
+Margossian, Charles, Aki Vehtari, Daniel Simpson, and Raj Agrawal. 2020.
+<span>“Hamiltonian <span>M</span>onte <span>C</span>arlo Using an
+Adjoint-Differentiated <span>L</span>aplace Approximation:
+<span>B</span>ayesian Inference for Latent <span>G</span>aussian Models
+and Beyond.”</span> In <em>Advances in <span>N</span>eural
+<span>I</span>nformation <span>P</span>rocessing
+<span>S</span>ystems</em>, edited by H. Larochelle, M. Ranzato, R.
+Hadsell, M. F. Balcan, and H. Lin, 33:9086–97. Curran Associates, Inc.
+<a href="https://proceedings.neurips.cc/paper_files/paper/2020/file/673de96b04fa3adcae1aacda704217ef-Paper.pdf" class="external-link">https://proceedings.neurips.cc/paper_files/paper/2020/file/673de96b04fa3adcae1aacda704217ef-Paper.pdf</a>.
+</div>
+<div id="ref-monnahan2018" class="csl-entry">
+Monnahan, C. C, and Kasper Kristensen. 2018. <span>“No-u-Turn Sampling
+for Fast Bayesian Inference in ADMB and TMB: Introducing the Adnuts and
+Tmbstan r Packages.”</span> <em>PloS One</em> 13 (5).
+</div>
+<div id="ref-monnahan2025" class="csl-entry">
+Monnahan, C. C., Thorson J. T., K. Kristensen, and B. Carpenter. in
+prep. <span>“Leveraging Sparsity to Improve No-u-Turn Sampling
+Efficiency for Hierarchical Bayesian Models.”</span> <em>arXiv
+Preprint</em>, in prep.
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

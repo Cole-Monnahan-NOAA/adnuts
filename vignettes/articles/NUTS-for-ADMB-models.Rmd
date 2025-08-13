@@ -1,8 +1,11 @@
 ---
 title: "NUTS for ADMB models"
+author: "Cole C. Monnahan"
+date: "`r Sys.Date()`"
+bibliography: refs.bib
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{NUTS-for-ADMB-models}
+  %\VignetteIndexEntry{NUTS for ADMB models}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -17,15 +20,16 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(adnuts)
 ```
-
-Key features of the packages:
+As of 2025 the ADMB functionality is no longer under development.
+However, ADMB users can still use 'adnuts' and it provides the
+best software framework for doing Bayesian inference in these
+models. Key features of the packages for ADMB users:
 
 -   Run no-U-turn sampler (NUTS) or random walk Metropolis (RWM) MCMC
-    chains from within R using the `sample_nuts` and 'sample_rwm'
+    chains from within R using the `sample_nuts` and `sample_rwm`
     functions.
 -   Parallel execution with automatic merging of chains and linking to
-    other R packages provides a smooth, efficient workflow for ADMB
-    users.
+    other R packages provides a smooth, efficient workflow.
 -   Adaptation of the NUTS stepsize is automatically done during the
     warmup phase.
 -   The mass matrix options are: diagonal or dense adaptation during
@@ -50,6 +54,30 @@ to modify the settings. See below for a brief description of NUTS and
 how you can modify its behavior and when needed. Guidance and
 performance specifically designed for fisheries stock assessment is
 given in [@monnahan2019].
+
+## ADMB Installation and Usage
+
+The adnuts R package version 1.1.2 can be installed from CRAN: `install.packages('adnuts')`. Future minor releases [listed here](https://github.com/Cole-Monnahan-NOAA/adnuts/releases) may not be released on CRAN so the latest stable version can be installed as:
+
+`devtools::install_github('Cole-Monnahan-NOAA/adnuts')`
+
+The `sample_rwm` and `sample_nuts` functions draw posterior samples from an ADMB model using an MCMC algorithm (random walk Metropolis or no-U-turn sampler). The returned fitted object contains samples and other information. The function 'extract_samples' can be used to get posterior samples (post warmup and thinning) into a data frame for inference, while 'launch_shinyadmb' can be used for interactive diagnostics based on 'ShinyStan'.
+
+A brief [demonstration file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo_ADMB.R) is the best place to help get you started, and there is also a user guide: `vignette('adnuts')` for more detailed information.
+
+'adnuts' was designed specifically for use in ADMB fisheries 'stock assessments, and interested authors are referred to:
+
+Monnahan, C.C., T.A. Branch, J.T. Thorson, I.J. Stewart, C.S. Szuwalksi (2020) Overcoming long Bayesian run times in integrated fisheries stock assessments. ICES Journal of Marine Science. <https://dx.doi.org/10.1093/icesjms/fsz059>
+
+## ADMB Installation
+
+To use the ADMB functionality you need to build your model with version 12.0 (released December 2017) or later, otherwise this functionality is not available. See [the ADMB installation instructions](https://www.admb-project.org/docs/install/) for more information. ADMB 12.2 or newer is highly recommended because it provides better console output, fixes bugs, and adds improved adaptation capabilities as compared to 12.0. You can check the ADMB version of a compiled model from the command line with a command `model.exe -version` which prints the version among other things.
+
+## Known issues
+
+Windows users may experience issues if their model name is too long. In some cases the OS will rename the output files using a "short" version. You'll see files like "MODEL\~1.par". The package tries to handle this but it is **highly recommended** to simply shorten your filename. So instead of 'model_filename_2021.tpl' use e.g. 'model_21'.
+
+Analyses are reproducible by setting the same initial values and a seed in `sample_rwm` or `sample_nuts` (passed to ADMB as '-mcseed'). However, they may not be entirely consistent across OS platforms. The chains will start the same but may eventually diverge. This is likely due to minuscule differences in the gradient and log-posterior calculations between systems and compilers.
 
 ## Sampling for ADMB models
 

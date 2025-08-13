@@ -144,7 +144,7 @@ for all parameters, similar ot Stan's default behavior. If
 the joint NLL is undefined at the initial values then the
 model will exit and return the initial vector for further
 investigation by the user, if desired. Note that
-<code><a href="https://rdrr.io/pkg/StanEstimators/man/stan_sample.html" class="external-link">StanEstimators::stan_sample</a></code> only allows for
+<code><a href="https://rdrr.io/pkg/StanEstimators/man/stan_sample.html" class="external-link">stan_sample</a></code> only allows for
 the same init vector for all chains currently. If a seed is
 specified it will be set and thus the inits used will be
 reproducible. The inits are also returned in the 'inits'
@@ -161,7 +161,8 @@ specified.</p></dd>
 
 <dt id="arg-skip-optimization">skip_optimization<a class="anchor" aria-label="anchor" href="#arg-skip-optimization"></a></dt>
 <dd><p>Whether to skip optimization or not
-(default).</p></dd>
+(default). If the model is already optimized and Q available
+these redundant steps can be skipped.</p></dd>
 
 
 <dt id="arg-q">Q<a class="anchor" aria-label="anchor" href="#arg-q"></a></dt>
@@ -170,7 +171,7 @@ internally if not specified (default).</p></dd>
 
 
 <dt id="arg-qinv">Qinv<a class="anchor" aria-label="anchor" href="#arg-qinv"></a></dt>
-<dd><p>The dense matrix (M). It is calculated internally
+<dd><p>The dense matrix \(Q^{-1}\). It is calculated internally
 if not specified (default).</p></dd>
 
 
@@ -261,8 +262,8 @@ sampling begins.</p>
 specific to <strong>TMB</strong> and is distinct from the Stan metric,
 which is controlled via the <code>control</code> list argument in
 the sampling function. Stan by default adapts a diagonal mass
-matrix (metric_e) using a series of expanding windows. If Q is
-a good estimate of the global covariance then this is not
+matrix (metric_e) using a series of expanding windows. If \(Q\) is
+a good estimate of the global precision then this is not
 needed and disabling Stan's metric adaptation is recommended.
 This can be done by setting `adapt_stan_metric=FALSE`. If left
 at NULL Stan's adaptation will only be done for metrics 'stan'

@@ -12,3 +12,5 @@ tests/testthat/Rplots.pdf
 ^pkgdown$
 ^doc$
 ^Meta$
+^vignettes/articles$
+^\.github$

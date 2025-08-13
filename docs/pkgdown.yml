@@ -3,6 +3,9 @@ pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   adnuts: adnuts.html
-  NUTS-for-ADMB-models: NUTS-for-ADMB-models.html
-  SNUTS-for-TMB-models: SNUTS-for-TMB-models.html
-last_built: 2025-08-11T21:41Z
+  articles/NUTS-for-ADMB-models: NUTS-for-ADMB-models.html
+  articles/SNUTS-for-TMB-models: SNUTS-for-TMB-models.html
+last_built: 2025-08-13T22:39Z
+urls:
+  reference: https://Cole-Monnahan-NOAA.github.io/adnuts/reference
+  article: https://Cole-Monnahan-NOAA.github.io/adnuts/articles

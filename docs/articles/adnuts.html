@@ -63,7 +63,7 @@
                         <h4 data-toc-skip class="author">Cole C.
 Monnahan</h4>
             
-            <h4 data-toc-skip class="date">2025-08-11</h4>
+            <h4 data-toc-skip class="date">2025-08-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/Cole-Monnahan-NOAA/adnuts/blob/HEAD/vignettes/adnuts.Rmd" class="external-link"><code>vignettes/adnuts.Rmd</code></a></small>
       <div class="d-none name"><code>adnuts.Rmd</code></div>
@@ -74,27 +74,29 @@ Monnahan</h4>
 <div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
-<p><code>adnuts</code>’ (pronounced A-D NUTS like A-D MB) main purpose
-is to provide a wrapper for performing Bayesian analyses using the
-no-U-turn (NUTS) algorithm <span class="citation">(Hoffman and Gelman
-2014)</span> for TMB <span class="citation">(Kristensen et al.
-2016)</span> and ADMB <span class="citation">(Fournier et al.
-2012)</span> models.</p>
+<p><code>adnuts</code> (pronounced A-D NUTS like A-D MB) provides a
+wrapper for performing Bayesian analyses using the no-U-turn (NUTS)
+algorithm <span class="citation">(Hoffman and Gelman 2014)</span> for
+TMB <span class="citation">(Kristensen et al. 2016)</span> and ADMB
+<span class="citation">(Fournier et al. 2012)</span> models.</p>
 <p>For TMB models the NUTS algorithm is in the Stan software <span class="citation">(Carpenter et al. 2017)</span> and linked through the
 <a href="https://github.com/andrjohns/StanEstimators" class="external-link">StanEstimators</a>
 R package. <code>adnuts</code> implements the sparse NUTS (SNUTS)
 algorithm of <span class="citation">(Monnahan et al. in prep)</span> by
 decorrelating and descaling the posterior distribution prior to passing
 to Stan. For models with high correlations and sparse precision
-matrices, SNUTS can substantially improve sampling efficiency. For
-models without strong global correlations, the related package
-<code>tmbstan</code> is likely to be faster due to lower overhead and
-may be a better option. Eventually, Stan may include SNUTS functionality
-and in that case <code>tmbstan</code> may be a better long term option.
-For TMB users now, SNUTS via <code>adnuts</code> is likely to be the
-best overall package for Bayesian inference. Importantly, it works for
-TMB and RTMB models, and can be run on TMB models from existing
-packages.</p>
+matrices, SNUTS can substantially improve sampling efficiency.
+Importantly, it works for TMB and RTMB models, and can be run on models
+from existing packages.</p>
+<p>Basic usage for a TMB or RTMB object <code>obj</code> is shown as
+follows, with a more in depth article on the website.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_snuts.html">sample_snuts</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/pairs.html" class="external-link">pairs</a></span><span class="op">(</span><span class="va">fit</span>, order<span class="op">=</span><span class="st">'slow'</span><span class="op">)</span></span>
+<span><span class="va">post</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/launch_shinytmb.html">launch_shinytmb</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p>ADMB models contain the algorithm code internally, but this package
 provides the user a convenient environment to run and diagnose Markov
 chains, and make inference. Development for ADMB models is frozen but
@@ -102,18 +104,31 @@ should maintain backwards compatibility in the near future. This package
 aims to give ADMB models similar functionality to the software Stan and
 <code>rstan</code> in particular <span class="citation">(Carpenter et
 al. 2017; Stan Development Team 2017)</span>.</p>
+<p>Assuming a valid ADMB model located in directory <code>path</code>
+has been built and optimized successfully, then</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/wrappers.html">sample_nuts</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">'simple'</span>, path<span class="op">=</span><span class="va">path</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/pairs.html" class="external-link">pairs</a></span><span class="op">(</span><span class="va">fit</span>, order<span class="op">=</span><span class="st">'slow'</span><span class="op">)</span></span>
+<span><span class="va">post</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/launch_shinyadmb.html">launch_shinyadmb</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="history">History<a class="anchor" aria-label="anchor" href="#history"></a>
 </h2>
 <p>The package has undergone several shifts in focus. Initially, it was
-developed to provide a NUTS implementation for models where the
+developed to provide a NUTS implementation in R for models where the
 log-density and log-density gradient could be written as R functions
 (e.g., TMB). However, the <code>tmbstan</code> package was developed and
 became the preferred option for TMB users, so the focus switched to ADMB
-models and TMB functionality was de-emphasized. Now, with the
-development of SNUTS, the primary focus of <code>adnuts</code> is for
-TMB sampling via the SNUTS approach.</p>
+models and TMB functionality was de-emphasized. In 2025, with the
+development of SNUTS, the primary focus of <code>adnuts</code> was
+shifted back to TMB models via the SNUTS approach.</p>
+</div>
+<div class="section level2 unnumbered">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-carpenter2017" class="csl-entry">
 Carpenter, B., A. Gelman, M. D. Hoffman, D. Lee, B. Goodrich, M.

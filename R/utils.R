@@ -666,6 +666,8 @@ check_identifiable <- function(model, path=getwd()){
 #' @param fit A named list returned by \code{sample_tmb}.
 #' @seealso \code{launch_shinyadmb}
 launch_shinytmb <- function(fit){
+  if(!requireNamespace('shinystan', quietly = TRUE))
+    stop("The shinystan package is required for this functionality")
   shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
 
@@ -675,6 +677,8 @@ launch_shinytmb <- function(fit){
 #' @seealso \code{launch_shinytmb}
 #' @export
 launch_shinyadmb <- function(fit){
+  if(!requireNamespace('shinystan', quietly = TRUE))
+    stop("The shinystan package is required for this functionality")
   shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
 

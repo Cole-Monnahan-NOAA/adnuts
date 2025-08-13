@@ -8,7 +8,7 @@ Description: Bayesian inference powered by the sparse no-U-turn (SNUTS) algorith
 Depends:
     R (>= 4.1.0),
     StanEstimators
-URL: https://github.com/Cole-Monnahan-NOAA/adnuts
+URL: https://Cole-Monnahan-NOAA.github.io/adnuts
 BugReports: https://github.com/Cole-Monnahan-NOAA/adnuts/issues
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
@@ -40,3 +40,4 @@ Suggests:
     withr,
     testthat (>= 2.1.0)
 VignetteBuilder: knitr
+Config/Needs/website: rmarkdown

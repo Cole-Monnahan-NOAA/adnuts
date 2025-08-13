@@ -50,7 +50,7 @@ confidence ellipses.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'adfit'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/pairs.html" class="external-link">pairs</a></span><span class="op">(</span></span>
-<span>  <span class="va">fit</span>,</span>
+<span>  <span class="va">x</span>,</span>
 <span>  pars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  order <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"orig"</span>, <span class="st">"slow"</span>, <span class="st">"fast"</span>, <span class="st">"mismatch"</span>, <span class="st">"cor"</span><span class="op">)</span>,</span>
 <span>  inc_warmup <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -72,11 +72,7 @@ confidence ellipses.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
-<dd><p>A list as returned by <code>sample_nuts</code>.</p></dd>
-
-
-<dt id="arg-pars">pars<a class="anchor" aria-label="anchor" href="#arg-pars"></a></dt>
+<dl><dt id="arg-pars">pars<a class="anchor" aria-label="anchor" href="#arg-pars"></a></dt>
 <dd><p>A character vector of parameters or integers
 representing which parameters to subset. Useful if the model
 has a larger number of parameters and you just want to show
@@ -156,6 +152,10 @@ the diagonal.</p></dd>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Arguments to be passed to plot call in lower
 triangular panels (scatterplots).</p></dd>
+
+
+<dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
+<dd><p>A list as returned by <code>sample_nuts</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
