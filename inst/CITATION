@@ -1,6 +1,6 @@
 citHeader("To cite adnuts in publications use:")
 
-year <- 2018##sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
 vers <- paste("R package version", meta$Version)
 
 
