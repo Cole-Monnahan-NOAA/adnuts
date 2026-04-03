@@ -103,6 +103,6 @@ path lengths in Hamiltonian Monte Carlo. J. Mach. Learn. Res.
 
 ## See also
 
-[`sample_tmb`](https://cole-monnahan-noaa.github.io/adnuts/reference/sample_tmb.md)
+[`sample_tmb`](sample_tmb.md)
 
-[`sample_tmb`](https://cole-monnahan-noaa.github.io/adnuts/reference/sample_tmb.md)
+[`sample_tmb`](sample_tmb.md)

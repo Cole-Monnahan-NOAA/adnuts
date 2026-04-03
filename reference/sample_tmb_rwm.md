@@ -79,4 +79,4 @@ machines. J Chem Phys. 21:1087-1092.
 
 ## See also
 
-[`sample_tmb`](https://cole-monnahan-noaa.github.io/adnuts/reference/sample_tmb.md)
+[`sample_tmb`](sample_tmb.md)

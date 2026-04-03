@@ -401,7 +401,7 @@ contained in red was not used and is only shown for illustration. The
 option `metric='mle'` would use the inverse Hessian as a tuning
 parameter (see section on metric below). More options for plotting fits
 like these are available in the help file
-[`?pairs_admb`](https://cole-monnahan-noaa.github.io/adnuts/reference/pairs_admb.md).
+[`?pairs_admb`](../reference/pairs_admb.md).
 
 ## Mass matrix adaptation
 

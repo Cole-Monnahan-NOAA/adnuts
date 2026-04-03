@@ -13,8 +13,7 @@ sample_inits(fit, chains)
 
 - fit:
 
-  An outputted list from
-  [`sample_admb`](https://cole-monnahan-noaa.github.io/adnuts/reference/sample_admb.md)
+  An outputted list from [`sample_admb`](sample_admb.md)
 
 - chains:
 
@@ -24,4 +23,4 @@ sample_inits(fit, chains)
 ## Value
 
 A list of lists which can be passed back into
-[`sample_admb`](https://cole-monnahan-noaa.github.io/adnuts/reference/sample_admb.md).
+[`sample_admb`](sample_admb.md).

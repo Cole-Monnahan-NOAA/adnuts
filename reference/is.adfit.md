@@ -12,5 +12,4 @@ is.adfit(x)
 
 - x:
 
-  Returned list from
-  [`sample_admb`](https://cole-monnahan-noaa.github.io/adnuts/reference/sample_admb.md)
+  Returned list from [`sample_admb`](sample_admb.md)

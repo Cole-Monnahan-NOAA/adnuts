@@ -251,10 +251,9 @@ The user is responsible for specifying the model properly (priors,
 starting values, desired parameters fixed, etc.), as well as assessing
 the convergence and validity of the resulting samples (e.g., through the
 `coda` package), or with function
-[`launch_shinytmb`](https://cole-monnahan-noaa.github.io/adnuts/reference/launch_shinytmb.md)
-before making inference. Specifically, priors must be specified in the
-template file for each parameter. Unspecified priors will be implicitly
-uniform.
+[`launch_shinytmb`](launch_shinytmb.md) before making inference.
+Specifically, priors must be specified in the template file for each
+parameter. Unspecified priors will be implicitly uniform.
 
 ## Author
 

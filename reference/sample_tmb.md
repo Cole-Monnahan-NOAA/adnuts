@@ -157,10 +157,9 @@ This is deprecated and will cease to exist in future releases
 
 ## See also
 
-[`extract_samples`](https://cole-monnahan-noaa.github.io/adnuts/reference/extract_samples.md)
-to extract samples and
-[`launch_shinytmb`](https://cole-monnahan-noaa.github.io/adnuts/reference/launch_shinytmb.md)
-to explore the results graphically which is a wrapper for the
+[`extract_samples`](extract_samples.md) to extract samples and
+[`launch_shinytmb`](launch_shinytmb.md) to explore the results
+graphically which is a wrapper for the
 [`launch_shinystan`](https://mc-stan.org/shinystan/reference/launch_shinystan.html)
 function.
 

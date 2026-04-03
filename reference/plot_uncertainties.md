@@ -12,8 +12,7 @@ plot_uncertainties(fit, log = TRUE, plot = TRUE)
 
 - fit:
 
-  A fitted object returned by
-  [`sample_admb`](https://cole-monnahan-noaa.github.io/adnuts/reference/sample_admb.md)
+  A fitted object returned by [`sample_admb`](sample_admb.md)
 
 - log:
 

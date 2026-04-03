@@ -13,8 +13,7 @@ plot(x, y, ...)
 
 - x:
 
-  Fitted object from
-  [`sample_admb`](https://cole-monnahan-noaa.github.io/adnuts/reference/sample_admb.md)
+  Fitted object from [`sample_admb`](sample_admb.md)
 
 - y:
 

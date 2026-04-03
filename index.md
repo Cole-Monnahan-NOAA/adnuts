@@ -50,9 +50,8 @@ diagnostics based on ‘ShinyStan’.
 A brief [demonstration
 file](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/master/inst/demo.R)
 is the best place to help get you started, and there is also a user
-guide:
-[`vignette('adnuts')`](https://cole-monnahan-noaa.github.io/adnuts/articles/adnuts.md)
-for more detailed information.
+guide: [`vignette('adnuts')`](articles/adnuts.md) for more detailed
+information.
 
 ## Installation
 
