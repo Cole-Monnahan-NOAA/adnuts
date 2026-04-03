@@ -1,0 +1,108 @@
+# Draw MCMC samples from a model posterior using a static HMC sampler.
+
+Draw MCMC samples from a model posterior using a static HMC sampler.
+
+## Usage
+
+``` r
+sample_tmb_hmc(
+  iter,
+  fn,
+  gr,
+  init,
+  L,
+  eps,
+  warmup = floor(iter/2),
+  seed = NULL,
+  chain = 1,
+  thin = 1,
+  control = NULL
+)
+```
+
+## Arguments
+
+- iter:
+
+  The number of samples to draw.
+
+- fn:
+
+  A function that returns the log of the posterior density.
+
+- gr:
+
+  A function that returns a vector of gradients of the log of the
+  posterior density (same as `fn`).
+
+- init:
+
+  A list of lists containing the initial parameter vectors, one for each
+  chain or a function. It is strongly recommended to initialize multiple
+  chains from dispersed points. A of NULL signifies to use the starting
+  values present in the model (i.e., `obj$par`) for all chains.
+
+- L:
+
+  The number of leapfrog steps to take. The NUTS algorithm does not
+  require this as an input. If `L=1` this function will perform Langevin
+  sampling. In some contexts `L` can roughly be thought of as a thinning
+  rate.
+
+- eps:
+
+  The step size. If a numeric value is passed, it will be used
+  throughout the entire chain. A `NULL` value will initiate
+  sampler_params of `eps` using the dual averaging algorithm during the
+  first `warmup` steps.
+
+- warmup:
+
+  The number of warmup iterations.
+
+- seed:
+
+  The random seed to use.
+
+- chain:
+
+  The chain number, for printing only.
+
+- thin:
+
+  The thinning rate to apply to samples. Typically not used with NUTS.
+
+- control:
+
+  A list to control the sampler. See details for further use.
+
+## Value
+
+A list containing samples ('par') and algorithm details such as step
+size adaptation and acceptance probabilities per iteration
+('sampler_params').
+
+## Details
+
+This function implements algorithm 5 of Hoffman and Gelman (2014), which
+includes adaptive step sizes (`eps`) via an algorithm called dual
+averaging.
+
+## References
+
+- Neal, R. M. (2011). MCMC using Hamiltonian dynamics. Handbook of
+  Markov Chain Monte Carlo.
+
+- Hoffman and Gelman (2014). The No-U-Turn sampler: Adaptively setting
+  path lengths in Hamiltonian Monte Carlo. J. Mach. Learn. Res.
+  15:1593-1623.
+
+Hoffman and Gelman (2014). The No-U-Turn sampler: Adaptively setting
+path lengths in Hamiltonian Monte Carlo. J. Mach. Learn. Res.
+15:1593-1623.
+
+## See also
+
+[`sample_tmb`](sample_tmb.md)
+
+[`sample_tmb`](sample_tmb.md)
