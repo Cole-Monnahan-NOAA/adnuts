@@ -1,0 +1,9 @@
+pandoc: 3.1.11
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  adnuts: adnuts.html
+last_built: 2026-04-03T16:20Z
+urls:
+  reference: https://cole-monnahan-noaa.github.io/adnuts/reference
+  article: https://cole-monnahan-noaa.github.io/adnuts/articles
