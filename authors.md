@@ -26,10 +26,10 @@ https://doi.org/10.1371/journal.pone.0197954
     }
 
 Monnahan CC (). adnuts: No-U-Turn MCMC Sampling for 'ADMB' and 'TMB'
-Models. R package version 1.1.2.
+Models. R package version 1.1.3.
 
     @Manual{,
       title = {adnuts: No-U-Turn MCMC Sampling for ADMB Models.},
       author = {Cole C. Monnahan},
-      note = {R package version 1.1.2},
+      note = {R package version 1.1.3},
     }

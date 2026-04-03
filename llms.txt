@@ -1,17 +1,12 @@
 # adnuts
 
-main:
-[![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg?branch=main)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check)
-dev:
-[![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CMD-check/badge.svg?branch=dev)](https://github.com/Cole-Monnahan-NOAA/adnuts/actions?query=workflow%3AR-CMD-check)
 [![codecov](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts/branch/dev/graph/badge.svg)](https://codecov.io/gh/Cole-Monnahan-NOAA/adnuts)
 [![](https://www.r-pkg.org/badges/version/adnuts)](https://www.r-pkg.org/pkg/adnuts)
 [![CRAN RStudio mirror
 downloads](https://cranlogs.r-pkg.org/badges/adnuts)](https://www.r-pkg.org/pkg/adnuts)
 
 !! Note that development of this package has largely ceased and effort
-is put toward ‘[SparseNUTS](https://github.com/noaa-afsc/SparseNUTS)’.
-!!
+is put toward ‘[SparseNUTS](https://github.com/noaa-afsc/SparseNUTS)’ !!
 
 The aim of ‘adnuts’ (pronounced A-D NUTS like A-D MB) is to provide
 advanced MCMC sampling for ‘ADMB’ models. It mimics ‘Stan’ in
