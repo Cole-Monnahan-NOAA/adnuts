@@ -1,6 +1,15 @@
+# adnuts 1.1.3 (2026-04-03)
+
+* Roll back some experimental TMB changes (moved to SparseNUTS package)
+
+* Remove GHA checks
+
+* Redo the pkgdown site
+
+* This is likely the last formal release with no plans to update the CRAN version
+
 
 # adnuts 1.1.2 (2021-03-02)
-
 
 * Improve console output for RStudio users. Was broken for NUTS
   chains and in serial.
