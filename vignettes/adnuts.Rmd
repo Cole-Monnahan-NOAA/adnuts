@@ -458,10 +458,7 @@ already rely on $\Sigma$ options 4-6 are worth exploring.
 
 Previous versions of `adnuts` included explicit
 demonstrations of use for TMB models. Now, however, the package `tmbstan`
-([@monnahan2018]) has replaced this functionality and users should
-exclusively use that package except for very rare cases. Consequently I
-deleted the TMB section from this vignette, but older versions on CRAN may
-be helpful for those looking for guidance.
+([@monnahan2018]) and '[SparseNUTS](https://github.com/noaa-afsc/SparseNUTS)' has replaced this functionality and users should exclusively use one of those packages. 
 
 ## The no-U-turn sampler implementation
 

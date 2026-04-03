@@ -5,12 +5,13 @@ dev: [![R-CMD-check](https://github.com/Cole-Monnahan-NOAA/adnuts/workflows/R-CM
 [![](https://www.r-pkg.org/badges/version/adnuts)](https://www.r-pkg.org/pkg/adnuts)
 [![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/adnuts)](https://www.r-pkg.org/pkg/adnuts)
 
+!! Note that development of this package has largely ceased and effort is put toward '[SparseNUTS](https://github.com/noaa-afsc/SparseNUTS)'. !!
+
+
 The aim of 'adnuts' (pronounced A-D NUTS like A-D MB) is to provide
 advanced MCMC sampling for 'ADMB' models. It mimics 'Stan' in
 functionality and feel, specifically providing no-U-turn (NUTS) sampling
 with adaptive mass matrix and parallel execution.
-
-Note that development of this package has large ceased and effort is put toward SparseNUTS. 
 
 The R package 'tmbstan' (available on CRAN) and '[SparseNUTS](https://github.com/noaa-afsc/SparseNUTS)' have replaced the TMB
 capabilities since original development. As such, adnuts is primarily used
