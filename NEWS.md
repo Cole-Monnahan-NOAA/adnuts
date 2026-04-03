@@ -1,6 +1,6 @@
-------------------------------------------------------------------------
-adnuts 1.1.2 (2021-03-02)
-------------------------------------------------------------------------
+
+# adnuts 1.1.2 (2021-03-02)
+
 
 * Improve console output for RStudio users. Was broken for NUTS
   chains and in serial.
@@ -17,9 +17,9 @@ adnuts 1.1.2 (2021-03-02)
 
 * Add slot 'par_names' to objects of type adfit
 
-------------------------------------------------------------------------
-adnuts 1.1.1 (2021-02-19)
-------------------------------------------------------------------------
+
+# adnuts 1.1.1 (2021-02-19)
+
 
 * Add slot for par_names to adfit objects
 
@@ -41,9 +41,9 @@ adnuts 1.1.1 (2021-02-19)
 
 * Fix `sample_tmb` to work again for short-term use
 
-------------------------------------------------------------------------
-adnuts 1.1.0 (2020-07-13)
-------------------------------------------------------------------------
+
+# adnuts 1.1.0 (2020-07-13)
+
 
 * Change from `sample_admb` to `sample_nuts` and `sample_rwm` to
   run the NUTS and RWM algorithms, respectively.
@@ -90,9 +90,9 @@ adnuts 1.1.0 (2020-07-13)
 
 * Improve error handling and testing routines
 
-------------------------------------------------------------------------
-adnuts 1.0.1 (2019-03-15) 
-------------------------------------------------------------------------
+
+# adnuts 1.0.1 (2019-03-15) 
+
 
 * Update ADMB algorithms to use "-maxfn 0 -phase 1000" instead of
   "-noest". This helps with Stock Synthesis and likely other
@@ -116,8 +116,8 @@ adnuts 1.0.1 (2019-03-15)
 * Minor bug fixes and updates.
 
 
-------------------------------------------------------------------------
-adnuts 1.0.0 (2018-02-04)
-------------------------------------------------------------------------
+
+# adnuts 1.0.0 (2018-02-04)
+
 
 Initial release.
