@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/Cole-Monnahan-NOAA/adnuts/blob/v1.1.3/inst/CITATION)
 
 Monnahan CC, Kristensen K (2018) No-U-turn sampling for fast Bayesian
 inference in ADMB and TMB: Introducing the adnuts and tmbstan R
